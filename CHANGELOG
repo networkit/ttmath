@@ -1,0 +1,4 @@
+Version 0.6.2 (2007.01.10):
+	* New division algorithm (radix b) where b is 2^32
+
+
