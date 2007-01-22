@@ -1,5 +1,5 @@
 /*
- * This file is part of TTMath Mathematical Library
+ * This file is a part of TTMath Mathematical Library
  * and is distributed under the (new) BSD licence.
  * Author: Tomasz Sowa <t.sowa@slimaczek.pl>
  */
@@ -69,7 +69,7 @@ public:
 	void SetMaxValue()
 	{
 		UInt<value_size>::SetMaxValue();
-		UInt<value_size>::table[value_size-1] = ~uint_the_highest_bit;
+		UInt<value_size>::table[value_size-1] = ~ TTMATH_UINT_HIGHEST_BIT;
 	}
 
 
@@ -80,7 +80,7 @@ public:
 	void SetMinValue()
 	{
 		UInt<value_size>::SetZero();
-		UInt<value_size>::table[value_size-1] = uint_the_highest_bit;
+		UInt<value_size>::table[value_size-1] = TTMATH_UINT_HIGHEST_BIT;
 	}
 
 
@@ -421,14 +421,14 @@ public:
 
 		if( i < value_size )
 		{	
-			uint fill = (p.table[argument_size-1] & uint_the_highest_bit)? uint_max_value : 0;
+			uint fill = (p.table[argument_size-1] & TTMATH_UINT_HIGHEST_BIT)? TTMATH_UINT_MAX_VALUE : 0;
 
 			for( ; i<value_size ; ++i)
 				UInt<value_size>::table[i] = fill;
 		}
 		else
 		{
-			uint test = (UInt<value_size>::table[value_size-1] & uint_the_highest_bit)? uint_max_value : 0;
+			uint test = (UInt<value_size>::table[value_size-1] & TTMATH_UINT_HIGHEST_BIT)? TTMATH_UINT_MAX_VALUE : 0;
 
 			for( ; i<argument_size ; ++i)
 				if( p.table[i] != test )

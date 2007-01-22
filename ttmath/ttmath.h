@@ -1,5 +1,5 @@
 /*
- * This file is part of TTMath Mathematical Library
+ * This file is a part of TTMath Mathematical Library
  * and is distributed under the (new) BSD licence.
  * Author: Tomasz Sowa <t.sowa@slimaczek.pl>
  */
@@ -59,10 +59,10 @@ namespace ttmath
 		e.g.
 		Factorial(4) = 4! = 1*2*3*4
 	*/
-	template<int exp,int man>
-	Big<exp, man> Factorial(const Big<exp, man> & x, ErrorCode * err = 0, const volatile StopCalculating * stop = 0)
+	template<class ValueType>
+	ValueType Factorial(const ValueType & x, ErrorCode * err = 0, const volatile StopCalculating * stop = 0)
 	{
-	Big<exp, man> result;
+	ValueType result;
 
 		result.SetOne();
 		
@@ -76,17 +76,17 @@ namespace ttmath
 
 		if( !x.exponent.IsSign() && !x.exponent.IsZero() )
 		{
-			// when x>0 there's no sense to calculate the formula
+			// when x.exponent>0 there's no sense to calculate the formula
 			// (we can't add one into the x bacause
-			// we don't have enough bits in our mantissa)
+			// we don't have enough bits in the mantissa)
 			if( err )
 				*err = err_overflow;
 
 		return result;
 		}
 
-		Big<exp, man> multipler;
-		Big<exp, man> one;
+		ValueType multipler;
+		ValueType one;
 		uint carry = 0;
 
 		one        = result; // =1
@@ -124,10 +124,10 @@ namespace ttmath
 		e.g.  -2 = 2 
 		       2 = 2
 	*/
-	template<int exp,int man>
-	Big<exp, man> Abs(const Big<exp, man> & x)
+	template<class ValueType>
+	ValueType Abs(const ValueType & x)
 	{
-		Big<exp, man> result( x );
+		ValueType result( x );
 		result.Abs();
 
 	return result;
@@ -141,10 +141,10 @@ namespace ttmath
 			 -2.2 = 2
 			 -2.7 = 2
 	*/
-	template<int exp,int man>
-	Big<exp, man> SkipFraction(const Big<exp, man> & x)
+	template<class ValueType>
+	ValueType SkipFraction(const ValueType & x)
 	{
-		Big<exp, man> result( x );
+		ValueType result( x );
 		result.SkipFraction();
 
 	return result;
@@ -158,10 +158,10 @@ namespace ttmath
 			 -2.2 = -2
 			 -2.7 = -3
 	*/
-	template<int exp,int man>
-	Big<exp, man> Round(const Big<exp, man> & x)
+	template<class ValueType>
+	ValueType Round(const ValueType & x)
 	{
-		Big<exp, man> result( x );
+		ValueType result( x );
 		result.Round();
 
 	return result;
@@ -171,10 +171,10 @@ namespace ttmath
 	/*!
 		this method calculates the natural logarithm (logarithm with the base 'e')
 	*/
-	template<int exp,int man>
-	Big<exp, man> Ln(const Big<exp, man> & x, ErrorCode * err = 0)
+	template<class ValueType>
+	ValueType Ln(const ValueType & x, ErrorCode * err = 0)
 	{
-	Big<exp, man> result;
+	ValueType result;
 
 		uint state = result.Ln(x);
 
@@ -205,12 +205,12 @@ namespace ttmath
 	/*!
 		this method calculates the logarithm
 	*/
-	template<int exp,int man>
-	Big<exp, man> Log(const Big<exp, man> & base, const Big<exp, man> & x, ErrorCode * err = 0)
+	template<class ValueType>
+	ValueType Log(const ValueType & x, const ValueType & base, ErrorCode * err = 0)
 	{
-	Big<exp, man> result;
+	ValueType result;
 
-		uint state = result.Log(base,x);
+		uint state = result.Log(x, base);
 
 		if( err )
 		{
@@ -239,10 +239,10 @@ namespace ttmath
 	/*!
 		this method calculates the expression e^x
 	*/
-	template<int exp,int man>
-	Big<exp, man> Exp(const Big<exp, man> & x, ErrorCode * err = 0)
+	template<class ValueType>
+	ValueType Exp(const ValueType & x, ErrorCode * err = 0)
 	{
-	Big<exp, man> result;
+	ValueType result;
 
 		uint state = result.Exp(x);
 
@@ -267,10 +267,10 @@ namespace ttmath
 		an auxiliary function for calculating the Sin
 		(you don't have to call this function) 
 	*/
-	template<int exp,int man>
-	void PrepareSin(Big<exp,man> & x, bool & change_sign)
+	template<class ValueType>
+	void PrepareSin(ValueType & x, bool & change_sign)
 	{
-	Big<exp,man> temp;
+	ValueType temp;
 
 		change_sign = false;
 	
@@ -332,13 +332,13 @@ namespace ttmath
 		and when a=PI/2:
 		sin(x) = 1 - ((x-PI/2)^2)/(2!) + ((x-PI/2)^4)/(4!) - ((x-PI/2)^6)/(6!) ...
 	*/
-	template<int exp,int man>
-	Big<exp,man> Sin0pi05(const Big<exp,man> & x)
+	template<class ValueType>
+	ValueType Sin0pi05(const ValueType & x)
 	{
-	Big<exp,man> result;
-	Big<exp,man> numerator, denominator;
-	Big<exp,man> d_numerator, d_denominator;
-	Big<exp,man> one, temp, old_result;
+	ValueType result;
+	ValueType numerator, denominator;
+	ValueType d_numerator, d_denominator;
+	ValueType one, temp, old_result;
 
 		// temp = pi/4
 		temp.Set05Pi();
@@ -367,7 +367,7 @@ namespace ttmath
 			denominator = one;
 
 			// d_numerator = (x-pi/2)^2
-			Big<exp,man> pi05;
+			ValueType pi05;
 			pi05.Set05Pi();
 
 			temp = x;
@@ -382,7 +382,7 @@ namespace ttmath
 		bool addition = false;
 
 		old_result = result;
-		for(int i=1 ; i<5000 ; ++i)
+		for(int i=1 ; i<=TTMATH_ARITHMETIC_MAX_LOOP ; ++i)
 		{
 			// we're starting from a second part of the formula
 			c += numerator.    Mul( d_numerator );
@@ -424,21 +424,24 @@ namespace ttmath
 	/*!
 		this function calulates the Sin
 	*/
-	template<int exp,int man>
-	Big<exp,man> Sin(Big<exp,man> x)
+	template<class ValueType>
+	ValueType Sin(ValueType x)
 	{
-	Big<exp,man> one;
+	ValueType one;
 	bool change_sign;	
 	
 		PrepareSin( x, change_sign );
-		Big<exp,man> result = Sin0pi05( x );
+		ValueType result = Sin0pi05( x );
 	
 		one.SetOne();
 
+		// after calculations there can be small distortions in the result
 		if( result > one )
 			result = one;
 		else
 		if( result.IsSign() )
+			// we've calculated the sin from <0, pi/2> and the result
+			// should be positive
 			result.SetZero();
 
 		if( change_sign )
@@ -452,10 +455,10 @@ namespace ttmath
 		this function calulates the Cos
 		we're using the formula cos(x) = sin(x + PI/2)
 	*/
-	template<int exp,int man>
-	Big<exp,man> Cos(Big<exp,man> x)
+	template<class ValueType>
+	ValueType Cos(ValueType x)
 	{
-		Big<exp,man> pi05;
+		ValueType pi05;
 		pi05.Set05Pi();
 
 		x.Add( pi05 );
@@ -469,15 +472,15 @@ namespace ttmath
 		we're using the formula tan(x) = sin(x) / cos(x)
 
 		it takes more time than calculating the Tan directly
-		from for example Taylor series but should be a bit precise
+		from for example Taylor series but should be a bit preciser
 		because Tan receives its values from -infinity to +infinity
 		and when we calculate it from any series then we can make
 		a small mistake than calculating 'sin/cos'
 	*/
-	template<int exp,int man>
-	Big<exp,man> Tan(const Big<exp,man> & x, ErrorCode * err = 0)
+	template<class ValueType>
+	ValueType Tan(const ValueType & x, ErrorCode * err = 0)
 	{
-		Big<exp,man> result = Cos(x);
+		ValueType result = Cos(x);
 
 		if( result.IsZero() )
 		{
@@ -499,12 +502,12 @@ namespace ttmath
 		we're using the formula tan(x) = cos(x) / sin(x)
 
 		(why do we make it in this way? 
-		look at the info in Tan() function)
+		look at information in Tan() function)
 	*/
-	template<int exp,int man>
-	Big<exp,man> CTan(const Big<exp,man> & x, ErrorCode * err = 0)
+	template<class ValueType>
+	ValueType CTan(const ValueType & x, ErrorCode * err = 0)
 	{
-		Big<exp,man> result = Sin(x);
+		ValueType result = Sin(x);
 
 		if( result.IsZero() )
 		{

@@ -1,5 +1,5 @@
 /*
- * This file is part of TTMath Mathematical Library
+ * This file is a part of TTMath Mathematical Library
  * and is distributed under the (new) BSD licence.
  * Author: Tomasz Sowa <t.sowa@slimaczek.pl>
  */
@@ -204,7 +204,7 @@ public:
 		// (first is the highest word)
 	
 		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(uint));
-		exponent = -int(man)*int(BITS_PER_UINT) + 2;
+		exponent = -int(man)*int(TTMATH_BITS_PER_UINT) + 2;
 		info = 0;
 	}
 
@@ -215,7 +215,7 @@ public:
 	void Set05Pi()
 	{
 		SetPi();	
-		exponent = -int(man)*int(BITS_PER_UINT) + 1;
+		exponent = -int(man)*int(TTMATH_BITS_PER_UINT) + 1;
 	}
 
 
@@ -225,7 +225,7 @@ public:
 	void Set2Pi()
 	{
 		SetPi();
-		exponent = -int(man)*int(BITS_PER_UINT) + 3;
+		exponent = -int(man)*int(TTMATH_BITS_PER_UINT) + 3;
 	}
 
 
@@ -249,7 +249,7 @@ public:
 		};
 	
 		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(uint));
-		exponent = -int(man)*int(BITS_PER_UINT) + 2;
+		exponent = -int(man)*int(TTMATH_BITS_PER_UINT) + 2;
 		info = 0;
 	}
 
@@ -274,7 +274,7 @@ public:
 		};	
 
 		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(uint));
-		exponent = -int(man)*int(BITS_PER_UINT);
+		exponent = -int(man)*int(TTMATH_BITS_PER_UINT);
 		info = 0;
 	}
 
@@ -394,7 +394,7 @@ public:
 	uint Add(Big<exp, man> ss2)
 	{
 	Int<exp> exp_offset( exponent );
-	Int<exp> mantissa_size_in_bits( man * BITS_PER_UINT );
+	Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
 	int c = 0;
 
 		exp_offset.Sub( ss2.exponent );
@@ -472,22 +472,22 @@ public:
 	*/
 	uint Mul(const Big<exp, man> & ss2)
 	{
-	MATHTT_THIS_ASSERT( ss2 )
+	TTMATH_REFERENCE_ASSERT( ss2 )
 
 	UInt<man*2> man_result;
 	int i,c;
 
 		// man_result = mantissa * ss2.mantissa
-		mantissa.Mul(ss2.mantissa, man_result);
+		mantissa.MulBig(ss2.mantissa, man_result);
 
-		// 'i' will be from 0 to man*BITS_PER_UINT
+		// 'i' will be from 0 to man*TTMATH_BITS_PER_UINT
 		// because mantissa and ss2.mantissa are standardized 
 		// (the highest bit in man_result is set to 1 or
 		// if there is a zero value in man_result the method CompensationToLeft()
 		// returns 0 but we'll correct this at the end in Standardizing() method)
 		i = man_result.CompensationToLeft();
 		
-		c  = exponent.Add( man * BITS_PER_UINT - i );
+		c  = exponent.Add( man * TTMATH_BITS_PER_UINT - i );
 		c += exponent.Add( ss2.exponent );
 
 		for(i=0 ; i<man ; ++i)
@@ -518,7 +518,7 @@ public:
 	*/
 	uint Div(const Big<exp, man> & ss2)
 	{
-	MATHTT_THIS_ASSERT( ss2 )
+	TTMATH_REFERENCE_ASSERT( ss2 )
 
 	UInt<man*2> man1;
 	UInt<man*2> man2;
@@ -635,15 +635,15 @@ public:
 	*/
 	bool Mod2() const
 	{
-		if( exponent>int(0) || exponent<=-int(man*BITS_PER_UINT) )
+		if( exponent>int(0) || exponent<=-int(man*TTMATH_BITS_PER_UINT) )
 			return false;
 
 		int exp_int = exponent.ToInt();
 		// 'exp_int' is negative (or zero), we set its as positive
 		exp_int = -exp_int;
 
-		int value = mantissa.table[ exp_int / BITS_PER_UINT ];
-		value >>= (exp_int % BITS_PER_UINT);
+		int value = mantissa.table[ exp_int / TTMATH_BITS_PER_UINT ];
+		value >>= (exp_int % TTMATH_BITS_PER_UINT);
 
 	return bool(value & 1);
 	}
@@ -696,7 +696,7 @@ public:
 	*/
 	uint PowBInt(const Big<exp, man> & pow)
 	{
-		MATHTT_THIS_ASSERT( pow )
+		TTMATH_REFERENCE_ASSERT( pow )
 	
 		if( !pow.IsSign() )
 			return PowBUInt(pow);
@@ -745,7 +745,7 @@ public:
 	int Pow(const Big<exp, man> pow)
 #endif
 	{
-		MATHTT_THIS_ASSERT( pow )
+		TTMATH_REFERENCE_ASSERT( pow )
 
 		if( IsZero() )
 		{
@@ -789,7 +789,7 @@ private:
 	*/
 	void ExpSurrounding0(const Big<exp,man> & x)
 	{
-		MATHTT_THIS_ASSERT( x )
+		TTMATH_REFERENCE_ASSERT( x )
 
 		Big<exp,man> denominator, denominator_i;
 		Big<exp,man> one, old_value, next_part;
@@ -800,13 +800,12 @@ private:
 		denominator.SetOne();
 		denominator_i.SetOne();
 
-		// we assume only 'max_loop' iterations of our loop
+	
 		// every 'step_test' times we make a test
-		const uint max_loop  = 2000;
 		const uint step_test = 5;
 
 		// we begin from 1 in order to not testing at the start
-		for(uint i=1 ; i<=max_loop ; ++i)
+		for(uint i=1 ; i<=TTMATH_ARITHMETIC_MAX_LOOP ; ++i)
 		{
 			bool testing = ((i % step_test) == 0);
 
@@ -870,18 +869,18 @@ public:
 
 		// m will be the value of the mantissa in range (-1,1)
 		Big<exp,man> m(x);
-		m.exponent = -int(man*BITS_PER_UINT);
+		m.exponent = -int(man*TTMATH_BITS_PER_UINT);
 
 		// 'e_' will be the value of '2^exponent'
-		//   e_.mantissa.table[man-1] = uint_the_highest_bit;  and
+		//   e_.mantissa.table[man-1] = TTMATH_UINT_HIGHEST_BIT;  and
 		//   e_.exponent.Add(1) mean:
 		//     e_.mantissa.table[0] = 1;
 		//     e_.Standardizing();
-		//     e_.exponent.Add(man*BITS_PER_UINT)
-		//     (we must add 'man*BITS_PER_UINT' because we've taken it from the mantissa)
+		//     e_.exponent.Add(man*TTMATH_BITS_PER_UINT)
+		//     (we must add 'man*TTMATH_BITS_PER_UINT' because we've taken it from the mantissa)
 		Big<exp,man> e_(x);
 		e_.mantissa.SetZero();
-		e_.mantissa.table[man-1] = uint_the_highest_bit;
+		e_.mantissa.table[man-1] = TTMATH_UINT_HIGHEST_BIT;
 		c += e_.exponent.Add(1);
 		e_.Abs();
 
@@ -957,13 +956,12 @@ private:
 		denominator.SetOne();
 		SetZero();
 		
-		// we assume only 'max_loop' iterations of our loop
 		// every 'step_test' times we make a test
-		const uint max_loop  = 2000;
+
 		const uint step_test = 5;
 
 		// we begin from 1 in order to not testing at the beginning
-		for(uint i=1 ; i< max_loop+1 ; ++i)
+		for(uint i=1 ; i<=TTMATH_ARITHMETIC_MAX_LOOP ; ++i)
 		{
 			bool testing = ((i % step_test) == 0);
 
@@ -1026,21 +1024,21 @@ public:
 	*/
 	uint Ln(const Big<exp,man> & x)
 	{
-		MATHTT_THIS_ASSERT( x )
+		TTMATH_REFERENCE_ASSERT( x )
 
 		if( x.IsSign() || x.IsZero() )
 			return 2;
 
 		// m will be the value of the mantissa in range <1,2)
 		Big<exp,man> m(x);
-		m.exponent = -int(man*BITS_PER_UINT - 1);
+		m.exponent = -int(man*TTMATH_BITS_PER_UINT - 1);
 	    LnSurrounding1(m);
 
 		Big<exp,man> exponent_temp;
 		exponent_temp.FromInt( x.exponent );
 
-		// we must add 'man*BITS_PER_UINT-1' because we've taken it from the mantissa
-		uint c = exponent_temp.Add(man*BITS_PER_UINT-1);
+		// we must add 'man*TTMATH_BITS_PER_UINT-1' because we've taken it from the mantissa
+		uint c = exponent_temp.Add(man*TTMATH_BITS_PER_UINT-1);
 
 		Big<exp,man> ln2;
 		ln2.SetLn2();
@@ -1071,10 +1069,10 @@ public:
 		  because if we passed 'parts' into 'ln(base)' as well then
 		  the error (after dividing) would be too great
 	*/
-	uint Log(const Big<exp,man> & base, const Big<exp,man> & x)
+	uint Log(const Big<exp,man> & x, const Big<exp,man> & base)
 	{
-		MATHTT_THIS_ASSERT( base )
-		MATHTT_THIS_ASSERT( x )
+		TTMATH_REFERENCE_ASSERT( base )
+		TTMATH_REFERENCE_ASSERT( x )
 
 		if( x.IsSign() || x.IsZero() )
 			return 2;
@@ -1125,10 +1123,10 @@ public:
 		if( IsZero() )
 			return 0;
 		
-		int maxbit = -int(man*BITS_PER_UINT);
+		int maxbit = -int(man*TTMATH_BITS_PER_UINT);
 
-		if( exponent > maxbit + int(BITS_PER_UINT) )
-			// if exponent > (maxbit + int(BITS_PER_UINT)) the value can't be passed
+		if( exponent > maxbit + int(TTMATH_BITS_PER_UINT) )
+			// if exponent > (maxbit + int(TTMATH_BITS_PER_UINT)) the value can't be passed
 			// into the 'int' type (it's too big)
 			return 1;
 
@@ -1144,14 +1142,14 @@ public:
 		how_many_bits = -how_many_bits;
 	
 		// we're taking into an account only the last word in a mantissa table
-		mantissa_temp.Rcr( how_many_bits % BITS_PER_UINT, 0 );
+		mantissa_temp.Rcr( how_many_bits % TTMATH_BITS_PER_UINT, 0 );
 		result = mantissa_temp.table[ man-1 ];
 
 		// the exception for the minimal value
-		if( IsSign() && result == uint_the_highest_bit )
+		if( IsSign() && result == TTMATH_UINT_HIGHEST_BIT )
 			return 0;
 
-		if( (result & uint_the_highest_bit) != 0 )
+		if( (result & TTMATH_UINT_HIGHEST_BIT) != 0 )
 			// the value is too big
 			return 1;
 
@@ -1175,10 +1173,10 @@ public:
 		if( IsZero() )
 			return 0;
 		
-		int maxbit = -int(man*BITS_PER_UINT);
+		int maxbit = -int(man*TTMATH_BITS_PER_UINT);
 
-		if( exponent > maxbit + int(int_size*BITS_PER_UINT) )
-			// if exponent > (maxbit + int(int_size*BITS_PER_UINT)) the value can't be passed
+		if( exponent > maxbit + int(int_size*TTMATH_BITS_PER_UINT) )
+			// if exponent > (maxbit + int(int_size*TTMATH_BITS_PER_UINT)) the value can't be passed
 			// into the 'Int<int_size>' type (it's too big)
 			return 1;
 
@@ -1192,20 +1190,20 @@ public:
 		if( how_many_bits < 0 )
 		{
 			how_many_bits = -how_many_bits;
-			uint index    = how_many_bits / BITS_PER_UINT;
-			mantissa_temp.Rcr( how_many_bits % BITS_PER_UINT, 0 );
+			uint index    = how_many_bits / TTMATH_BITS_PER_UINT;
+			mantissa_temp.Rcr( how_many_bits % TTMATH_BITS_PER_UINT, 0 );
 
 			for(uint i=index, a=0 ; i<man ; ++i,++a)
 				result.table[a] = mantissa_temp.table[i];
 		}
 		else
 		{
-			uint index = how_many_bits / BITS_PER_UINT;
+			uint index = how_many_bits / TTMATH_BITS_PER_UINT;
 
 			for(uint i=0 ; i<man ; ++i)
 				result.table[index+i] = mantissa_temp.table[i];
 
-			result.Rcl( how_many_bits % BITS_PER_UINT, 0 );
+			result.Rcl( how_many_bits % TTMATH_BITS_PER_UINT, 0 );
 		}
 
 		// the exception for the minimal value
@@ -1218,7 +1216,7 @@ public:
 				return 0;
 		}
 
-		if( (result.table[int_size-1] & uint_the_highest_bit) != 0 )
+		if( (result.table[int_size-1] & TTMATH_UINT_HIGHEST_BIT) != 0 )
 			// the value is too big
 			return 1;
 
@@ -1290,7 +1288,7 @@ public:
 
 		uint minimum_size = (int_size < man)? int_size : man;
 		int compensation  = (int)value.CompensationToLeft();
-		exponent          = (int(int_size)-int(man)) * int(BITS_PER_UINT) - compensation;
+		exponent          = (int(int_size)-int(man)) * int(TTMATH_BITS_PER_UINT) - compensation;
 		
 		// copying the highest words
 		uint i;
@@ -1568,7 +1566,7 @@ private:
 
 		// new_exp_ = [log base (2^exponent)] + 1
 		Big<exp+1,man> new_exp_;
-		c += new_exp_.ToString_Log(base, temp); // this logarithm isn't very complicated
+		c += new_exp_.ToString_Log(temp, base); // this logarithm isn't very complicated
 		new_exp_.SkipFraction();
 		temp.SetOne();
 		c += new_exp_.Add( temp );
@@ -1628,9 +1626,9 @@ private:
         x is greater than 0
 		base is in <2,16> range
 	*/
-	uint ToString_Log(uint base, const Big<exp,man> & x)
+	uint ToString_Log(const Big<exp,man> & x, uint base)
 	{
-		MATHTT_THIS_ASSERT( x )
+		TTMATH_REFERENCE_ASSERT( x )
 
 		Big<exp,man> temp;
 		temp.SetOne();
@@ -1691,13 +1689,13 @@ private:
 		if( !exponent.IsSign() )
 			return 1;
 
-		if( exponent <= -int(man*BITS_PER_UINT) )
-			// if 'exponent' is <= than '-int(man*BITS_PER_UINT)'
+		if( exponent <= -int(man*TTMATH_BITS_PER_UINT) )
+			// if 'exponent' is <= than '-int(man*TTMATH_BITS_PER_UINT)'
 			// it means that we must cut the whole mantissa
 			// (there'll not be any of the valid bits)
 			return 1;
 
-		// e will be from (-man*BITS_PER_UINT, 0>
+		// e will be from (-man*TTMATH_BITS_PER_UINT, 0>
 		int e = -( exponent.ToInt() );
 		mantissa.Rcr(e,0);
 
@@ -1723,9 +1721,9 @@ private:
 		{
 			uint value = mantissa.table[i]; 
 
-			for( unsigned int bit=0 ; bit<BITS_PER_UINT ; ++bit )
+			for( unsigned int bit=0 ; bit<TTMATH_BITS_PER_UINT ; ++bit )
 			{
-				if( (value & uint_the_highest_bit) != 0 )
+				if( (value & TTMATH_UINT_HIGHEST_BIT) != 0 )
 					new_man += '1';
 				else
 					new_man += '0';
@@ -1786,7 +1784,7 @@ private:
 			// we can have the comma as well because
 			// we're using this method later in ToString_CorrectDigitsAfterComma_Round()
 			// (we're only ignoring it)
-			if( new_man[i] == MATHTT_COMMA_CHARACTER_1 )
+			if( new_man[i] == TTMATH_COMMA_CHARACTER_1 )
 				continue;
 
 			// we're adding one
@@ -1898,7 +1896,7 @@ private:
 			// we're setting the comma within the mantissa
 			
 			int index = new_man_len - e;
-			new_man.insert( new_man.begin() + index, MATHTT_COMMA_CHARACTER_1);
+			new_man.insert( new_man.begin() + index, TTMATH_COMMA_CHARACTER_1);
 		}
 		else
 		{
@@ -1907,7 +1905,7 @@ private:
 			uint how_many = e - new_man_len;
 			std::string man_temp(how_many+1, '0');
 
-			man_temp.insert( man_temp.begin()+1, MATHTT_COMMA_CHARACTER_1);
+			man_temp.insert( man_temp.begin()+1, TTMATH_COMMA_CHARACTER_1);
 			new_man.insert(0, man_temp);
 		}
 
@@ -1926,7 +1924,7 @@ private:
 		if( new_man.empty() )
 			return;
 		
-		new_man.insert( new_man.begin()+1, MATHTT_COMMA_CHARACTER_1 );
+		new_man.insert( new_man.begin()+1, TTMATH_COMMA_CHARACTER_1 );
 
 		ToString_CorrectDigitsAfterComma(new_man, base, max_digit_after_comma);
 	
@@ -1996,7 +1994,7 @@ private:
 
 		// if directly before the first zero is the comma operator
 		// we're cutting it as well
-		if( i>0 && new_man[i]==MATHTT_COMMA_CHARACTER_1 )
+		if( i>0 && new_man[i]==TTMATH_COMMA_CHARACTER_1 )
 			--i;
 
 		new_man.erase(i+1, new_man.length()-i-1);
@@ -2010,7 +2008,7 @@ private:
 															int max_digit_after_comma) const
 	{
 		// first we're looking for the comma operator
-		std::string::size_type index = new_man.find(MATHTT_COMMA_CHARACTER_1, 0);
+		std::string::size_type index = new_man.find(TTMATH_COMMA_CHARACTER_1, 0);
 
 		if( index == std::string::npos )
 			// nothing was found (actually there can't be this situation)
@@ -2154,8 +2152,8 @@ private:
 	*/
 	bool FromString_TestCommaOperator(const char * & source)
 	{
-		if( (*source == MATHTT_COMMA_CHARACTER_1) || 
-			(*source == MATHTT_COMMA_CHARACTER_2 && MATHTT_COMMA_CHARACTER_2 != 0 ) )
+		if( (*source == TTMATH_COMMA_CHARACTER_1) || 
+			(*source == TTMATH_COMMA_CHARACTER_2 && TTMATH_COMMA_CHARACTER_2 != 0 ) )
 		{
 			++source;
 
@@ -2662,14 +2660,14 @@ public:
 			// exponent >=0 -- the value don't have any fractions
 			return;
 
-		if( exponent <= -int(man*BITS_PER_UINT) )
+		if( exponent <= -int(man*TTMATH_BITS_PER_UINT) )
 		{
 			// the value is from (-1,1), we return zero
 			SetZero();
 			return;
 		}
 
-		// exponent is in range (-man*BITS_PER_UINT, 0)
+		// exponent is in range (-man*TTMATH_BITS_PER_UINT, 0)
 		int e = exponent.ToInt();
 	
 		mantissa.ClearFirstBits( -e );
@@ -2700,17 +2698,17 @@ public:
 			return;
 		}
 
-		if( exponent <= -int(man*BITS_PER_UINT) )
+		if( exponent <= -int(man*TTMATH_BITS_PER_UINT) )
 		{
 			// the value is from (-1,1)
 			// we don't make anything with the value
 			return;
 		}
 
-		// e will be from (-man*BITS_PER_UINT, 0)
+		// e will be from (-man*TTMATH_BITS_PER_UINT, 0)
 		int e = exponent.ToInt();
 
-		int how_many_bits_leave = man*BITS_PER_UINT + e; // there'll be a subtraction -- e is negative
+		int how_many_bits_leave = man*TTMATH_BITS_PER_UINT + e; // there'll be a subtraction -- e is negative
 		mantissa.Rcl( how_many_bits_leave, 0);
 
 		// there'll not be a carry because the exponent is too small
@@ -2797,10 +2795,10 @@ public:
 
 		// we're reading only digits (base=10) and only one comma operator
 		while(	s.good() &&
-			(	UInt<man>::CharToDigit(z, 10)>=0 || (!was_comma && z==MATHTT_COMMA_CHARACTER_1) )
+			(	UInt<man>::CharToDigit(z, 10)>=0 || (!was_comma && z==TTMATH_COMMA_CHARACTER_1) )
 			 )
 		{
-			if( z == MATHTT_COMMA_CHARACTER_1 )
+			if( z == TTMATH_COMMA_CHARACTER_1 )
 				was_comma = true;
 
 			ss += z;

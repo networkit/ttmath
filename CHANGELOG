@@ -1,4 +1,10 @@
+Version 0.6.3 (2007.01.22):
+	* position of arguments (x and base) in logarithm functions are swapped
+	* it's possible to use any multiplication algorithms in the same time
+	  (macros UINT_MUL_VERSION_'X' have gone)
+	* added ExceptionInfo, ReferenceError and RuntimeError classes
+	* the mess in macros has been cleaned up
+	* added TTMATH_RELEASE macro
+
 Version 0.6.2 (2007.01.10):
 	* New division algorithm (radix b) where b is 2^32
-
-

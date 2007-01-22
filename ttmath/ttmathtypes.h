@@ -1,5 +1,5 @@
 /*
- * This file is part of TTMath Mathematical Library
+ * This file is a part of TTMath Mathematical Library
  * and is distributed under the (new) BSD licence.
  * Author: Tomasz Sowa <t.sowa@slimaczek.pl>
  */
@@ -36,24 +36,24 @@
  */
 
 
-
 #ifndef headerfilettmathtypes
 #define headerfilettmathtypes
 
 /*!
 	\file ttmathtypes.h
-    \brief A Documented file.
+    \brief constants which are used in the library
     
-    Details.
+    As our library is written in header files (templates) we cannot use
+	constants like 'const int' etc. because we should have some source files
+	*.cpp to define this variables. Only what we can have are constants
+	defined by #define preprocessor macro.
+
+	All macros are preceded TTMATH_ part
 */
 
 
-#include <exception>
-#include <string>
-#include <iostream>
-#include <map>
-
-
+#include <stdexcept>
+#include <sstream>
 
 
 /*!
@@ -61,95 +61,92 @@
 */
 #define TTMATH_MAJOR_VER		0
 #define TTMATH_MINOR_VER		6
-#define TTMATH_REVISION_VER		2
-
-
-
-
-
-
+#define TTMATH_REVISION_VER		3
 
 
 /*!
+	TTMATH_DEBUG
 	this macro enables further testing during writing your code
 	you don't have to define it in a release mode
 
-	if this macro is set then macro MATHTT_ASSERT is set as well
-	and MATHTT_ASSERT can throw an exception if a condition is not fulfilled
-	(look at the definition of MATHTT_ASSERT)
+	if this macro is set then macros TTMATH_ASSERT and TTMATH_REFERENCE_ASSERT
+	are set as well	and these macros can throw an exception if a condition in it
+	is not fulfilled (look at the definition of TTMATH_ASSERT and TTMATH_REFERENCE_ASSERT)
 
-	if you don't want any further testing put two characters '//' before this macro
-	e.g. 
-	// #define MATHTT_DEBUG
+	TTMATH_RELEASE
+	if you are confident that your code is without bugs you can define TTMATH_RELEASE
+	macro for example by using -D option in gcc
+	 gcc -DTTMATH_RELEASE -o myprogram myprogram.cpp 
+	or by defining this macro in your code before using any header files of this library
+
+	if TTMATH_RELEASE is not set then TTMATH_DEBUG is set	
 */
-#define MATHTT_DEBUG
+#ifndef TTMATH_RELEASE
+	#define TTMATH_DEBUG
+#endif
 
 
-/*!
-	32 bit integer value without a sign 
-	(the same on 64 bits platform (amd))
-*/
-typedef unsigned int uint;
+namespace ttmath
+{
+	/*!
+		32 bit integer value without a sign 
+		(on 64bit platforms will be 32bit as well)
+	*/
+	typedef unsigned int uint;
+}
 
 
 /*!
 	how many bits there are in the uint type
 */
-#define BITS_PER_UINT 32u
+#define TTMATH_BITS_PER_UINT 32u
 
 
 /*!
-	the mask for the highest bit in the unsigned 32bits word (2^31)
+	the mask for the highest bit in the unsigned 32bit word (2^31)
 */
-#define uint_the_highest_bit 2147483648u
+#define TTMATH_UINT_HIGHEST_BIT 2147483648u
 
 
 /*!
-	the max value of the unsigned 32bits word (2^32 - 1)
+	the max value of the unsigned 32bit word (2^32 - 1)
 	(all bits equal one)
 */
-#define uint_max_value 4294967295u
-
-
-/*!
-	if you define this macro that means the version one of the multiplication algorithm 
-	will be used in the UInt class
-*/
-//#define UINT_MUL_VERSION_1
-
-
-
-/*!
-	if you define this macro that means the version two of the multiplication algorithm 
-	will be used in the UInt class
-
-	this algorithm is much faster than previous
-
-	you can't use both these macros together, you must use either UINT_MUL_VERSION_1
-	or UINT_MUL_VERSION_2
-*/
-#define UINT_MUL_VERSION_2
-
+#define TTMATH_UINT_MAX_VALUE 4294967295u
 
 
 /*!
 	characters which represent the comma operator
 
-	MATHTT_COMMA_CHARACTER_1 is used in reading (parsing) and in writing
-	MATHTT_COMMA_CHARACTER_2 can be used in reading as an auxiliary comma character
+	TTMATH_COMMA_CHARACTER_1 is used in reading (parsing) and in writing
+	TTMATH_COMMA_CHARACTER_2 can be used in reading as an auxiliary comma character
 	that means you can input values for example 1.2345 and 1,2345 as well
 
 	if you don't want it just put 0 there eg.
-		#define MATHTT_COMMA_CHARACTER_2 0
-	then only MATHTT_COMMA_CHARACTER_1 will be used
+		#define TTMATH_COMMA_CHARACTER_2 0
+	then only TTMATH_COMMA_CHARACTER_1 will be used
 
 	don't put here any special character which is used by the parser
 	(for example a semicolon ';' shouldn't be here)
 */
-#define MATHTT_COMMA_CHARACTER_1 '.'
-#define MATHTT_COMMA_CHARACTER_2 ','
-////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//// odwrocic nazwy ma byc TTMATH
+#define TTMATH_COMMA_CHARACTER_1 '.'
+#define TTMATH_COMMA_CHARACTER_2 ','
+
+
+/*!
+	this variable defines how many iterations are performed
+	during some kind of calculating when we're making any long formulas
+	(for example Taylor series)
+
+	it's used in ExpSurrounding0(...), LnSurrounding1(...), Sin0pi05(...), etc.
+
+	note! there'll not be so many iterations, iterations are stopped when
+	there is no sense to continue calculating (for example when the result
+	still remains unchanged after adding next series and we know that the next
+	series are smaller than previous)
+*/
+#define TTMATH_ARITHMETIC_MAX_LOOP 5000
+
 
 
 
@@ -162,37 +159,34 @@ namespace ttmath
 	enum ErrorCode
 	{
 		err_ok = 0,
-		err_nothing_has_read = 1,
-		err_unknown_character = 2,
-		err_unexpected_final_bracket = 4,
-		err_stack_not_clear = 6,
-		err_unknown_variable = 8,
-		err_division_by_zero = 9,
-		err_interrupt = 10,
-		err_overflow = 11,
-		err_unknown_function = 12,
-		err_unexpected_semicolon_operator = 18,
-		err_improper_amount_of_arguments = 19,
-		err_improper_argument = 20,
-		err_unexpected_end = 21,
-		err_internal_error = 100,
-
+		err_nothing_has_read,
+		err_unknown_character,
+		err_unexpected_final_bracket,
+		err_stack_not_clear,
+		err_unknown_variable,
+		err_division_by_zero,
+		err_interrupt,
+		err_overflow,
+		err_unknown_function,
+		err_unexpected_semicolon_operator,
+		err_improper_amount_of_arguments,
+		err_improper_argument,
+		err_unexpected_end,
+		err_internal_error,
 		err_incorrect_name,
 		err_incorrect_value,
 		err_variable_exists,
 		err_variable_loop,
 		err_functions_loop,
 		err_must_be_only_one_value,
-
 		err_object_exists,
-		err_unknown_object,
-
-
-		err_this_cant_be_used = 200
+		err_unknown_object
 	};
 
 
+	/*!
 
+	*/
 	class StopCalculating
 	{
 	public:
@@ -201,84 +195,135 @@ namespace ttmath
 	};
 
 
+	/*!
+		a small class which is useful when compiling with gcc
 
-
-
-
-
-// moze tutaj z runtime dziedziczyc?
-	//zmienic nazwe na TTMathError
-	class MathTTError : public std::exception
+		object of this type holds the name and the line of a file
+		in which the macro TTMATH_ASSERT or TTMATH_REFERENCE_ASSERT was used
+	*/
+	class ExceptionInfo
 	{
-	ErrorCode code;
+	const char * file;
+	int line;
 
 	public:
-		MathTTError(ErrorCode c) : code(c) {}
-		const char* what() const throw()
-		{
-			switch( code )
-			{
-			case err_this_cant_be_used:
-				return "You've used 'this' somewhere in your code but you can't use it there";
-				// dac tu jakis lepszy komunikat w stylu
-				// 'uzyles referencji do samego siebie ale w tym miejscu nie mozesz tego zrobic'
-			default:
-				return ":)"; // temporary
-			}
+		ExceptionInfo() : file(0), line(0) {}
+		ExceptionInfo(const char * f, int l) : file(f), line(l) {}
 
-		return "Unnamed";
+		std::string Where() const
+		{
+			if( !file )
+				return "unknown";
+
+			std::ostringstream result;
+			result << file << ":" << line;
+
+		return result.str();
 		}
 	};
 
-	#ifdef MATHTT_DEBUG
-		#define MATHTT_ASSERT(expression, c) \
-		if( !(expression) ) throw MathTTError(c);
+
+	/*!
+		A small class used for reporting 'reference' errors
+
+		In the library is used macro TTMATH_REFERENCE_ASSERT which
+		can throw an exception of this type
+
+		If you compile with gcc you can get a small benefit 
+		from using method Where() (it returns std::string with
+		the name and the line of a file where the macro TTMATH_REFERENCE_ASSERT
+		was used)
+
+		What is it the 'reference' error?
+		Some kind of methods use a reference as their argument to another object,
+		and the another object not always can be the same which is calling, e.g.
+			Big<1,2> foo(10);
+			foo.Mul(foo); // this is incorrect
+		above method Mul is making something more with 'this' object and 
+		'this' cannot be passed as the argument because the result will be undefined
+
+		macro TTMATH_REFERENCE_ASSERT helps us to solve the above problem
+
+		note! some methods can use 'this' object as the argument
+		for example this code is correct:
+			UInt<2> foo(10);
+			foo.Add(foo);
+		but there are only few methods which can do that
+	*/
+	class ReferenceError : public std::logic_error, ExceptionInfo
+	{
+	public:
+
+		ReferenceError() : std::logic_error ("reference error")
+		{
+		}
+
+		ReferenceError(const char * f, int l) :
+							std::logic_error ("reference error"), ExceptionInfo(f,l)
+		{
+		}
+
+		std::string Where() const
+		{
+			return ExceptionInfo::Where();
+		}
+	};
+
+
+	/*!
+		a small class used for reporting errors
+
+		in the library is used macro TTMATH_ASSERT which
+		(if the condition in it is false) throw an exception
+		of this type
+
+		if you compile with gcc you can get a small benefit 
+		from using method Where() (it returns std::string with
+		the name and the line of a file where the macro TTMATH_ASSERT
+		was used)
+	*/
+	class RuntimeError : public std::runtime_error, ExceptionInfo
+	{
+	public:
+
+		RuntimeError() : std::runtime_error ("internal error")
+		{
+		}
+
+		RuntimeError(const char * f, int l) :
+						std::runtime_error ("internal error"), ExceptionInfo(f,l)
+		{
+		}
+
+		std::string Where() const
+		{
+			return ExceptionInfo::Where();
+		}
+	};
+
+
+
+	#ifdef TTMATH_DEBUG
+		#ifdef __GNUC__
+			#define TTMATH_REFERENCE_ASSERT(expression) \
+				if( &(expression) == this ) throw ReferenceError(__FILE__, __LINE__);
+
+			#define TTMATH_ASSERT(expression) \
+				if( !(expression) ) throw RuntimeError(__FILE__, __LINE__);
+		#else
+			#define TTMATH_REFERENCE_ASSERT(expression) \
+				if( &(expression) == this ) throw ReferenceError();
+
+			#define TTMATH_ASSERT(expression) \
+				if( !(expression) ) throw RuntimeError();
+		#endif
 	#else
-		#define MATHTT_ASSERT(expression, c)
+		#define TTMATH_REFERENCE_ASSERT(expression)
+		#define TTMATH_ASSERT(expression)
 	#endif
 
-	#define MATHTT_THIS_ASSERT(expression) \
-		MATHTT_ASSERT( &expression != this, err_this_cant_be_used)
-
-
-
-/*
-	template<class ValueType>
-	class ValuesHistory
-	{
-		typedef std::map<ValueType, ValueType> buffer_type;
-		buffer_type buffer;
-
-	public:
-
-		void AddValue(const ValueType & key, const ValueType & result)
-		{
-			buffer.insert( std::make_pair(key, result) );
-		}
-
-		bool GetValue(const ValueType & key, ValueType & result) const
-		{
-			buffer_type::iterator i = buffer.find( key );
-
-			if( i == buffer.end() )
-				return false;
-
-			result = *i;
-
-		return true;
-		}
-
-		uint Size() const
-		{
-			return static_cast<uint>( buffer.size() );
-		}
-	};
-*/
 
 } // namespace
-
-
-
 
 
 #endif

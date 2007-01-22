@@ -1,5 +1,5 @@
 /*
- * This file is part of TTMath Mathematical Library
+ * This file is a part of TTMath Mathematical Library
  * and is distributed under the (new) BSD licence.
  * Author: Tomasz Sowa <t.sowa@slimaczek.pl>
  */
@@ -50,8 +50,6 @@
 
 #define TTMATH_UINT_GUARD 1234567891
 
-// !!!
-extern bool bylocos;
 
 namespace ttmath
 {
@@ -113,7 +111,7 @@ public:
 	void SetMaxValue()
 	{
 		for(uint i=0 ; i<value_size ; ++i)
-			table[i] = uint_max_value;
+			table[i] = TTMATH_UINT_MAX_VALUE;
 	}
 
 
@@ -153,7 +151,7 @@ public:
 		// rounding mantissa
 		if( temp_table_index < temp_table_len )
 		{
-			if( (temp_table[temp_table_index] & uint_the_highest_bit) != 0 )
+			if( (temp_table[temp_table_index] & TTMATH_UINT_HIGHEST_BIT) != 0 )
 			{
 				/*
 					very simply rounding
@@ -799,7 +797,7 @@ public:
 		this method moving all bits into the left side 'bits' times
 		return value <- this <- C
 
-		bits is from a range of <0, man * BITS_PER_UINT>
+		bits is from a range of <0, man * TTMATH_BITS_PER_UINT>
 		or it can be even bigger then all bits will be set to 'c'
 
 		the value c will be set into the lowest bits
@@ -811,10 +809,10 @@ public:
 	int second;
 	int last_c = 0;
 	
-		if( bits > value_size*BITS_PER_UINT )
-			bits = value_size*BITS_PER_UINT;
+		if( bits > value_size*TTMATH_BITS_PER_UINT )
+			bits = value_size*TTMATH_BITS_PER_UINT;
 
-		int all_words = int(bits) / int(BITS_PER_UINT);
+		int all_words = int(bits) / int(TTMATH_BITS_PER_UINT);
 
 		if( all_words > 0 )
 		{
@@ -826,12 +824,12 @@ public:
 			}
 
 			// sets the rest bits of value into 'c'
-			uint mask = (c!=0)? uint_max_value : 0;
+			uint mask = (c!=0)? TTMATH_UINT_MAX_VALUE : 0;
 			for( ; first>=0 ; --first )
 				table[first] = mask;
 		}
 
-		int rest_bits = int(bits) % int(BITS_PER_UINT);
+		int rest_bits = int(bits) % int(TTMATH_BITS_PER_UINT);
 		for( ; rest_bits > 0 ; --rest_bits )
 			last_c = Rcl(c);		
 
@@ -843,7 +841,7 @@ public:
 		this method moving all bits into the right side 'bits' times
 		c -> this -> return value
 
-		bits is from a range of <0, man * BITS_PER_UINT>
+		bits is from a range of <0, man * TTMATH_BITS_PER_UINT>
 		or it can be even bigger then all bits will be set to 'c'
 
 		the value c will be set into the highest bits
@@ -855,17 +853,17 @@ public:
 	int second;
 	int last_c = 0;
 	
-		if( bits > value_size*BITS_PER_UINT )
-			bits = value_size*BITS_PER_UINT;
+		if( bits > value_size*TTMATH_BITS_PER_UINT )
+			bits = value_size*TTMATH_BITS_PER_UINT;
 
-		int all_words = int(bits) / int(BITS_PER_UINT);
+		int all_words = int(bits) / int(TTMATH_BITS_PER_UINT);
 
 		if( all_words > 0 )
 		{
 			// copying the first part of the value
 			for(first=0, second=all_words ; second<int(value_size) ; ++first, ++second)
 			{
-				last_c = table[first] & uint_the_highest_bit;
+				last_c = table[first] & TTMATH_UINT_HIGHEST_BIT;
 				table[first] = table[second];
 			}
 
@@ -873,12 +871,12 @@ public:
 				last_c = 1; 
 
 			// sets the rest bits of value into 'c'
-			uint mask = (c!=0)? uint_max_value : 0;
+			uint mask = (c!=0)? TTMATH_UINT_MAX_VALUE : 0;
 			for( ; first<int(value_size) ; ++first )
 				table[first] = mask;
 		}
 
-		int rest_bits = int(bits) % int(BITS_PER_UINT);
+		int rest_bits = int(bits) % int(TTMATH_BITS_PER_UINT);
 		for( ; rest_bits > 0 ; --rest_bits )
 			last_c = Rcr(c);		
 
@@ -906,7 +904,7 @@ public:
 
 		if( a != value_size-1 )
 		{
-			moving += ( value_size-1 - a ) * BITS_PER_UINT;
+			moving += ( value_size-1 - a ) * TTMATH_BITS_PER_UINT;
 
 			// moving all words
 			int i;
@@ -918,7 +916,7 @@ public:
 				table[i] = 0;
 		}
 
-		// moving the rest bits (max BITS_PER_UINT -- only one word)
+		// moving the rest bits (max TTMATH_BITS_PER_UINT -- only one word)
 		while( !IsTheHighestBitSet() )
 		{
 			Rcl();
@@ -1011,11 +1009,11 @@ public:
 	*/
 	void SetBit(uint bit_index)
 	{
-		uint index = bit_index / BITS_PER_UINT;
+		uint index = bit_index / TTMATH_BITS_PER_UINT;
 		if( index >= value_size )
 			return;
 
-		bit_index %= BITS_PER_UINT;
+		bit_index %= TTMATH_BITS_PER_UINT;
 		uint result = 1;
 
 		if( bit_index > 0 )
@@ -1025,75 +1023,14 @@ public:
 	}
 
 
+	/*!
+	 *
+	 * Multiplication
+	 *
+	 *
+	*/
 
-	#ifdef UINT_MUL_VERSION_1
-
-		/*!
-			the first version of the multiplication algorithm
-		*/
-
-		/*!
-			multiplication: this = this * ss2
-	
-			it returns carry if it has been
-
-			we can't use a reference to the ss2 because someone can use this
-			method in this way: mul(*this)
-		*/
-		uint Mul(const UInt<value_size> & ss2)
-		{
-		MATHTT_THIS_ASSERT( ss2 )
-
-		UInt<value_size> ss1( *this );
-		SetZero();	
-
-			for(uint i=0; i < value_size*BITS_PER_UINT ; ++i)
-			{
-				if( Add(*this) )
-					return 1;
-
-				if( ss1.Rcl() )
-					if( Add(ss2) )
-						return 1;
-			}
-
-		return 0;
-		}
-
-		
-		/*!
-			multiplication: result = this * ss2
-	
-			result is twice bigger than 'this' and 'ss2'
-			this method never returns carry			
-		*/
-		void Mul(const UInt<value_size> & ss2_, UInt<value_size*2> & result)
-		{
-		UInt<value_size*2> ss2;
-		uint i;
-
-			// copying *this into result and ss2_ into ss2
-			for(i=0 ; i<value_size ; ++i)
-			{
-				result.table[i] = table[i];
-				ss2.table[i]    = ss2_.table[i];
-			}
-
-			// cleaning the highest bytes in result and ss2
-			for( ; i < value_size*2 ; ++i)
-			{
-				result.table[i] = 0;
-				ss2.table[i]    = 0;
-			}
-
-			// multiply
-			// (there will not be a carry)
-			result.Mul( ss2 );
-		}
-
-	#endif
-
-
+public:
 
 	/*!
 		multiplication: result2:result1 = a * b
@@ -1154,113 +1091,222 @@ public:
 	}
 
 
+	/*!
+		multiplication: this = this * ss2
 
+		it returns carry if it has been
+	*/
+	uint MulInt(uint ss2)
+	{
+	uint r2,r1;
 
+		UInt<value_size> u( *this );
+		SetZero();
 
-
-		
-	#ifdef UINT_MUL_VERSION_2
-
-		/*!
-			the second version of the multiplication algorithm
-
-			this algorithm is similar to the 'schoolbook method' which is done by hand
-		*/
-
-		/*!
-			multiplication: this = this * ss2
-	
-			it returns carry if it has been
-		*/
-		uint Mul(const UInt<value_size> & ss2)
+		for(uint x1=0 ; x1<value_size ; ++x1)
 		{
-		UInt<value_size*2> result;
-		uint i;
+			Mul64(u.table[x1], ss2, &r2, &r1 );
+			
+			if( x1 <= value_size - 2 )
+			{
+				if( AddTwoUints(x1,r2,r1) )
+					return 1;
+			}
+			else
+			{
+				// last iteration:
+				// x1 = value_size - 1;
 
-			Mul(ss2, result);
-		
-			// copying result
-			for(i=0 ; i<value_size ; ++i)
-				table[i] = result.table[i];
-
-			// testing carry
-			for( ; i<value_size*2 ; ++i)
-				if( result.table[i] != 0 )
+				if( r2 )
 					return 1;
 
-		return 0;
-		}
+				table[x1] += r1;
 
-
-		/*!
-			multiplication: this = this * ss2
-	
-			it returns carry if it has been
-		*/
-		uint MulInt(uint ss2)
-		{
-		uint r2,r1;
-
-			UInt<value_size> u( *this );
-			SetZero();
-
-			for(uint x1=0 ; x1<value_size ; ++x1)
-			{
-				Mul64(u.table[x1], ss2, &r2, &r1 );
-				
-				if( x1 <= value_size - 2 )
-				{
-					if( AddTwoUints(x1,r2,r1) )
-						return 1;
-				}
-				else
-				{
-					// last iteration:
-					// x1 = value_size - 1;
-
-					if( r2 )
-						return 1;
-
-					table[x1] += r1;
-
-					if( table[x1] < r1 ) // there was a carry
-						return 1;
-				}
-			}
-
-		return 0;
-		}
-
-
-		/*!
-			multiplication: result = this * ss2
-	
-			result is twice bigger than this and ss2
-			this method never returns carry			
-		*/
-		void Mul(const UInt<value_size> & ss2, UInt<value_size*2> & result)
-		{
-		uint r2,r1;
-
-			result.SetZero();
-
-			for(uint x1=0 ; x1<value_size ; ++x1)
-			{
-				for(uint x2=0 ; x2<value_size ; ++x2)
-				{
-					Mul64(table[x1], ss2.table[x2], &r2, &r1 );
-					result.AddTwoUints(x2+x1,r2,r1);
-					// there will never be a carry
-				}
+				if( table[x1] < r1 ) // there was a carry
+					return 1;
 			}
 		}
 
-	#endif
+	return 0;
+	}
 
 
+	/*!
+
+
+	*/
+	uint Mul(const UInt<value_size> & ss2, uint algorithm = 2)
+	{
+		switch( algorithm )
+		{
+		case 1:
+			return Mul1(ss2);
+
+		default:
+			return Mul2(ss2);
+		}
+	}
+
+
+	/*!
+
+	*/
+	void MulBig(const UInt<value_size> & ss2,
+				UInt<value_size*2> & result, 
+				uint algorithm = 2)
+	{
+		switch( algorithm )
+		{
+		case 1:
+			return Mul1Big(ss2, result);
+
+		default:
+			return Mul2Big(ss2, result);
+		}
+	}
+
+
+
+	/*!
+		the first version of the multiplication algorithm
+	*/
+
+	/*!
+		multiplication: this = this * ss2
+
+		it returns carry if it has been
+
+		we can't use a reference to the ss2 because someone can use this
+		method in this way: mul(*this)
+	*/
+	uint Mul1(const UInt<value_size> & ss2)
+	{
+	TTMATH_REFERENCE_ASSERT( ss2 )
+
+	UInt<value_size> ss1( *this );
+	SetZero();	
+
+		for(uint i=0; i < value_size*TTMATH_BITS_PER_UINT ; ++i)
+		{
+			if( Add(*this) )
+				return 1;
+
+			if( ss1.Rcl() )
+				if( Add(ss2) )
+					return 1;
+		}
+
+	return 0;
+	}
+
+	
+	/*!
+		multiplication: result = this * ss2
+
+		result is twice bigger than 'this' and 'ss2'
+		this method never returns carry			
+	*/
+	void Mul1Big(const UInt<value_size> & ss2_, UInt<value_size*2> & result)
+	{
+	UInt<value_size*2> ss2;
+	uint i;
+
+		// copying *this into result and ss2_ into ss2
+		for(i=0 ; i<value_size ; ++i)
+		{
+			result.table[i] = table[i];
+			ss2.table[i]    = ss2_.table[i];
+		}
+
+		// cleaning the highest bytes in result and ss2
+		for( ; i < value_size*2 ; ++i)
+		{
+			result.table[i] = 0;
+			ss2.table[i]    = 0;
+		}
+
+		// multiply
+		// (there will not be a carry)
+		result.Mul1( ss2 );
+	}
+
+
+
+	/*!
+		the second version of the multiplication algorithm
+
+		this algorithm is similar to the 'schoolbook method' which is done by hand
+	*/
+
+	/*!
+		multiplication: this = this * ss2
+
+		it returns carry if it has been
+	*/
+	uint Mul2(const UInt<value_size> & ss2)
+	{
+	UInt<value_size*2> result;
+	uint i;
+
+		Mul2Big(ss2, result);
+	
+		// copying result
+		for(i=0 ; i<value_size ; ++i)
+			table[i] = result.table[i];
+
+		// testing carry
+		for( ; i<value_size*2 ; ++i)
+			if( result.table[i] != 0 )
+				return 1;
+
+	return 0;
+	}
+
+
+	/*!
+		multiplication: result = this * ss2
+
+		result is twice bigger than this and ss2
+		this method never returns carry			
+	*/
+	void Mul2Big(const UInt<value_size> & ss2, UInt<value_size*2> & result)
+	{
+	uint r2,r1,x1size,x2size,x1start,x2start;
+
+		result.SetZero();
+
+		for(x1size=value_size ; x1size>0 && table[x1size-1]==0 ; --x1size);
+		for(x2size=value_size ; x2size>0 && ss2.table[x2size-1]==0 ; --x2size);
+
+		if( x1size==0 || x2size==0 )
+			return;
+
+		for(x1start=0 ; x1start<x1size && table[x1start]==0 ; ++x1start);
+		for(x2start=0 ; x2start<x2size && ss2.table[x2start]==0 ; ++x2start);
+
+		for(uint x1=x1start ; x1<x1size ; ++x1)
+		{
+			for(uint x2=x2start ; x2<x2size ; ++x2)
+			{
+				Mul64(table[x1], ss2.table[x2], &r2, &r1);
+				result.AddTwoUints(x2+x1,r2,r1);
+				// there will never be a carry
+			}
+		}
+	}
+
+
+
+
+	/*!
+	 *
+	 * Division
+	 *
+	 *
+	*/
+	
 public:
 
-	
 	/*!
 		this method calculates 64bits word a:b / 32bits c (a higher, b lower word)
 		r = a:b / c and rest - remainder
@@ -1370,6 +1416,8 @@ public:
 			'remainder' - remainder
 
 // !!!!!!!!!!!
+it needs a new description
+
 		we've got two algorithms:
 		1. with Log(n) where n is the max value which should be held in this class
 		   (Log(n) will be equal to the number of bits there are in the table)
@@ -1530,13 +1578,13 @@ private:
 
 	uint Div1_Calculate(const UInt<value_size> & divisor, UInt<value_size> & rest)
 	{
-	MATHTT_THIS_ASSERT( divisor )
+	TTMATH_REFERENCE_ASSERT( divisor )
 	
 	int loop;
 	int c;
 
 		rest.SetZero();
-		loop = value_size * BITS_PER_UINT;
+		loop = value_size * TTMATH_BITS_PER_UINT;
 		c = 0;
 
 		
@@ -1593,7 +1641,7 @@ public:
 	*/
 	uint Div2(const UInt<value_size> & divisor, UInt<value_size> * remainder = 0)
 	{
-		MATHTT_THIS_ASSERT( divisor )
+		TTMATH_REFERENCE_ASSERT( divisor )
 
 		uint bits_diff;
 		uint status = Div2_Calculate(divisor, remainder, bits_diff);
@@ -1692,8 +1740,8 @@ private:
 		return 0;
 		}
 	
-		divisor_index += divisor_table_id * BITS_PER_UINT;
-		index         += table_id         * BITS_PER_UINT;
+		divisor_index += divisor_table_id * TTMATH_BITS_PER_UINT;
+		index         += table_id         * TTMATH_BITS_PER_UINT;
 
 		if( divisor_table_id == 0 )
 		{
@@ -1790,7 +1838,7 @@ public:
 	*/
 	uint Div3(const UInt<value_size> & v, UInt<value_size> * remainder = 0)
 	{
-	MATHTT_THIS_ASSERT( v )
+	TTMATH_REFERENCE_ASSERT( v )
 
 	uint m,n, test;
 
@@ -1830,7 +1878,7 @@ private:
 
 	void Div3_Division(UInt<value_size> v, UInt<value_size> * remainder, uint m, uint n)
 	{
-	MATHTT_ASSERT( n>=2, ttmath::err_internal_error )
+	TTMATH_ASSERT( n>=2 )
 
 	UInt<value_size+1> uu, vv;
 	UInt<value_size> q;
@@ -1931,7 +1979,7 @@ private:
 	{
 	uint c = 0;
 
-		for( d = 0 ; (v.table[n-1] & uint_the_highest_bit) == 0 ; ++d )
+		for( d = 0 ; (v.table[n-1] & TTMATH_UINT_HIGHEST_BIT) == 0 ; ++d )
 		{
 			// we can move the bits only to the 'n-1' index but at the moment
 			// we don't have such method
@@ -1969,7 +2017,7 @@ private:
 		u_temp.table[0] = u1;
 		u_temp.DivInt(v1, &rp);
 
-		MATHTT_ASSERT( u_temp.table[1]==0 || u_temp.table[1]==1, ttmath::err_internal_error);
+		TTMATH_ASSERT( u_temp.table[1]==0 || u_temp.table[1]==1 )
 
 		do
 		{
@@ -2048,7 +2096,7 @@ public:
 	*/
 	void ClearFirstBits(uint n)
 	{
-		if( n >= value_size*BITS_PER_UINT )
+		if( n >= value_size*TTMATH_BITS_PER_UINT )
 		{
 			SetZero();
 			return;
@@ -2057,10 +2105,10 @@ public:
 		uint * p = table;
 
 		// first we're clearing the whole words
-		while( n >= BITS_PER_UINT )
+		while( n >= TTMATH_BITS_PER_UINT )
 		{
 			*p++ = 0;
-			n   -= BITS_PER_UINT;
+			n   -= TTMATH_BITS_PER_UINT;
 		}
 
 		if( n == 0 )
@@ -2068,7 +2116,7 @@ public:
 
 		// and then we're clearing one word which has left
 		// mask -- all bits are set to one
-		uint mask = uint_max_value;
+		uint mask = TTMATH_UINT_MAX_VALUE;
 
 		mask = mask << n;
 
@@ -2081,7 +2129,7 @@ public:
 	*/
 	bool IsTheHighestBitSet() const
 	{
-		return (table[value_size-1] & uint_the_highest_bit) == uint_the_highest_bit;
+		return (table[value_size-1] & TTMATH_UINT_HIGHEST_BIT) == TTMATH_UINT_HIGHEST_BIT;
 	}
 
 
@@ -2211,8 +2259,10 @@ public:
 			table[i] = p.table[i];
 
 
-		if( i < value_size )
+		if( value_size > argument_size )
 		{	
+			// 'this' is longer than 'p'
+
 			for( ; i<value_size ; ++i)
 				table[i] = 0;
 		}

@@ -1,5 +1,5 @@
 /*
- * This file is part of TTMath Mathematical Library
+ * This file is a part of TTMath Mathematical Library
  * and is distributed under the (new) BSD licence.
  * Author: Tomasz Sowa <t.sowa@slimaczek.pl>
  */
@@ -81,7 +81,7 @@ namespace ttmath
 		"1"
 		"2.1234"
 		"2,1234"    (they are the same, we can either use a comma or a dot in values)
-		            (look at the macro MATHTT_COMMA_CHARACTER_2)
+		            (look at the macro TTMATH_COMMA_CHARACTER_2)
 		"1 + 2"
 		"(1 + 2) * 3"
 		"pi"
