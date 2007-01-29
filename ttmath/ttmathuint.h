@@ -48,14 +48,13 @@
 
 #include "ttmathtypes.h"
 
-#define TTMATH_UINT_GUARD 1234567891
 
 
 namespace ttmath
 {
 
 /*! 
-	\brief it implements the big integer value without the sign
+	\brief it implements the big integer value without a sign
 
 	value_size - how many bytes specify our value (value_size = 1 -> 4 bytes -> 32 bits)
 	value_size = 1,2,3,4,5,6....
@@ -65,15 +64,12 @@ class UInt
 {
 public:
 
-	uint guard1;
-
 	/*!
 		buffer for this integer value
 		the first value (index 0) means the lowest word of this value
 	*/
 	uint table[value_size];
 
-	uint guard2;
 
 	/*!
 		it returns the size of the table
@@ -126,15 +122,15 @@ public:
 
 
 	/*!
-		this method copys value stored in an another table
-		(warning: first values in temp_table are the highest words -- it's differently
-		than our table)
+		this method copies the value stored in an another table
+		(warning: first values in temp_table are the highest words -- it's different
+		from our table)
 
 		we copy as many words as it is possible
 		
 		if temp_table_len is bigger than value_size we'll try to round 
 		the lowest word from table depending on the last not used bit in temp_table
-		(this rounding isn't a perfect rounding -- look on a description below)
+		(this rounding isn't a perfect rounding -- look at the description below)
 
 		and if temp_table_len is smaller than value_size we'll clear the rest words
 		int table
@@ -142,7 +138,7 @@ public:
 	void SetFromTable(const uint * temp_table, uint temp_table_len)
 	{
 		uint temp_table_index = 0;
-		int i; // i with a sign
+		sint i; // 'i' with a sign
 
 		for(i=value_size-1 ; i>=0 && temp_table_index<temp_table_len; --i, ++temp_table_index)
 			table[i] = temp_table[ temp_table_index ];
@@ -159,7 +155,7 @@ public:
 					we're rouding the lowest word in the table
 
 					in fact there should be a normal addition but
-					we don't use Add() or AddTwoUints() because these methods 
+					we don't use Add() or AddTwoInts() because these methods 
 					can set a carry and then there'll be a small problem
 					for optimization
 				*/
@@ -168,7 +164,7 @@ public:
 			}
 		}
 
-		// cleaning the rest of mantissa
+		// cleaning the rest of the mantissa
 		for( ; i>=0 ; --i)
 			table[i] = 0;
 	}
@@ -180,6 +176,8 @@ public:
 	*
 	*/
 
+#if !defined _M_X64 && !defined __x86_64__
+
 
 	/*!
 		this method adding ss2 to the this and adding carry if it's defined
@@ -190,15 +188,15 @@ public:
 	*/
 	uint Add(const UInt<value_size> & ss2, uint c=0)
 	{
-	register int b = value_size;
+	register uint b = value_size;
 	register uint * p1 = table;
 	register uint * p2 = const_cast<uint*>(ss2.table);
 
 
 		#ifndef __GNUC__
-			/*
-				this part might be compiled with for example visual c
-			*/
+			
+			//	this part might be compiled with for example visual c
+			
 			__asm
 			{
 				push eax
@@ -244,9 +242,9 @@ public:
 			
 
 		#ifdef __GNUC__
-			/*
-				this part should be compiled with gcc
-			*/
+			
+			//	this part should be compiled with gcc
+			
 			__asm__ __volatile__(
 			
 				"push %%ebx				\n"
@@ -283,20 +281,131 @@ public:
 
 				: "=S" (c)
 				: "0" (c), "c" (b), "b" (p1), "d" (p2)
-				: "eax", "cc", "memory" );
-
-	
-			#if !defined(__i386__) && !defined(__amd64__)
-			/*
-				when you try to build this program on an another platform 
-				than x86/amd64 you'll see the following message
-			*/
-			#error "This code is designed only for x86/amd64 platforms"
-			#endif
-
+				: "%eax", "cc", "memory" );
 
 		#endif
 
+	
+	return c;
+	}
+
+
+	/*!
+		this method adds one word (at a specific position)
+		and returns a carry (if it was)
+
+		e.g.
+
+		if we've got (value_size=3):
+			table[0] = 10;
+			table[1] = 30;
+			table[2] = 5;	
+		and we call:
+			AddInt(2,1)
+		then it'll be:
+			table[0] = 10;
+			table[1] = 30 + 2;
+			table[2] = 5;
+
+		of course if there was a carry from table[3] it would be returned
+	*/
+	uint AddInt(uint value, uint index = 0)
+	{
+	register uint b = value_size;
+	register uint * p1 = table;
+	register uint c;
+
+		#ifndef __GNUC__
+			__asm
+			{
+				push eax
+				push ebx
+				push ecx
+				push edx
+
+				mov ecx, [b]
+				sub ecx, [index]				
+
+				mov edx, [index]
+				mov eax, [p1]
+			
+				lea ebx, [eax+4*edx]
+				mov edx, [value]
+
+				clc
+			p:
+				mov eax, [ebx]
+				adc eax, edx
+				mov [ebx], eax
+			
+			jnc end
+				mov edx, 0
+
+				inc ebx
+				inc ebx
+				inc ebx
+				inc ebx
+
+			loop p
+
+			end:
+
+				mov eax,0
+				adc eax,eax
+				mov [c],eax
+
+				pop edx
+				pop ecx
+				pop ebx
+				pop eax
+			}
+		#endif		
+			
+
+		#ifdef __GNUC__
+			__asm__ __volatile__(
+			
+				"push %%ebx						\n"
+				"push %%ecx						\n"
+				"push %%edx						\n"
+
+				"subl %%edx, %%ecx 				\n"
+
+				"leal (%%ebx,%%edx,4), %%ebx 	\n"
+
+				"movl %4, %%edx					\n"
+				"clc							\n"
+			"1:									\n"
+
+				"movl (%%ebx), %%eax			\n"
+				"adcl %%edx, %%eax				\n"
+				"movl %%eax, (%%ebx)			\n"
+
+			"jnc 2f								\n"
+
+				"movl $0, %%edx					\n"
+
+				"inc %%ebx						\n"
+				"inc %%ebx						\n"
+				"inc %%ebx						\n"
+				"inc %%ebx						\n"
+
+			"loop 1b							\n"
+
+			"2:									\n"
+
+				"movl $0, %%eax					\n"
+				"adcl %%eax,%%eax				\n"
+
+				"pop %%edx						\n"
+				"pop %%ecx						\n"
+				"pop %%ebx						\n"
+
+				: "=a" (c)
+				: "c" (b), "d" (index), "b" (p1), "q" (value)
+				: "cc", "memory" );
+
+		#endif
 
 	
 	return c;
@@ -304,10 +413,8 @@ public:
 
 
 
-
-
 	/*!
-		this method addes only two unsigned words to the existing value
+		this method adds only two unsigned words to the existing value
 		and these words begin on the 'index' position
 		(it's used in the multiplication algorithm 2)
 
@@ -336,9 +443,9 @@ public:
 		(of course if there was a carry in table[2](5+20) then 
 		this carry would be passed to the table[3] etc.)
 	*/
-	uint AddTwoUints(uint index, uint x2, uint x1)
+	uint AddTwoInts(uint index, uint x2, uint x1)
 	{
-	register int b = value_size;
+	register uint b = value_size;
 	register uint * p1 = table;
 	register uint c;
 
@@ -475,22 +582,16 @@ public:
 
 
 	/*!
-		this method subtracting ss2 from the this and subtracting carry if it's defined
+		this method's subtracting ss2 from the 'this' and subtracting
+		carry if it has been defined
 		(this = this - ss2 - c)
 
 		c must be zero or one (might be a bigger value than 1)
 		function returns carry (1) (if it was)
 	*/
-	uint Sub(const UInt<value_size> & ss2, uint c=0, int last_index = -1)
+	uint Sub(const UInt<value_size> & ss2, uint c=0)
 	{
-	register int b;
-	
-		if( last_index == -1 )
-			b = value_size;
-		else
-			b = last_index + 1;
-
-
+	register uint b = value_size;
 	register uint * p1 = table;
 	register uint * p2 = const_cast<uint*>(ss2.table);
 
@@ -578,7 +679,7 @@ public:
 
 				: "=S" (c)
 				: "0" (c), "c" (b), "b" (p1), "d" (p2)
-				: "eax", "cc", "memory" );
+				: "%eax", "cc", "memory" );
 
 		#endif
 
@@ -588,15 +689,135 @@ public:
 
 
 	/*!
+		this method subtracts one word (at a specific position)
+		and returns a carry (if it was)
+
+		e.g.
+
+		if we've got (value_size=3):
+			table[0] = 10;
+			table[1] = 30;
+			table[2] = 5;	
+		and we call:
+			SubInt(2,1)
+		then it'll be:
+			table[0] = 10;
+			table[1] = 30 - 2;
+			table[2] = 5;
+
+		of course if there was a carry from table[3] it would be returned
+	*/
+	uint SubInt(uint value, uint index = 0)
+	{
+	register uint b = value_size;
+	register uint * p1 = table;
+	register uint c;
+
+		#ifndef __GNUC__
+			__asm
+			{
+				push eax
+				push ebx
+				push ecx
+				push edx
+
+				mov ecx, [b]
+				sub ecx, [index]				
+
+				mov edx, [index]
+				mov eax, [p1]
+			
+				lea ebx, [eax+4*edx]
+				mov edx, [value]
+
+				clc
+			p:
+				mov eax, [ebx]
+				sbb eax, edx
+				mov [ebx], eax
+			
+			jnc end
+				mov edx, 0
+
+				inc ebx
+				inc ebx
+				inc ebx
+				inc ebx
+
+			loop p
+
+			end:
+
+				mov eax,0
+				adc eax,eax
+				mov [c],eax
+
+				pop edx
+				pop ecx
+				pop ebx
+				pop eax
+			}
+		#endif		
+			
+
+		#ifdef __GNUC__
+			__asm__ __volatile__(
+			
+				"push %%ebx						\n"
+				"push %%ecx						\n"
+				"push %%edx						\n"
+
+				"subl %%edx, %%ecx 				\n"
+
+				"leal (%%ebx,%%edx,4), %%ebx 	\n"
+
+				"movl %4, %%edx					\n"
+				"clc							\n"
+			"1:									\n"
+
+				"movl (%%ebx), %%eax			\n"
+				"sbbl %%edx, %%eax				\n"
+				"movl %%eax, (%%ebx)			\n"
+
+			"jnc 2f								\n"
+
+				"movl $0, %%edx					\n"
+
+				"inc %%ebx						\n"
+				"inc %%ebx						\n"
+				"inc %%ebx						\n"
+				"inc %%ebx						\n"
+
+			"loop 1b							\n"
+
+			"2:									\n"
+
+				"movl $0, %%eax					\n"
+				"adcl %%eax,%%eax				\n"
+
+				"pop %%edx						\n"
+				"pop %%ecx						\n"
+				"pop %%ebx						\n"
+
+				: "=a" (c)
+				: "c" (b), "d" (index), "b" (p1), "q" (value)
+				: "cc", "memory" );
+
+		#endif
+
+	
+	return c;
+	}
+
+#endif
+
+
+	/*!
 		this method adds one to the existing value
 	*/
 	uint AddOne()
 	{
-	UInt<value_size> temp;
-
-		temp.SetOne();
-
-	return Add(temp);
+		return AddInt(1);
 	}
 
 
@@ -605,12 +826,11 @@ public:
 	*/
 	uint SubOne()
 	{
-	UInt<value_size> temp;
-
-		temp.SetOne();
-
-	return Sub(temp);
+		return SubInt(1);
 	}
+
+
+#if !defined _M_X64 && !defined __x86_64__
 
 
 	/*!
@@ -622,7 +842,7 @@ public:
 	*/
 	uint Rcl(uint c=0)
 	{
-	register int b = value_size;
+	register sint b = value_size;
 	register uint * p1 = table;
 
 
@@ -667,7 +887,7 @@ public:
 			"push %%ecx			\n"
 			
 			"movl $0,%%eax		\n"
-			"sub %%edx,%%eax	\n"
+			"subl %%edx,%%eax	\n"
 		
 		"1:						\n"
 			"rcll $1,(%%ebx)	\n"
@@ -679,15 +899,15 @@ public:
 			
 		"loop 1b				\n"
 			
-			"mov $0, %%edx		\n"
-			"adc %%edx,%%edx	\n"
+			"movl $0, %%edx		\n"
+			"adcl %%edx,%%edx	\n"
 
 			"pop %%ecx			\n"
 			"pop %%ebx			\n"
 
 			: "=d" (c)
 			: "0" (c), "c" (b), "b" (p1)
-			: "eax", "cc", "memory" );
+			: "%eax", "cc", "memory" );
 
 		#endif
 
@@ -705,7 +925,7 @@ public:
 	*/
 	uint Rcr(uint c=0)
 	{
-	register int b = value_size;
+	register sint b = value_size;
 	register uint * p1 = table;
 
 
@@ -716,15 +936,10 @@ public:
 				push ebx
 				push ecx
 
-				mov ecx,[b]
-
-				add ecx,ecx
-				add ecx,ecx
-
 				mov ebx,[p1]
-				add ebx,ecx
-
 				mov ecx,[b]
+
+				lea ebx,[ebx+4*ecx]
 
 				mov eax,0
 				sub eax,[c]
@@ -756,15 +971,10 @@ public:
 			"push %%ebx			\n"
 			"push %%ecx			\n"
 
-			"movl %%ecx,%%eax   \n"
-			"addl %%ecx,%%ecx	\n"
-			"addl %%ecx,%%ecx	\n"
-			
-			"addl %%ecx,%%ebx	\n"
-			"movl %%eax, %%ecx	\n"
+			"leal (%%ebx,%%ecx,4),%%ebx  \n"
 			
 			"movl $0, %%eax		\n"
-			"subl %%edx, %%	eax	\n"
+			"subl %%edx, %%eax	\n"
 
 		"1:						\n"
 			"dec %%ebx			\n"
@@ -776,15 +986,15 @@ public:
 			
 		"loop 1b				\n"
 
-			"mov $0, %%edx		\n"
-			"adc %%edx,%%edx	\n"
+			"movl $0, %%edx		\n"
+			"adcl %%edx,%%edx	\n"
 
 			"pop %%ecx			\n"
 			"pop %%ebx			\n"
 
 			: "=d" (c)
 			: "0" (c), "c" (b), "b" (p1)
-			: "eax", "cc", "memory" );
+			: "%eax", "cc", "memory" );
 
 		#endif
 
@@ -792,6 +1002,7 @@ public:
 	return c;
 	}
 
+#endif
 
 	/*!
 		this method moving all bits into the left side 'bits' times
@@ -805,14 +1016,14 @@ public:
 	*/
 	uint Rcl(uint bits, uint c)
 	{
-	int first;
-	int second;
-	int last_c = 0;
+	sint first;
+	sint second;
+	uint last_c = 0;
 	
 		if( bits > value_size*TTMATH_BITS_PER_UINT )
 			bits = value_size*TTMATH_BITS_PER_UINT;
 
-		int all_words = int(bits) / int(TTMATH_BITS_PER_UINT);
+		sint all_words = sint(bits) / sint(TTMATH_BITS_PER_UINT);
 
 		if( all_words > 0 )
 		{
@@ -829,7 +1040,7 @@ public:
 				table[first] = mask;
 		}
 
-		int rest_bits = int(bits) % int(TTMATH_BITS_PER_UINT);
+		sint rest_bits = sint(bits) % sint(TTMATH_BITS_PER_UINT);
 		for( ; rest_bits > 0 ; --rest_bits )
 			last_c = Rcl(c);		
 
@@ -849,19 +1060,19 @@ public:
 	*/
 	uint Rcr(uint bits, uint c)
 	{
-	int first;
-	int second;
-	int last_c = 0;
+	sint first;
+	sint second;
+	sint last_c = 0;
 	
 		if( bits > value_size*TTMATH_BITS_PER_UINT )
 			bits = value_size*TTMATH_BITS_PER_UINT;
 
-		int all_words = int(bits) / int(TTMATH_BITS_PER_UINT);
+		sint all_words = sint(bits) / sint(TTMATH_BITS_PER_UINT);
 
 		if( all_words > 0 )
 		{
 			// copying the first part of the value
-			for(first=0, second=all_words ; second<int(value_size) ; ++first, ++second)
+			for(first=0, second=all_words ; second<sint(value_size) ; ++first, ++second)
 			{
 				last_c = table[first] & TTMATH_UINT_HIGHEST_BIT;
 				table[first] = table[second];
@@ -872,11 +1083,11 @@ public:
 
 			// sets the rest bits of value into 'c'
 			uint mask = (c!=0)? TTMATH_UINT_MAX_VALUE : 0;
-			for( ; first<int(value_size) ; ++first )
+			for( ; first<sint(value_size) ; ++first )
 				table[first] = mask;
 		}
 
-		int rest_bits = int(bits) % int(TTMATH_BITS_PER_UINT);
+		sint rest_bits = sint(bits) % sint(TTMATH_BITS_PER_UINT);
 		for( ; rest_bits > 0 ; --rest_bits )
 			last_c = Rcr(c);		
 
@@ -893,7 +1104,7 @@ public:
 		uint moving = 0;
 
 		// a - index a last word which is different from zero
-		int a;
+		sint a;
 		for(a=value_size-1 ; a>=0 && table[a]==0 ; --a);
 
 		if( a < 0 )
@@ -907,8 +1118,8 @@ public:
 			moving += ( value_size-1 - a ) * TTMATH_BITS_PER_UINT;
 
 			// moving all words
-			int i;
-			for(i=value_size-1 ; i>=0 && a>=0; --i, --a)
+			sint i;
+			for(i=value_size-1 ; a>=0 ; --i, --a)
 				table[i] = table[a];
 
 			// setting the rest word to zero
@@ -926,14 +1137,15 @@ public:
 	return moving;
 	}
 
+#if !defined _M_X64 && !defined __x86_64__
 
 	/*
 		this method returns the number of the highest set bit in one 32-bit word
 		if the 'x' is zero this method returns '-1'
 	*/
-	static int FindLeadingBit32(uint x)
+	static sint FindLeadingBitInWord(uint x)
 	{
-	register int result;
+	register sint result;
 
 		#ifndef __GNUC__
 			__asm
@@ -956,7 +1168,7 @@ public:
 
 			"bsrl %1, %0		\n"
 			"jnz 1f				\n"
-			"mov $-1, %0		\n"
+			"movl $-1, %0		\n"
 		"1:						\n"
 
 			: "=q" (result)
@@ -969,6 +1181,7 @@ public:
 	return result;
 	}
 
+#endif
 
 	/*!
 		this method looks for the highest set bit
@@ -996,11 +1209,58 @@ public:
 		}
 		
 		// table[table_id] != 0
-		index = FindLeadingBit32( table[table_id] );
+		index = FindLeadingBitInWord( table[table_id] );
 
 	return true;
 	}
 	
+
+#if !defined _M_X64 && !defined __x86_64__
+
+	/*!
+		this method sets a special bit in the 'value'
+		and returns the result
+
+		bit is from <0,31>
+
+		e.g.
+		SetBitInWord(0,0) = 1
+		SetBitInWord(0,2) = 4
+		SetBitInWord(10, 8) = 266
+	*/
+	static uint SetBitInWord(uint value, uint bit)
+	{
+		#ifndef __GNUC__
+			__asm
+			{
+			push ebx
+			push eax
+			mov eax, value
+			mov ebx, bit
+			bts eax, ebx
+			mov value, eax
+			pop eax
+			pop ebx
+			}
+		#endif
+
+
+		#ifdef __GNUC__
+			__asm__  __volatile__(
+
+			"btsl %%ebx,%%eax	\n"
+
+			: "=a" (value)
+			: "0" (value), "b" (bit)
+			: "cc" );
+
+		#endif
+
+	return value;
+	}
+
+#endif
+
 
 	/*!
 		it sets the bit bit_index
@@ -1014,12 +1274,8 @@ public:
 			return;
 
 		bit_index %= TTMATH_BITS_PER_UINT;
-		uint result = 1;
 
-		if( bit_index > 0 )
-			result <<= bit_index;
-
-		table[index] |= result;
+		table[index] = SetBitInWord(table[index], bit_index);
 	}
 
 
@@ -1032,16 +1288,19 @@ public:
 
 public:
 
+#if !defined _M_X64 && !defined __x86_64__
+
+
 	/*!
 		multiplication: result2:result1 = a * b
 		result2 - higher word
 		result1 - lower word of the result
 	
-		this methos never returns a carry
+		this method never returns a carry
 
 		it is an auxiliary method for version two of the multiplication algorithm
 	*/
-	static void Mul64(uint a, uint b, uint * result2, uint * result1)
+	static void MulTwoWords(uint a, uint b, uint * result2, uint * result1)
 	{
 	/*
 		we must use these temporary variables in order to inform the compilator
@@ -1080,7 +1339,7 @@ public:
 			"mull %%edx			\n"
 
 			: "=a" (result1_), "=d" (result2_)
-			: "a" (a), "d" (b)
+			: "0" (a), "1" (b)
 			: "cc" );
 
 		#endif
@@ -1090,11 +1349,12 @@ public:
 		*result2 = result2_;
 	}
 
+#endif
 
 	/*!
 		multiplication: this = this * ss2
 
-		it returns carry if it has been
+		it returns a carry if it has been
 	*/
 	uint MulInt(uint ss2)
 	{
@@ -1105,11 +1365,12 @@ public:
 
 		for(uint x1=0 ; x1<value_size ; ++x1)
 		{
-			Mul64(u.table[x1], ss2, &r2, &r1 );
+			MulTwoWords(u.table[x1], ss2, &r2, &r1 );
+			
 			
 			if( x1 <= value_size - 2 )
 			{
-				if( AddTwoUints(x1,r2,r1) )
+				if( AddTwoInts(x1,r2,r1) )
 					return 1;
 			}
 			else
@@ -1120,9 +1381,7 @@ public:
 				if( r2 )
 					return 1;
 
-				table[x1] += r1;
-
-				if( table[x1] < r1 ) // there was a carry
+				if( AddInt(r1, x1) )
 					return 1;
 			}
 		}
@@ -1132,8 +1391,7 @@ public:
 
 
 	/*!
-
-
+		the multiplication 'this' = 'this' * ss2
 	*/
 	uint Mul(const UInt<value_size> & ss2, uint algorithm = 2)
 	{
@@ -1142,6 +1400,7 @@ public:
 		case 1:
 			return Mul1(ss2);
 
+		case 2:
 		default:
 			return Mul2(ss2);
 		}
@@ -1149,7 +1408,10 @@ public:
 
 
 	/*!
+		the multiplication 'result' = 'this' * ss2
 
+		since the 'result' is twice bigger than 'this' and 'ss2' 
+		this method never returns a carry
 	*/
 	void MulBig(const UInt<value_size> & ss2,
 				UInt<value_size*2> & result, 
@@ -1160,6 +1422,7 @@ public:
 		case 1:
 			return Mul1Big(ss2, result);
 
+		case 2:
 		default:
 			return Mul2Big(ss2, result);
 		}
@@ -1175,9 +1438,6 @@ public:
 		multiplication: this = this * ss2
 
 		it returns carry if it has been
-
-		we can't use a reference to the ss2 because someone can use this
-		method in this way: mul(*this)
 	*/
 	uint Mul1(const UInt<value_size> & ss2)
 	{
@@ -1288,9 +1548,9 @@ public:
 		{
 			for(uint x2=x2start ; x2<x2size ; ++x2)
 			{
-				Mul64(table[x1], ss2.table[x2], &r2, &r1);
-				result.AddTwoUints(x2+x1,r2,r1);
-				// there will never be a carry
+				MulTwoWords(table[x1], ss2.table[x2], &r2, &r1);
+				result.AddTwoInts(x2+x1,r2,r1);
+				// here will never be a carry
 			}
 		}
 	}
@@ -1307,6 +1567,9 @@ public:
 	
 public:
 
+	#if !defined _M_X64 && !defined __x86_64__
+
+
 	/*!
 		this method calculates 64bits word a:b / 32bits c (a higher, b lower word)
 		r = a:b / c and rest - remainder
@@ -1318,13 +1581,13 @@ public:
 		* and probably the end of your program
 		*
 	*/
-	static void Div64(uint a, uint b, uint c, uint * r, uint * rest)
+	static void DivTwoWords(uint a, uint b, uint c, uint * r, uint * rest)
 	{
 		register uint r_;
 		register uint rest_;
 		/*
 			these variables have similar meaning like those in
-			the multiplication algorithm Mul64
+			the multiplication algorithm MulTwoWords
 		*/
 
 		#ifndef __GNUC__
@@ -1363,6 +1626,7 @@ public:
 		*rest = rest_;
 	}
 
+#endif
 
 
 
@@ -1384,14 +1648,14 @@ public:
 		UInt<value_size> dividend(*this);
 		SetZero();
 		
-		int i;  // i must be with a sign
+		sint i;  // i must be with a sign
 		uint r = 0;
 
 		// we're looking for the last word in ss1
 		for(i=value_size-1 ; i>0 && dividend.table[i]==0 ; --i);
 
 		for( ; i>=0 ; --i)
-			Div64(r, dividend.table[i], divisor, &table[i], &r);
+			DivTwoWords(r, dividend.table[i], divisor, &table[i], &r);
 
 		if( remainder )
 			*remainder = r;
@@ -1414,30 +1678,10 @@ public:
 			 1 - division by zero
 			'this' will be the quotient
 			'remainder' - remainder
-
-// !!!!!!!!!!!
-it needs a new description
-
-		we've got two algorithms:
-		1. with Log(n) where n is the max value which should be held in this class
-		   (Log(n) will be equal to the number of bits there are in the table)
-		   (on one loop there are one Rcl one Add and one Add or Sub)
-		2. if only the first word in ss2 is given (ss2.table[0] != 0) and the rest from
-		   ss2.table is equal zero
-		   this algorithm has O(n) where n is the number of words there are in the table
-		   (on one loop it's only one hardware division)
-
-	   For example if we've got value_size equal 4 then:
-	   1 algorithm: O = 4*32 = 128 (4 words with 32 bits) * (Rcl,Add, Add|Sub)
-	   2 algorithm: O = 4 * Div64 (hardware)
-
-	   The second algorithm is much faster than first but at the moment it's only
-	   used for values where only first word (ss2.table[0]) is given.
-// !!!!!!!!!!!
 	*/
 	uint Div(	const UInt<value_size> & divisor,
 				UInt<value_size> * remainder = 0,
-				uint algorithm = 1)
+				uint algorithm = 3)
 	{
 		switch( algorithm )
 		{
@@ -1505,7 +1749,6 @@ private:
 
 
 	/*!
-	
 		return values:
 		0 - ok 
 			'm' - is the index (from 0) of last non-zero word in table ('this')
@@ -1580,8 +1823,8 @@ private:
 	{
 	TTMATH_REFERENCE_ASSERT( divisor )
 	
-	int loop;
-	int c;
+	sint loop;
+	sint c;
 
 		rest.SetZero();
 		loop = value_size * TTMATH_BITS_PER_UINT;
@@ -1707,7 +1950,7 @@ private:
 			--bits_diff;
 		}
 
-		Sub(divisor_copy, 0, table_id);
+		Sub(divisor_copy, 0);
 
 	return 2;
 	}
@@ -1832,7 +2075,7 @@ public:
 	/*!
 		the third division algorithm
 
-		this algorithm is described in the following book
+		this algorithm is described in the following book:
 			"The art of computer programming 2" (4.3.1 page 272)
 			Donald E. Knuth 
 	*/
@@ -2029,7 +2272,7 @@ private:
 			{
 				UInt<2> temp1, temp2;
 
-				UInt<2>::Mul64(u_temp.table[0], v0, temp1.table+1, temp1.table);
+				UInt<2>::MulTwoWords(u_temp.table[0], v0, temp1.table+1, temp1.table);
 				temp2.table[1] = rp;
 				temp2.table[0] = u0;
 
@@ -2043,15 +2286,10 @@ private:
 			{
 				u_temp.SubOne();
 
-//				uint rp_old = rp;
 				rp += v1;
 
 				if( rp >= v1 ) // it means that there wasn't a carry (r<b from the book)
 					next_test = true;
-
-				// maybe we put here some kind of assembler code in the future
-//				if( rp >= rp_old ) // it means that there wasn't a carry (r<b from the book)
-//					next_test = true;
 			}
 		}
 		while( next_test );
@@ -2129,7 +2367,7 @@ public:
 	*/
 	bool IsTheHighestBitSet() const
 	{
-		return (table[value_size-1] & TTMATH_UINT_HIGHEST_BIT) == TTMATH_UINT_HIGHEST_BIT;
+		return (table[value_size-1] & TTMATH_UINT_HIGHEST_BIT) != 0;
 	}
 
 
@@ -2138,7 +2376,7 @@ public:
 	*/
 	bool IsTheLowestBitSet() const
 	{
-		return (*table & 1) == 1;
+		return (*table & 1) != 0;
 	}
 
 
@@ -2199,7 +2437,7 @@ public:
 		c=A, base=10 -> function returns -1
 		c=A, base=16 -> function returns 10
 	*/
-	static int CharToDigit(uint c, uint base)
+	static sint CharToDigit(uint c, uint base)
 	{
 		if( c>='0' && c<='9' )
 			c=c-'0';
@@ -2217,7 +2455,7 @@ public:
 			return -1;
 
 
-	return int(c);
+	return sint(c);
 	}
 
 
@@ -2242,7 +2480,7 @@ public:
 
 
 	/*!
-		this method convert an UInt<another_size> type to this class
+		this method converts an UInt<another_size> type to this class
 
 		this operation has mainly sense if the value from p is 
 		equal or smaller than that one which is returned from UInt<value_size>::SetMaxValue()
@@ -2291,7 +2529,7 @@ public:
 	}
 
 	/*!
-		the default assignment operator
+		the assignment operator
 	*/
 	UInt<value_size> & operator=(const UInt<value_size> & p)
 	{
@@ -2313,37 +2551,28 @@ public:
 
 
 	/*!
-		constructor for converting an uint to this class
+		a constructor for converting an uint to this class
 	*/
 	UInt(uint i)
 	{
-		guard1 = TTMATH_UINT_GUARD;
-		guard2 = TTMATH_UINT_GUARD;
-
 		operator=(i);
 	}
 
 
 	/*!
-		constructor for converting string to this class (with base=10)
+		a constructor for converting string to this class (with base=10)
 	*/
 	UInt(const char * s)
 	{
-		guard1 = TTMATH_UINT_GUARD;
-		guard2 = TTMATH_UINT_GUARD;
-
 		FromString(s);
 	}
 
 
 	/*!
-		constructor for converting string to this class (with base=10)
+		a constructor for converting string to this class (with base=10)
 	*/
 	UInt(const std::string & s)
 	{
-		guard1 = TTMATH_UINT_GUARD;
-		guard2 = TTMATH_UINT_GUARD;
-
 		FromString( s.c_str() );
 	}
 
@@ -2355,40 +2584,31 @@ public:
 	*/
 	UInt()
 	{
-		guard1 = TTMATH_UINT_GUARD;
-		guard2 = TTMATH_UINT_GUARD;
 	}
 
 
 	/*!
-		the copying constructor
+		the copy constructor
 	*/
 	UInt(const UInt<value_size> & u)
 	{
-		guard1 = TTMATH_UINT_GUARD;
-		guard2 = TTMATH_UINT_GUARD;
-
 		FromUInt(u);
 	}
 
 
 	/*!
-		template for producting constructors for copying from another types
+		a template for producting constructors for copying from another types
 	*/
 	template<uint argument_size>
 	UInt(const UInt<argument_size> & u)
 	{
-		guard1 = TTMATH_UINT_GUARD;
-		guard2 = TTMATH_UINT_GUARD;
-
 		// look that 'size' we still set as 'value_size' and not as u.value_size
-
 		FromUInt(u);
 	}
 
 
 	/*!
-		a destructor
+		the destructor
 	*/
 	virtual ~UInt()
 	{
@@ -2400,7 +2620,7 @@ public:
 		this method returns the lowest value from table
 
 		we must be sure when we using this method whether the value
-		will hold in an uint type or not (the rest value from table must be zero)
+		will hold in an uint type or not (the rest value from the table must be zero)
 	*/
 	uint ToUInt() const
 	{
@@ -2445,6 +2665,7 @@ public:
 			++c;
 	}
 
+
 	/*!
 		this method converts a string into its value
 		it returns carry=1 if the value will be too big or an incorrect base 'b' is given
@@ -2460,7 +2681,7 @@ public:
 	{
 	UInt<value_size> base( b );
 	UInt<value_size> temp;
-	int z;
+	sint z;
 
 		SetZero();
 		temp.SetZero();
@@ -2526,11 +2747,11 @@ public:
 	*/
 
 
-	bool CmpSmaller(const UInt<value_size> & l, int index = -1) const
+	bool CmpSmaller(const UInt<value_size> & l, sint index = -1) const
 	{
-	int i;
+	sint i;
 
-		if( index==-1 || index>=int(value_size) )
+		if( index==-1 || index>=sint(value_size) )
 			i = value_size - 1;
 		else
 			i = index;
@@ -2548,11 +2769,11 @@ public:
 
 
 
-	bool CmpBigger(const UInt<value_size> & l, int index = -1) const
+	bool CmpBigger(const UInt<value_size> & l, sint index = -1) const
 	{
-	int i;
+	sint i;
 
-		if( index==-1 || index>=int(value_size) )
+		if( index==-1 || index>=sint(value_size) )
 			i = value_size - 1;
 		else
 			i = index;
@@ -2569,11 +2790,11 @@ public:
 	}
 
 
-	bool CmpEqual(const UInt<value_size> & l, int index = -1) const
+	bool CmpEqual(const UInt<value_size> & l, sint index = -1) const
 	{
-	int i;
+	sint i;
 
-		if( index==-1 || index>=int(value_size) )
+		if( index==-1 || index>=sint(value_size) )
 			i = value_size - 1;
 		else
 			i = index;
@@ -2586,11 +2807,11 @@ public:
 	return true;
 	}
 
-	bool CmpSmallerEqual(const UInt<value_size> & l, int index=-1) const
+	bool CmpSmallerEqual(const UInt<value_size> & l, sint index=-1) const
 	{
-	int i;
+	sint i;
 
-		if( index==-1 || index>=int(value_size) )
+		if( index==-1 || index>=sint(value_size) )
 			i = value_size - 1;
 		else
 			i = index;
@@ -2606,11 +2827,11 @@ public:
 	return true;
 	}
 
-	bool CmpBiggerEqual(const UInt<value_size> & l, int index=-1) const
+	bool CmpBiggerEqual(const UInt<value_size> & l, sint index=-1) const
 	{
-	int i;
+	sint i;
 
-		if( index==-1 || index>=int(value_size) )
+		if( index==-1 || index>=sint(value_size) )
 			i = value_size - 1;
 		else
 			i = index;
@@ -2631,38 +2852,20 @@ public:
 
 	bool operator<(const UInt<value_size> & l) const
 	{
-		for(int i=value_size-1 ; i>=0 ; --i)
-		{
-			if( table[i] != l.table[i] )
-				return table[i] < l.table[i];
-		}
-
-	// they're equal
-	return false;
+		return CmpSmaller(l);
 	}
 
 
 
 	bool operator>(const UInt<value_size> & l) const
 	{
-		for(int i=value_size-1 ; i>=0 ; --i)
-		{
-			if( table[i] != l.table[i] )
-				return table[i] > l.table[i];
-		}
-
-	// they're equal
-	return false;
+		return CmpBigger(l);
 	}
 
 
 	bool operator==(const UInt<value_size> & l) const
 	{
-		for(uint i=0 ; i<value_size ; ++i)
-			if( table[i] != l.table[i] )
-				return false;
-
-	return true;
+		return CmpEqual(l);
 	}
 
 
@@ -2675,26 +2878,12 @@ public:
 
 	bool operator<=(const UInt<value_size> & l) const
 	{
-		for(int i=value_size-1 ; i>=0 ; --i)
-		{
-			if( table[i] != l.table[i] )
-				return table[i] < l.table[i];
-		}
-
-	// they're equal
-	return true;
+		return CmpSmallerEqual(l);
 	}
 
 	bool operator>=(const UInt<value_size> & l) const
 	{
-		for(int i=value_size-1 ; i>=0 ; --i)
-		{
-			if( table[i] != l.table[i] )
-				return table[i] > l.table[i];
-		}
-
-	// they're equal
-	return true;
+		return CmpBiggerEqual(l);
 	}
 
 
@@ -2843,6 +3032,8 @@ public:
 	/*!
 	*
 	*	input/output operators for standard streams
+	*	
+	*	(they are very simple, in the future they should be changed)
 	*
 	*/
 
@@ -2885,12 +3076,31 @@ public:
 	}
 
 
+#if defined _M_X64 || defined __x86_64__
+
+	// these methods for 64bit processors are defined in 'ttmathuint64.h'
+
+	uint Add(const UInt<value_size> & ss2, uint c=0);
+	uint AddInt(uint value, uint index = 0);
+	uint AddTwoInts(uint index, uint x2, uint x1);
+	uint Sub(const UInt<value_size> & ss2, uint c=0);
+	uint SubInt(uint value, uint index = 0);
+	uint Rcl(uint c=0);
+	uint Rcr(uint c=0);
+	static sint FindLeadingBitInWord(uint x);
+	static uint SetBitInWord(uint value, uint bit);
+	static void MulTwoWords(uint a, uint b, uint * result2, uint * result1);
+	static void DivTwoWords(uint a,uint b, uint c, uint * r, uint * rest);
+
+#endif
+
 };
 
 
 } //namespace
 
 
+#include "ttmathuint64.h"
 
 
 #endif

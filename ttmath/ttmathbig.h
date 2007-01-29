@@ -52,7 +52,7 @@ namespace ttmath
 /*!
 	\brief it implements the big value
 */
-template <int exp,int man>
+template <uint exp,uint man>
 class Big
 {
 
@@ -204,7 +204,7 @@ public:
 		// (first is the highest word)
 	
 		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(uint));
-		exponent = -int(man)*int(TTMATH_BITS_PER_UINT) + 2;
+		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT) + 2;
 		info = 0;
 	}
 
@@ -215,7 +215,7 @@ public:
 	void Set05Pi()
 	{
 		SetPi();	
-		exponent = -int(man)*int(TTMATH_BITS_PER_UINT) + 1;
+		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT) + 1;
 	}
 
 
@@ -225,7 +225,7 @@ public:
 	void Set2Pi()
 	{
 		SetPi();
-		exponent = -int(man)*int(TTMATH_BITS_PER_UINT) + 3;
+		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT) + 3;
 	}
 
 
@@ -249,7 +249,7 @@ public:
 		};
 	
 		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(uint));
-		exponent = -int(man)*int(TTMATH_BITS_PER_UINT) + 2;
+		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT) + 2;
 		info = 0;
 	}
 
@@ -274,7 +274,7 @@ public:
 		};	
 
 		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(uint));
-		exponent = -int(man)*int(TTMATH_BITS_PER_UINT);
+		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT);
 		info = 0;
 	}
 
@@ -395,7 +395,7 @@ public:
 	{
 	Int<exp> exp_offset( exponent );
 	Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
-	int c = 0;
+	uint c = 0;
 
 		exp_offset.Sub( ss2.exponent );
 		exp_offset.Abs();
@@ -475,7 +475,7 @@ public:
 	TTMATH_REFERENCE_ASSERT( ss2 )
 
 	UInt<man*2> man_result;
-	int i,c;
+	uint i,c;
 
 		// man_result = mantissa * ss2.mantissa
 		mantissa.MulBig(ss2.mantissa, man_result);
@@ -635,15 +635,16 @@ public:
 	*/
 	bool Mod2() const
 	{
-		if( exponent>int(0) || exponent<=-int(man*TTMATH_BITS_PER_UINT) )
+		if( exponent>sint(0) || exponent<=-sint(man*TTMATH_BITS_PER_UINT) )
 			return false;
 
-		int exp_int = exponent.ToInt();
+		sint exp_int = exponent.ToInt();
 		// 'exp_int' is negative (or zero), we set its as positive
 		exp_int = -exp_int;
 
-		int value = mantissa.table[ exp_int / TTMATH_BITS_PER_UINT ];
-		value >>= (exp_int % TTMATH_BITS_PER_UINT);
+		// !!! here we'll use a new method (method for testing a bit)
+		uint value = mantissa.table[ exp_int / TTMATH_BITS_PER_UINT ];
+		value >>= (uint(exp_int) % TTMATH_BITS_PER_UINT);
 
 	return bool(value & 1);
 	}
@@ -727,7 +728,7 @@ public:
 		2 - incorrect argument ('this' or 'pow')
 	*/
 	/*  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		there should be 'int Pow(const Big<exp, man> & pow)'
+		there should be 'sint Pow(const Big<exp, man> & pow)'
 		but vc2005express doesn't want to compile it perfect, that means
 		when using 'Maximize Speed /O2' the result of compilation doesn't work property
 		for example 10^(1/2) is a big value
@@ -740,9 +741,9 @@ public:
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 #ifdef __GNUC__
-	int Pow(const Big<exp, man> & pow)
+	uint Pow(const Big<exp, man> & pow)
 #else
-	int Pow(const Big<exp, man> pow)
+	uint Pow(const Big<exp, man> pow)
 #endif
 	{
 		TTMATH_REFERENCE_ASSERT( pow )
@@ -869,7 +870,7 @@ public:
 
 		// m will be the value of the mantissa in range (-1,1)
 		Big<exp,man> m(x);
-		m.exponent = -int(man*TTMATH_BITS_PER_UINT);
+		m.exponent = -sint(man*TTMATH_BITS_PER_UINT);
 
 		// 'e_' will be the value of '2^exponent'
 		//   e_.mantissa.table[man-1] = TTMATH_UINT_HIGHEST_BIT;  and
@@ -1031,7 +1032,7 @@ public:
 
 		// m will be the value of the mantissa in range <1,2)
 		Big<exp,man> m(x);
-		m.exponent = -int(man*TTMATH_BITS_PER_UINT - 1);
+		m.exponent = -sint(man*TTMATH_BITS_PER_UINT - 1);
 	    LnSurrounding1(m);
 
 		Big<exp,man> exponent_temp;
@@ -1112,22 +1113,22 @@ public:
 
 
 	/*!
-		this method sets 'result' as the one word of type int
+		this method sets 'result' as the one word of type sint
 
 		if the value is too big this method returns a carry (1)
 	*/
-	uint ToInt(int & result) const
+	uint ToInt(sint & result) const
 	{
 		result = 0;
 
 		if( IsZero() )
 			return 0;
 		
-		int maxbit = -int(man*TTMATH_BITS_PER_UINT);
+		sint maxbit = -sint(man*TTMATH_BITS_PER_UINT);
 
-		if( exponent > maxbit + int(TTMATH_BITS_PER_UINT) )
-			// if exponent > (maxbit + int(TTMATH_BITS_PER_UINT)) the value can't be passed
-			// into the 'int' type (it's too big)
+		if( exponent > maxbit + sint(TTMATH_BITS_PER_UINT) )
+			// if exponent > (maxbit + sint(TTMATH_BITS_PER_UINT)) the value can't be passed
+			// into the 'sint' type (it's too big)
 			return 1;
 
 		if( exponent <= maxbit )
@@ -1136,7 +1137,7 @@ public:
 
 		UInt<man> mantissa_temp(mantissa);
 		// exponent is from a range of (-maxbit,0>
-		int how_many_bits = exponent.ToInt();
+		sint how_many_bits = exponent.ToInt();
 
 		// how_many_bits is negative, we'll make it positive
 		how_many_bits = -how_many_bits;
@@ -1154,7 +1155,7 @@ public:
 			return 1;
 
 		if( IsSign() )
-			result = -int(result);
+			result = -sint(result);
 
 	return 0;
 	}
@@ -1173,10 +1174,10 @@ public:
 		if( IsZero() )
 			return 0;
 		
-		int maxbit = -int(man*TTMATH_BITS_PER_UINT);
+		sint maxbit = -sint(man*TTMATH_BITS_PER_UINT);
 
-		if( exponent > maxbit + int(int_size*TTMATH_BITS_PER_UINT) )
-			// if exponent > (maxbit + int(int_size*TTMATH_BITS_PER_UINT)) the value can't be passed
+		if( exponent > maxbit + sint(int_size*TTMATH_BITS_PER_UINT) )
+			// if exponent > (maxbit + sint(int_size*TTMATH_BITS_PER_UINT)) the value can't be passed
 			// into the 'Int<int_size>' type (it's too big)
 			return 1;
 
@@ -1185,7 +1186,7 @@ public:
 			return 0;
 
 		UInt<man> mantissa_temp(mantissa);
-		int how_many_bits = exponent.ToInt();
+		sint how_many_bits = exponent.ToInt();
 
 		if( how_many_bits < 0 )
 		{
@@ -1228,9 +1229,9 @@ public:
 
 
 	/*!
-		a method for converting 'int' to this class
+		a method for converting 'sint' to this class
 	*/
-	void FromInt(int value)
+	void FromInt(sint value)
 	{
 	bool is_sign = false;
 
@@ -1247,15 +1248,15 @@ public:
 		if( is_sign )
 			SetSign();
 
-		// there shouldn't be a carry because 'value' has the type 'int'
+		// there shouldn't be a carry because 'value' has the type 'sint'
 		Standardizing();
 	}
 
 
 	/*!
-		an operator= for converting 'int' to this class
+		an operator= for converting 'sint' to this class
 	*/
-	Big<exp, man> & operator=(int value)
+	Big<exp, man> & operator=(sint value)
 	{
 		FromInt(value);
 
@@ -1264,12 +1265,28 @@ public:
 
 
 	/*!
-		a constructor for converting 'int' to this class
+		a constructor for converting 'sint' and 'uint' to this class
 	*/
-	Big(int value)
+	Big(sint value)
 	{
 		FromInt(value);
 	}
+
+	Big(uint value)
+	{
+		FromInt( sint(value) );
+	}
+
+#if defined _M_X64 || defined __x86_64__
+	/*!
+		a constructor for converting 'int' to this class
+		(on 64bit platforms 'sint' has 64 bits and 'int' has 32 bits
+	*/
+	Big(int value)
+	{
+		FromInt( sint(value) );
+	}
+#endif
 
 
 	/*!
@@ -1287,8 +1304,8 @@ public:
 		}
 
 		uint minimum_size = (int_size < man)? int_size : man;
-		int compensation  = (int)value.CompensationToLeft();
-		exponent          = (int(int_size)-int(man)) * int(TTMATH_BITS_PER_UINT) - compensation;
+		sint compensation  = (sint)value.CompensationToLeft();
+		exponent          = (sint(int_size)-sint(man)) * sint(TTMATH_BITS_PER_UINT) - compensation;
 		
 		// copying the highest words
 		uint i;
@@ -1404,8 +1421,8 @@ public:
 	uint ToString(	std::string & result,
 					uint base                  = 10,
 					bool always_scientific     = false,
-					int  when_scientific       = 15,
-					int  max_digit_after_comma = -2 ) const
+					sint  when_scientific       = 15,
+					sint  max_digit_after_comma = -2 ) const
 	{
 		static char error_overflow_msg[] = "overflow";
 		result.erase();
@@ -1647,7 +1664,18 @@ private:
 		// (LnSurrounding1() will return one immediately)
 		uint c = Ln(x);
 
-		static Big<exp,man> log_history[15] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
+
+		/*
+		 *
+		 *	this is only temporarily (for testing)
+		 *
+		 */
+
+//		static Big<exp,man> log_history[15] = { 0l,0l,0l,0l,0l,0l,0l,0l,0l,0l,
+//			0l,0l,0l,0l,0l };
+		static Big<exp,man> log_history[15] = { 0,0,0,0,0,0,0,0,0,0,
+			0,0,0,0,0 };
+
 		Big<exp,man> * log_value = log_history + base - 2;
 
 		if( log_value->IsZero() )
@@ -1689,14 +1717,14 @@ private:
 		if( !exponent.IsSign() )
 			return 1;
 
-		if( exponent <= -int(man*TTMATH_BITS_PER_UINT) )
-			// if 'exponent' is <= than '-int(man*TTMATH_BITS_PER_UINT)'
+		if( exponent <= -sint(man*TTMATH_BITS_PER_UINT) )
+			// if 'exponent' is <= than '-sint(man*TTMATH_BITS_PER_UINT)'
 			// it means that we must cut the whole mantissa
 			// (there'll not be any of the valid bits)
 			return 1;
 
 		// e will be from (-man*TTMATH_BITS_PER_UINT, 0>
-		int e = -( exponent.ToInt() );
+		sint e = -( exponent.ToInt() );
 		mantissa.Rcr(e,0);
 
 	return 0;
@@ -1717,11 +1745,11 @@ private:
 	uint ToString_CreateNewMantissaAndExponent_Base2(	std::string & new_man,
 														Int<exp+1> & new_exp     ) const
 	{
-		for( int i=man-1 ; i>=0 ; --i )
+		for( sint i=man-1 ; i>=0 ; --i )
 		{
 			uint value = mantissa.table[i]; 
 
-			for( unsigned int bit=0 ; bit<TTMATH_BITS_PER_UINT ; ++bit )
+			for( uint bit=0 ; bit<TTMATH_BITS_PER_UINT ; ++bit )
 			{
 				if( (value & TTMATH_UINT_HIGHEST_BIT) != 0 )
 					new_man += '1';
@@ -1776,7 +1804,7 @@ private:
 		if( new_man.empty() )
 			return;
 
-		int i = int( new_man.length() ) - 1;
+		sint i = sint( new_man.length() ) - 1;
 		bool was_carry = true;
 
 		for( ; i>=0 && was_carry ; --i )
@@ -1809,12 +1837,12 @@ private:
 		this method sets the comma operator and/or puts the exponent
 		into the string
 	*/
-	int ToString_SetCommaAndExponent(	std::string & new_man, uint base, Int<exp+1> & new_exp,
+	uint ToString_SetCommaAndExponent(	std::string & new_man, uint base, Int<exp+1> & new_exp,
 										bool always_scientific,
-										int  when_scientific,
-										int  max_digit_after_comma ) const
+										sint  when_scientific,
+										sint  max_digit_after_comma ) const
 	{
-	int carry = 0;
+	uint carry = 0;
 
 		if( new_man.empty() )
 			return carry;
@@ -1826,14 +1854,14 @@ private:
 		// we'd like to show it in this way:
 		//  3.2342343234 (the 'scientific_exp' is connected with this example)
 
-		int offset = int( new_man.length() ) - 1;
+		sint offset = sint( new_man.length() ) - 1;
 		carry += scientific_exp.Add( offset );
 		// there shouldn't have been a carry because we're using
 		// a greater type -- 'Int<exp+1>' instead of 'Int<exp>'
 
 		if( !always_scientific )
 		{
-			if( scientific_exp > when_scientific || scientific_exp < -int(when_scientific) )
+			if( scientific_exp > when_scientific || scientific_exp < -sint(when_scientific) )
 				always_scientific = true;
 		}
 
@@ -1852,9 +1880,10 @@ private:
 		an auxiliary method for converting into the string
 	*/
 	void ToString_SetCommaAndExponent_Normal(std::string & new_man, uint base, 
-										Int<exp+1> & new_exp, int max_digit_after_comma) const
+										Int<exp+1> & new_exp, sint max_digit_after_comma) const
 	{
-		if( new_exp >= 0 )
+		//if( new_exp >= 0 )
+		if( !new_exp.IsSign() )
 			return ToString_SetCommaAndExponent_Normal_AddingZero(new_man, new_exp);
 		else
 			return ToString_SetCommaAndExponent_Normal_SetCommaInside(new_man, base, new_exp, max_digit_after_comma);
@@ -1884,18 +1913,18 @@ private:
 		an auxiliary method for converting into the string
 	*/
 	void ToString_SetCommaAndExponent_Normal_SetCommaInside(std::string & new_man,
-							uint base, Int<exp+1> & new_exp, int max_digit_after_comma) const
+							uint base, Int<exp+1> & new_exp, sint max_digit_after_comma) const
 	{
 		// new_exp is < 0 
 
-		int new_man_len = int(new_man.length()); // 'new_man_len' with a sign
-		int e = -( new_exp.ToInt() ); // 'e' will be positive
+		sint new_man_len = sint(new_man.length()); // 'new_man_len' with a sign
+		sint e = -( new_exp.ToInt() ); // 'e' will be positive
 
 		if( new_exp > -new_man_len )
 		{
 			// we're setting the comma within the mantissa
 			
-			int index = new_man_len - e;
+			sint index = new_man_len - e;
 			new_man.insert( new_man.begin() + index, TTMATH_COMMA_CHARACTER_1);
 		}
 		else
@@ -1919,7 +1948,7 @@ private:
 	void ToString_SetCommaAndExponent_Scientific(	std::string & new_man,
 													uint base,
 													Int<exp+1> & scientific_exp,
-													int max_digit_after_comma ) const
+													sint max_digit_after_comma ) const
 	{
 		if( new_man.empty() )
 			return;
@@ -1955,7 +1984,7 @@ private:
 		we can call this method only if we've put the comma operator into the mantissa's string
 	*/
 	void ToString_CorrectDigitsAfterComma(std::string & new_man, uint base,
-															int max_digit_after_comma) const
+															sint max_digit_after_comma) const
 	{
 		switch( max_digit_after_comma )
 		{
@@ -2005,7 +2034,7 @@ private:
 		an auxiliary method for converting into the string
 	*/
 	void ToString_CorrectDigitsAfterComma_Round(std::string & new_man, uint base,
-															int max_digit_after_comma) const
+															sint max_digit_after_comma) const
 	{
 		// first we're looking for the comma operator
 		std::string::size_type index = new_man.find(TTMATH_COMMA_CHARACTER_1, 0);
@@ -2061,7 +2090,7 @@ public:
 		if 'after_source' is set that when this method will have finished its job
 		it set the pointer to the new first character after this parsed value
 	*/
-	int FromString(const char * source, uint base = 10, const char ** after_source = 0)
+	uint FromString(const char * source, uint base = 10, const char ** after_source = 0)
 	{
 	bool is_sign;
 
@@ -2077,7 +2106,7 @@ public:
 		FromString_TestNewBase( source, base );
 		FromString_TestSign( source, is_sign );
 
-		int c = FromString_ReadPartBeforeComma( source, base );
+		uint c = FromString_ReadPartBeforeComma( source, base );
 
 		if( FromString_TestCommaOperator(source) )
 			c += FromString_ReadPartAfterComma( source, base );
@@ -2170,7 +2199,7 @@ private:
 	*/
 	uint FromString_ReadPartBeforeComma( const char * & source, uint base )
 	{
-		int character;
+		sint character;
 		Big<exp, man> temp;
 		Big<exp, man> base_( base );
 		
@@ -2197,7 +2226,8 @@ private:
 	*/
 	uint FromString_ReadPartAfterComma( const char * & source, uint base )
 	{
-	int character, c = 0, index = 1;
+	sint character;
+	uint c = 0, index = 1;
 	Big<exp, man> part, power, old_value, base_( base );
 
 		// we don't remove any white characters here
@@ -2267,7 +2297,7 @@ private:
 	*/
 	uint FromString_ReadPartScientific( const char * & source )
 	{
-	int c = 0;
+	uint c = 0;
 	Big<exp, man> new_exponent, temp;
 	bool was_sign = false;
 
@@ -2291,7 +2321,7 @@ private:
 	*/
 	uint FromString_ReadPartScientific_ReadExponent( const char * & source, Big<exp, man> & new_exponent )
 	{
-	int character;
+	sint character;
 	Big<exp, man> base, temp;
 
 		UInt<man>::SkipWhiteCharacters(source);
@@ -2320,7 +2350,7 @@ public:
 	/*!
 		a method for converting a string into its value		
 	*/
-	int FromString(const std::string & string, uint base = 10)
+	uint FromString(const std::string & string, uint base = 10)
 	{
 		return FromString( string.c_str(), base );
 	}
@@ -2660,7 +2690,7 @@ public:
 			// exponent >=0 -- the value don't have any fractions
 			return;
 
-		if( exponent <= -int(man*TTMATH_BITS_PER_UINT) )
+		if( exponent <= -sint(man*TTMATH_BITS_PER_UINT) )
 		{
 			// the value is from (-1,1), we return zero
 			SetZero();
@@ -2668,7 +2698,7 @@ public:
 		}
 
 		// exponent is in range (-man*TTMATH_BITS_PER_UINT, 0)
-		int e = exponent.ToInt();
+		sint e = exponent.ToInt();
 	
 		mantissa.ClearFirstBits( -e );
 		
@@ -2698,7 +2728,7 @@ public:
 			return;
 		}
 
-		if( exponent <= -int(man*TTMATH_BITS_PER_UINT) )
+		if( exponent <= -sint(man*TTMATH_BITS_PER_UINT) )
 		{
 			// the value is from (-1,1)
 			// we don't make anything with the value
@@ -2706,9 +2736,9 @@ public:
 		}
 
 		// e will be from (-man*TTMATH_BITS_PER_UINT, 0)
-		int e = exponent.ToInt();
+		sint e = exponent.ToInt();
 
-		int how_many_bits_leave = man*TTMATH_BITS_PER_UINT + e; // there'll be a subtraction -- e is negative
+		sint how_many_bits_leave = sint(man*TTMATH_BITS_PER_UINT) + e; // there'll be a subtraction -- e is negative
 		mantissa.Rcl( how_many_bits_leave, 0);
 
 		// there'll not be a carry because the exponent is too small

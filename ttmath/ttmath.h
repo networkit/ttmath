@@ -378,11 +378,11 @@ namespace ttmath
 			d_denominator = one;
 		}
 
-		int c = 0;
+		uint c = 0;
 		bool addition = false;
 
 		old_result = result;
-		for(int i=1 ; i<=TTMATH_ARITHMETIC_MAX_LOOP ; ++i)
+		for(uint i=1 ; i<=TTMATH_ARITHMETIC_MAX_LOOP ; ++i)
 		{
 			// we're starting from a second part of the formula
 			c += numerator.    Mul( d_numerator );

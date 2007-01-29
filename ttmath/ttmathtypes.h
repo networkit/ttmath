@@ -61,7 +61,7 @@
 */
 #define TTMATH_MAJOR_VER		0
 #define TTMATH_MINOR_VER		6
-#define TTMATH_REVISION_VER		3
+#define TTMATH_REVISION_VER		4
 
 
 /*!
@@ -86,33 +86,70 @@
 #endif
 
 
+/*
+VC doesn't have these macros
+#if !defined(__i386__) && !defined(__amd64__)
+#error "This code is designed only for x86/amd64 platforms (amd64 is very experimental now)"
+#endif
+*/
+
+
 namespace ttmath
 {
 	/*!
-		32 bit integer value without a sign 
-		(on 64bit platforms will be 32bit as well)
+		on 32bit platforms one word will be equal 32bits
+		on 64bit platforms one word will be 64bits
 	*/
+
+#if !defined _M_X64 && !defined __x86_64__
+
 	typedef unsigned int uint;
+	typedef signed   int sint;
+
+	/*!
+		how many bits there are in the uint type
+	*/
+	#define TTMATH_BITS_PER_UINT 32u
+
+	/*!
+		the mask for the highest bit in the unsigned 32bit word (2^31)
+	*/
+	#define TTMATH_UINT_HIGHEST_BIT 2147483648u
+
+
+	/*!
+		the max value of the unsigned 32bit word (2^32 - 1)
+		(all bits equal one)
+	*/
+	#define TTMATH_UINT_MAX_VALUE 4294967295u
+
+
+#else
+
+	typedef unsigned long uint;
+	typedef signed   long sint;
+
+	/*!
+		how many bits there are in the uint type
+	*/
+	#define TTMATH_BITS_PER_UINT 64ul
+
+	/*!
+		the mask for the highest bit in the unsigned 64bit word (2^63)
+	*/
+	#define TTMATH_UINT_HIGHEST_BIT 9223372036854775808ul
+
+
+	/*!
+		the max value of the unsigned 64bit word (2^64 - 1)
+		(all bits equal one)
+	*/
+	#define TTMATH_UINT_MAX_VALUE 18446744073709551615ul
+
+
+#endif
 }
 
-
-/*!
-	how many bits there are in the uint type
-*/
-#define TTMATH_BITS_PER_UINT 32u
-
-
-/*!
-	the mask for the highest bit in the unsigned 32bit word (2^31)
-*/
-#define TTMATH_UINT_HIGHEST_BIT 2147483648u
-
-
-/*!
-	the max value of the unsigned 32bit word (2^32 - 1)
-	(all bits equal one)
-*/
-#define TTMATH_UINT_MAX_VALUE 4294967295u
 
 
 /*!
@@ -304,19 +341,23 @@ namespace ttmath
 
 
 	#ifdef TTMATH_DEBUG
-		#ifdef __GNUC__
-			#define TTMATH_REFERENCE_ASSERT(expression) \
-				if( &(expression) == this ) throw ReferenceError(__FILE__, __LINE__);
 
-			#define TTMATH_ASSERT(expression) \
-				if( !(expression) ) throw RuntimeError(__FILE__, __LINE__);
-		#else
-			#define TTMATH_REFERENCE_ASSERT(expression) \
-				if( &(expression) == this ) throw ReferenceError();
+		#define TTMATH_REFERENCE_ASSERT(expression) \
+			if( &(expression) == this ) throw ttmath::ReferenceError(__FILE__, __LINE__);
 
-			#define TTMATH_ASSERT(expression) \
-				if( !(expression) ) throw RuntimeError();
-		#endif
+		#define TTMATH_ASSERT(expression) \
+			if( !(expression) ) throw ttmath::RuntimeError(__FILE__, __LINE__);
+
+		/*
+			if your compiler doesn't support macros __FILE__ and __LINE__
+			you can above asserts change to:
+
+				#define TTMATH_REFERENCE_ASSERT(expression) \
+					if( &(expression) == this ) throw ReferenceError();
+
+				#define TTMATH_ASSERT(expression) \
+					if( !(expression) ) throw RuntimeError();
+		*/
 	#else
 		#define TTMATH_REFERENCE_ASSERT(expression)
 		#define TTMATH_ASSERT(expression)

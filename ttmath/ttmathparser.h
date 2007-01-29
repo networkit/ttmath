@@ -1373,8 +1373,13 @@ int index;
 	// 'index' will be greater than zero
 	// 'amount_of_parameters' can be zero
 
+
 	if( amount_of_parameters==0 && !stack[index-1].function )
 		Error( err_unexpected_final_bracket );
+
+
+	bool was_sign = stack[index-1].sign;
+
 
 	if( stack[index-1].function )
 	{
@@ -1402,11 +1407,10 @@ int index;
 		if there was a '-' character before the first bracket
 		we change the sign of the expression
 	*/
-	if( stack[index-1].sign )
-	{
+	stack[index-1].sign = false;
+
+	if( was_sign )
 		stack[index-1].value.ChangeSign();
-		stack[index-1].sign = false;
-	}
 
 	stack[index-1].type = Item::numerical_value;
 	
@@ -1676,7 +1680,7 @@ ErrorCode Parse(const char * str)
 	
 	stack.resize( default_stack_size );
 
-//	char buf_temp[] = "1111";
+//	char buf_temp[] = "-(1)";
 //	pstring = buf_temp;
 
 	try

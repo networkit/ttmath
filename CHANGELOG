@@ -1,3 +1,17 @@
+Version 0.6.4 (2007.01.29):
+	* fixed the problem with a sign in the mathematical parser /-(1) was 1/
+	* added UInt::AddInt and UInt::SubInt
+	* changed UInt::AddOne and UInt::SubOne (much faster now)
+	* added UInt::SetBitInWord
+	* changed UInt::SetBit (much faster now)
+	* UInt::AddTwoUints renamed to UInt::AddTwoInts
+	* UInt::FindLeadingBit32 renamed to UInt::FindLeadingBitInWord
+	* added UInt::SetBitInWord
+	* UInt::Mul64 renamed to UInt::MulTwoWords
+	* UInt::Div64 renamed to UInt::DivTwoWords
+	* and more small changes in UInt type
+	* start adding support for Amd64 (not finished yet) (added ttmathuint64.h)
+	
 Version 0.6.3 (2007.01.22):
 	* position of arguments (x and base) in logarithm functions are swapped
 	* it's possible to use any multiplication algorithms in the same time

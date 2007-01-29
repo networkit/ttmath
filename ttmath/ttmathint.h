@@ -465,9 +465,9 @@ public:
 
 
 	/*!
-		this method convert an int type to this class
+		this method convert an sint type to this class
 	*/
-	Int<value_size> & operator=(int i)
+	Int<value_size> & operator=(sint i)
 	{
 		if(i<0)
 			SetSignOne();
@@ -483,7 +483,7 @@ public:
 	/*!
 		constructor for converting an uint to this class
 	*/
-	Int(int i)
+	Int(sint i)
 	{
 		operator=(i);
 	}
@@ -540,11 +540,11 @@ public:
 		this method returns the lowest value from table with the sign
 
 		we must be sure when we using this method whether the value
-		will hold in an int type or not (the rest value from table must be zero or -1)
+		will hold in an sint type or not (the rest value from table must be zero or -1)
 	*/
-	int ToInt() const
+	sint ToInt() const
 	{
-		return int( UInt<value_size>::table[0] );
+		return sint( UInt<value_size>::table[0] );
 	}
 
 
@@ -676,10 +676,10 @@ public:
 
 	bool operator<(const Int<value_size> & l) const
 	{
-		int i=value_size-1;
+		sint i=value_size-1;
 
-		int a1 = int(UInt<value_size>::table[i]);
-		int a2 = int(l.table[i]);
+		sint a1 = sint(UInt<value_size>::table[i]);
+		sint a2 = sint(l.table[i]);
 
 		if( a1 != a2 )
 			return a1 < a2;
@@ -703,11 +703,11 @@ public:
 
 	bool operator>(const Int<value_size> & l) const
 	{
-		int i=value_size-1;
+		sint i=value_size-1;
 		
 
-		int a1 = int(UInt<value_size>::table[i]);
-		int a2 = int(l.table[i]);
+		sint a1 = sint(UInt<value_size>::table[i]);
+		sint a2 = sint(l.table[i]);
 
 		if( a1 != a2 )
 			return a1 > a2;
@@ -730,11 +730,11 @@ public:
 
 	bool operator<=(const Int<value_size> & l) const
 	{
-		int i=value_size-1;
+		sint i=value_size-1;
 		
 
-		int a1 = int(UInt<value_size>::table[i]);
-		int a2 = int(l.table[i]);
+		sint a1 = sint(UInt<value_size>::table[i]);
+		sint a2 = sint(l.table[i]);
 
 		if( a1 != a2 )
 			return a1 < a2;
@@ -757,11 +757,11 @@ public:
 
 	bool operator>=(const Int<value_size> & l) const
 	{
-		int i=value_size-1;
+		sint i=value_size-1;
 		
 
-		int a1 = int(UInt<value_size>::table[i]);
-		int a2 = int(l.table[i]);
+		sint a1 = sint(UInt<value_size>::table[i]);
+		sint a2 = sint(l.table[i]);
 
 		if( a1 != a2 )
 			return a1 > a2;
