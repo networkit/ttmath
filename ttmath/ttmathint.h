@@ -52,9 +52,11 @@ namespace ttmath
 
 
 /*!
-	\brief it implements the big integer value with the sign
+	\brief it implements a big integer value with a sign
 
-	value_size - how many bytes specify our value (value_size = 1 -> 4 bytes -> 32 bits)
+	value_size - how many bytes specify our value
+		on 32bit platforms: value_size=1 -> 4 bytes -> 32 bits
+		on 64bit platforms: value_size=1 -> 8 bytes -> 64 bits
 	value_size = 1,2,3,4,5,6....
 */
 template<uint value_size>
@@ -161,7 +163,7 @@ public:
 
 
 	/*!
-		it returns the absolute value
+		it sets an absolute value
 
 		it can return carry (1) (look on ChangeSign() for details)
 	*/
@@ -182,8 +184,30 @@ public:
 	*
 	*/
 
+private:
+
+	uint CorrectCarryAfterAdding(bool p1_is_sign, bool p2_is_sign)
+	{
+		if( !p1_is_sign && !p2_is_sign )
+		{
+			if( UInt<value_size>::IsTheHighestBitSet() )
+				return 1;
+		}
+
+		if( p1_is_sign && p2_is_sign )
+		{	
+			if( ! UInt<value_size>::IsTheHighestBitSet() )
+				return 1;
+		}
+
+	return 0;
+	}
+
+
+public:
+
 	/*!
-		this method adds two value with sign and returns carry
+		this method adds two value with a sign and returns carry
 
 		we're using methods from the base class because values are stored with U2
 		we must only make the carry correction
@@ -202,13 +226,55 @@ public:
 
 		UInt<value_size>::Add(ss2);		
 
-		if( !p1_is_sign && !p2_is_sign )
+	return CorrectCarryAfterAdding(p1_is_sign, p2_is_sign);
+	}
+
+
+	/*!
+		this method adds one *unsigned* word (at a specific position)
+		and returns a carry (if it was)
+
+		look at a description in UInt<>::AddInt(...)
+	*/
+	uint AddInt(uint value, uint index = 0)
+	{
+		bool p1_is_sign = IsSign();
+
+		UInt<value_size>::AddInt(value, index);		
+
+	return CorrectCarryAfterAdding(p1_is_sign, false);
+	}
+
+
+	/*!
+		this method adds two *unsigned* words to the existing value
+		and these words begin on the 'index' position
+
+		index should be equal or smaller than value_size-2 (index <= value_size-2)
+		x1 - lower word, x2 - higher word
+
+		look at a description in UInt<>::AddTwoInts(...)
+	*/
+	uint AddTwoInts(uint x2, uint x1, uint index)
+	{
+		bool p1_is_sign = IsSign();
+
+		UInt<value_size>::AddTwoInts(x2, x1, index);		
+
+	return CorrectCarryAfterAdding(p1_is_sign, false);
+	}
+
+private:
+
+	uint CorrectCarryAfterSubtracting(bool p1_is_sign, bool p2_is_sign)
+	{
+		if( !p1_is_sign && p2_is_sign )
 		{
 			if( UInt<value_size>::IsTheHighestBitSet() )
 				return 1;
 		}
 
-		if( p1_is_sign && p2_is_sign )
+		if( p1_is_sign && !p2_is_sign )
 		{	
 			if( ! UInt<value_size>::IsTheHighestBitSet() )
 				return 1;
@@ -217,9 +283,10 @@ public:
 	return 0;
 	}
 
+public:
 
 	/*!	
-		this method subtracts two values with the sign
+		this method subtracts two values with a sign
 
 		we don't use the previous Add because the method ChangeSign can
 		sometimes return carry 
@@ -238,19 +305,21 @@ public:
 
 		UInt<value_size>::Sub(ss2);		
 
-		if( !p1_is_sign && p2_is_sign )
-		{
-			if( UInt<value_size>::IsTheHighestBitSet() )
-				return 1;
-		}
+	return CorrectCarryAfterSubtracting(p1_is_sign, p2_is_sign);
+	}
 
-		if( p1_is_sign && !p2_is_sign )
-		{	
-			if( ! UInt<value_size>::IsTheHighestBitSet() )
-				return 1;
-		}
 
-	return 0;
+	/*!
+		this method subtracts one *unsigned* word (at a specific position)
+		and returns a carry (if it was)
+	*/
+	uint SubInt(uint value, uint index = 0)
+	{
+		bool p1_is_sign = IsSign();
+
+		UInt<value_size>::SubInt(value, index);		
+
+	return CorrectCarryAfterSubtracting(p1_is_sign, false);
 	}
 
 
@@ -259,11 +328,11 @@ public:
 	*/
 	uint AddOne()
 	{
-	Int<value_size> temp;
+		bool p1_is_sign = IsSign();
 
-		temp.SetOne();
+		UInt<value_size>::AddOne();		
 
-	return Add(temp);
+	return CorrectCarryAfterAdding(p1_is_sign, false);
 	}
 
 
@@ -272,11 +341,11 @@ public:
 	*/
 	uint SubOne()
 	{
-	Int<value_size> temp;
+		bool p1_is_sign = IsSign();
 
-		temp.SetOne();
+		UInt<value_size>::SubOne();		
 
-	return Sub(temp);
+	return CorrectCarryAfterSubtracting(p1_is_sign, false);
 	}
 
 
@@ -308,11 +377,11 @@ public:
 
 
 		/*
-			we have to examine the sign of result now
+			we have to examine the sign of the result now
 			but if the result is with the sign then:
 				1. if the signs were the same that means the result is too big
 				(the result must be without a sign)
-				2. if the signs were diffrent that means if the result
+				2. if the signs were different that means if the result
 				is different from that one which has been returned from SetMinValue()
 				that is carry (result too big) but if the result is equal SetMinValue()
 				there'll be ok (and the next SetSign will has no effect because
@@ -324,7 +393,7 @@ public:
 			/*
 				there can be one case where signs are different and
 				the result will be equal the value from SetMinValue()
-				(there is ok situation)
+				(this situation is ok)
 			*/
 			if( ss1_is_sign != ss2_is_sign )
 			{
@@ -356,20 +425,21 @@ public:
 
 	/*!
 		division this = this / ss2
-		function returns the remainder
+		returned values:
+			0 - ok
+			1 - division by zero
 
-		for example: (result means this)
+		for example: (result means 'this')
 			 20 /  3 --> result:  6   remainder:  2
 			-20 /  3 --> result: -6   remainder: -2
 			 20 / -3 --> result: -6   remainder:  2
 			-20 / -3 --> result:  6   remainder: -2
 
-		in other words: this(old) = result * this(new) + remainder
+		in other words: this(old) = ss2 * this(new)(result) + remainder
 	*/
-	Int<value_size> Div(Int<value_size> ss2)
+	uint Div(Int<value_size> ss2, Int<value_size> * remainder = 0)
 	{
 	bool ss1_is_sign, ss2_is_sign;
-	Int<value_size> remainder;
 
 		ss1_is_sign = IsSign();
 		ss2_is_sign = ss2.IsSign();
@@ -380,17 +450,21 @@ public:
 		Abs();
 		ss2.Abs();
 
-		remainder = UInt<value_size>::Div(ss2);
+		uint c = UInt<value_size>::Div(ss2, remainder);
 
 		if( ss1_is_sign != ss2_is_sign )
 			SetSign();
 
-		if( ss1_is_sign )
-			remainder.SetSign();
+		if( ss1_is_sign && remainder )
+			remainder->SetSign();
 
-	return remainder;
+	return c;
 	}
 	
+	uint Div(const Int<value_size> & ss2, Int<value_size> & remainder)
+	{
+		return Div(ss2, &remainder);
+	}
 
 
 
@@ -465,7 +539,7 @@ public:
 
 
 	/*!
-		this method convert an sint type to this class
+		this method converts an sint type to this class
 	*/
 	Int<value_size> & operator=(sint i)
 	{
@@ -481,7 +555,7 @@ public:
 
 
 	/*!
-		constructor for converting an uint to this class
+		a constructor for converting an uint to this class
 	*/
 	Int(sint i)
 	{
@@ -490,7 +564,7 @@ public:
 
 
 	/*!
-		constructor for converting string to this class (with base=10)
+		a constructor for converting string to this class (with base=10)
 	*/
 	Int(const char * s)
 	{
@@ -499,7 +573,7 @@ public:
 
 
 	/*!
-		constructor for converting string to this class (with base=10)
+		a constructor for converting string to this class (with base=10)
 	*/
 	Int(const std::string & s)
 	{
@@ -508,7 +582,7 @@ public:
 
 
 	/*!
-		default constructor
+		a default constructor
 
 		we don't clear table etc.
 	*/
@@ -518,7 +592,7 @@ public:
 
 
 	/*!
-		the copying constructor
+		a copy constructor
 	*/
 	template<uint argument_size>
 	Int(const Int<argument_size> & u) : UInt<value_size>::size(value_size)
@@ -537,7 +611,7 @@ public:
 	}
 
 	/*!
-		this method returns the lowest value from table with the sign
+		this method returns the lowest value from table with a sign
 
 		we must be sure when we using this method whether the value
 		will hold in an sint type or not (the rest value from table must be zero or -1)
@@ -685,10 +759,6 @@ public:
 			return a1 < a2;
 
 
-//		 comparison as int
-//		if( int(UInt<value_size>::table[i]) != int(l.table[i]) )
-//			return int(UInt<value_size>::table[i]) < int(l.table[i]);
-
 		for(--i ; i>=0 ; --i)
 		{
 			if( UInt<value_size>::table[i] != l.table[i] )
@@ -704,7 +774,6 @@ public:
 	bool operator>(const Int<value_size> & l) const
 	{
 		sint i=value_size-1;
-		
 
 		sint a1 = sint(UInt<value_size>::table[i]);
 		sint a2 = sint(l.table[i]);
@@ -712,9 +781,6 @@ public:
 		if( a1 != a2 )
 			return a1 > a2;
 
-		// comparison as int
-//		if( int(UInt<value_size>::table[i]) != int(l.table[i]) )
-//			return int(UInt<value_size>::table[i]) > int(l.table[i]);
 
 		for(--i ; i>=0 ; --i)
 		{
@@ -731,7 +797,6 @@ public:
 	bool operator<=(const Int<value_size> & l) const
 	{
 		sint i=value_size-1;
-		
 
 		sint a1 = sint(UInt<value_size>::table[i]);
 		sint a2 = sint(l.table[i]);
@@ -739,9 +804,6 @@ public:
 		if( a1 != a2 )
 			return a1 < a2;
 
-		// comparison as int
-//		if( int(UInt<value_size>::table[i]) != int(l.table[i]) )
-//			return int(UInt<value_size>::table[i]) < int(l.table[i]);
 
 		for(--i ; i>=0 ; --i)
 		{
@@ -758,7 +820,6 @@ public:
 	bool operator>=(const Int<value_size> & l) const
 	{
 		sint i=value_size-1;
-		
 
 		sint a1 = sint(UInt<value_size>::table[i]);
 		sint a2 = sint(l.table[i]);
@@ -766,9 +827,6 @@ public:
 		if( a1 != a2 )
 			return a1 > a2;
 
-		// comparison as int
-//		if( int(UInt<value_size>::table[i]) != int(l.table[i]) )
-//			return int(UInt<value_size>::table[i]) > int(l.table[i]);
 
 		for(--i ; i>=0 ; --i)
 		{
@@ -880,7 +938,9 @@ public:
 	Int<value_size> operator%(const Int<value_size> & p2) const
 	{
 	Int<value_size> temp(*this);
-	Int<value_size> remainder = temp.Div( p2 );
+	Int<value_size> remainder;
+	
+		temp.Div(p2, remainder);
 
 	return remainder;
 	}
@@ -889,7 +949,9 @@ public:
 	Int<value_size> & operator%=(const Int<value_size> & p2)
 	{
 	Int<value_size> temp(*this);
-	Int<value_size> remainder = temp.Div( p2 );
+	Int<value_size> remainder;
+	
+		temp.Div(p2, remainder);
 
 		operator=(remainder);
 
@@ -898,7 +960,7 @@ public:
 
 
 	/*!
-		Prefix operator e.g ++variable
+		Prefix operator e.g. ++variable
 	*/
 	UInt<value_size> & operator++()
 	{
@@ -907,8 +969,9 @@ public:
 	return *this;
 	}
 
+
 	/*!
-		Postfix operator e.g variable++
+		Postfix operator e.g. variable++
 	*/
 	UInt<value_size> operator++(int)
 	{
@@ -922,7 +985,7 @@ public:
 
 	UInt<value_size> & operator--()
 	{
-		AddOne();
+		SubOne();
 
 	return *this;
 	}

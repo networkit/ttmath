@@ -54,9 +54,11 @@ namespace ttmath
 {
 
 /*! 
-	\brief it implements the big integer value without a sign
+	\brief it implements a big integer value without a sign
 
-	value_size - how many bytes specify our value (value_size = 1 -> 4 bytes -> 32 bits)
+	value_size - how many bytes specify our value
+		on 32bit platforms: value_size=1 -> 4 bytes -> 32 bits
+		on 64bit platforms: value_size=1 -> 8 bytes -> 64 bits
 	value_size = 1,2,3,4,5,6....
 */
 template<uint value_size>
@@ -443,7 +445,7 @@ public:
 		(of course if there was a carry in table[2](5+20) then 
 		this carry would be passed to the table[3] etc.)
 	*/
-	uint AddTwoInts(uint index, uint x2, uint x1)
+	uint AddTwoInts(uint x2, uint x1, uint index)
 	{
 	register uint b = value_size;
 	register uint * p1 = table;
@@ -1370,7 +1372,7 @@ public:
 			
 			if( x1 <= value_size - 2 )
 			{
-				if( AddTwoInts(x1,r2,r1) )
+				if( AddTwoInts(r2,r1,x1) )
 					return 1;
 			}
 			else
@@ -1549,7 +1551,7 @@ public:
 			for(uint x2=x2start ; x2<x2size ; ++x2)
 			{
 				MulTwoWords(table[x1], ss2.table[x2], &r2, &r1);
-				result.AddTwoInts(x2+x1,r2,r1);
+				result.AddTwoInts(r2,r1,x2+x1);
 				// here will never be a carry
 			}
 		}
@@ -2578,7 +2580,7 @@ public:
 
 
 	/*!
-		the default constructor
+		a default constructor
 
 		we don't clear table etc.
 	*/
@@ -2588,7 +2590,7 @@ public:
 
 
 	/*!
-		the copy constructor
+		a copy constructor
 	*/
 	UInt(const UInt<value_size> & u)
 	{
@@ -2608,7 +2610,7 @@ public:
 
 
 	/*!
-		the destructor
+		a destructor
 	*/
 	virtual ~UInt()
 	{
@@ -3010,7 +3012,7 @@ public:
 
 	UInt<value_size> & operator--()
 	{
-		AddOne();
+		SubOne();
 
 	return *this;
 	}
@@ -3082,7 +3084,7 @@ public:
 
 	uint Add(const UInt<value_size> & ss2, uint c=0);
 	uint AddInt(uint value, uint index = 0);
-	uint AddTwoInts(uint index, uint x2, uint x1);
+	uint AddTwoInts(uint x2, uint x1, uint index);
 	uint Sub(const UInt<value_size> & ss2, uint c=0);
 	uint SubInt(uint value, uint index = 0);
 	uint Rcl(uint c=0);

@@ -262,7 +262,7 @@ namespace ttmath
 		this carry would be passed to the table[3] etc.)
 	*/
 	template<uint value_size>
-	uint UInt<value_size>::AddTwoInts(uint index, uint x2, uint x1)
+	uint UInt<value_size>::AddTwoInts(uint x2, uint x1, uint index)
 	{
 	register uint b = value_size;
 	register uint * p1 = table;
