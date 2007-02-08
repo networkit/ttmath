@@ -1,5 +1,6 @@
 TODO TTMath Library
 ===================
 
-* add the method Mod (a remainder from a division) for the Big type
-
+* to add the method Mod (a remainder from a division) for the Big type
+* to add operators (or functions) and, or, xor
+* to add functions for generating random values

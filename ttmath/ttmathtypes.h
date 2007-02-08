@@ -217,7 +217,8 @@ namespace ttmath
 		err_functions_loop,
 		err_must_be_only_one_value,
 		err_object_exists,
-		err_unknown_object
+		err_unknown_object,
+		err_still_calculating
 	};
 
 
