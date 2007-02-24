@@ -187,7 +187,7 @@ public:
 	*/
 	void SetPi()
 	{
-	static const uint temp_table[] = {
+	static const unsigned int temp_table[] = {
 		0xc90fdaa2, 0x2168c234, 0xc4c6628b, 0x80dc1cd1, 0x29024e08, 0x8a67cc74, 0x020bbea6, 0x3b139b22, 
 		0x514a0879, 0x8e3404dd, 0xef9519b3, 0xcd3a431b, 0x302b0a6d, 0xf25f1437, 0x4fe1356d, 0x6d51c245, 
 		0xe485b576, 0x625e7ec6, 0xf44c42e9, 0xa637ed6b, 0x0bff5cb6, 0xf406b7ed, 0xee386bfb, 0x5a899fa5, 
@@ -199,9 +199,11 @@ public:
 		0xecfb8504, 0x58dbef0a, 0x8aea7157, 0x5d060c7d, 0xb3970f85, 0xa6e1e4c7, 0xabf5ae8c, 0xdb0933d7, 
 		0x1e8c94e0, 0x4a25619d, 0xcee3d226, 0x1ad2ee6b, 0xf0139f9d, 0x88e637cb
 		};
-		// 78 unsigned words
+		// 78 unsigned 32bits words
 		// this is static table which represents the value Pi (mantissa of its)
 		// (first is the highest word)
+		//	we must define this table as 'unsigned int' because 
+		//	on 32bits and 64bits platforms this table is 32bits
 	
 		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(uint));
 		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT) + 2;
@@ -235,7 +237,7 @@ public:
 	*/
 	void SetE()
 	{
-	static const uint temp_table[] = {
+	static const unsigned int temp_table[] = {
 		0xadf85458, 0xa2bb4a9a, 0xafdc5620, 0x273d3cf1, 0xd8b9c583, 0xce2d3695, 0xa9e13641, 0x146433fb, 
 		0xcc939dce, 0x249b3ef9, 0x7d2fe363, 0x630c75d8, 0xf681b202, 0xaec4617a, 0xd3df1ed5, 0xd5fd6561, 
 		0x2433f51f, 0x5f066ed0, 0x85636555, 0x3ded1af3, 0xb557135e, 0x7f57c935, 0x984f0c70, 0xe0e68b77, 
@@ -260,7 +262,7 @@ public:
 	*/
 	void SetLn2()
 	{
-	static const uint temp_table[] = {
+	static const unsigned int temp_table[] = {
 		0xb17217f7, 0xd1cf79ab, 0xc9e3b398, 0x03f2f6af, 0x40f34326, 0x7298b62d, 0x8a0d175b, 0x8baafa2b, 
 		0xe7b87620, 0x6debac98, 0x559552fb, 0x4afa1b10, 0xed2eae35, 0xc1382144, 0x27573b29, 0x1169b825, 
 		0x3e96ca16, 0x224ae8c5, 0x1acbda11, 0x317c387e, 0xb9ea9bc3, 0xb136603b, 0x256fa0ec, 0x7657f74b, 
@@ -738,15 +740,18 @@ public:
 
 		(we also can change 'Div' instead modifying this 'Pow' -- it'll be the same effect,
 		this error is only when we're using our mathematic parser)
+
+		gcc 3.4.6 (FreeBSD) with -O3 doesn't work perfect as well -- there must be
+		without the reference
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
-#ifdef __GNUC__
-	uint Pow(const Big<exp, man> & pow)
-#else
-	uint Pow(const Big<exp, man> pow)
-#endif
+//#ifdef __GNUC__
+//	uint Pow(const Big<exp, man> & pow)
+//#else
+	uint Pow(Big<exp, man> pow)
+//#endif
 	{
-		TTMATH_REFERENCE_ASSERT( pow )
+//		TTMATH_REFERENCE_ASSERT( pow )
 
 		if( IsZero() )
 		{

@@ -60,8 +60,8 @@
 	the version of the library
 */
 #define TTMATH_MAJOR_VER		0
-#define TTMATH_MINOR_VER		6
-#define TTMATH_REVISION_VER		4
+#define TTMATH_MINOR_VER		7
+#define TTMATH_REVISION_VER		0
 
 
 /*!

@@ -704,6 +704,32 @@ void Min(int sindex, int amount_of_args, ValueType & result)
 }
 
 
+void ASin(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 1 )
+		Error( err_improper_amount_of_arguments );
+
+	ErrorCode err;
+	result = ttmath::ASin(stack[sindex].value, &err);
+
+	if(err != err_ok)
+		Error( err );
+}
+
+
+void ACos(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 1 )
+		Error( err_improper_amount_of_arguments );
+
+	ErrorCode err;
+	result = ttmath::ACos(stack[sindex].value, &err);
+
+	if(err != err_ok)
+		Error( err );
+}
+
+
 /*!
 	this method returns the value from a user-defined function
 
@@ -826,6 +852,8 @@ void CreateFunctionsTable()
 	InsertFunctionToTable(std::string("exp"),   	&Parser<ValueType>::Exp);
 	InsertFunctionToTable(std::string("max"),   	&Parser<ValueType>::Max);
 	InsertFunctionToTable(std::string("min"),   	&Parser<ValueType>::Min);
+	InsertFunctionToTable(std::string("asin"),   	&Parser<ValueType>::ASin);
+	InsertFunctionToTable(std::string("acos"),   	&Parser<ValueType>::ACos);
 }
 
 

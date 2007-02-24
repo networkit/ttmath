@@ -1,3 +1,7 @@
+Version 0.7.0 (2007.02.24):
+	* finished support for 64bit platforms
+	* added ASin (arcsin), ACos (arccos) functions
+	
 Version 0.6.4 (2007.01.29):
 	* fixed the problem with a sign in the mathematical parser /-(1) was 1/
 	* added UInt::AddInt and UInt::SubInt

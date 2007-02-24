@@ -122,6 +122,7 @@ public:
 		SetZero();
 	}
 
+#if !defined _M_X64 && !defined __x86_64__
 
 	/*!
 		this method copies the value stored in an another table
@@ -135,7 +136,7 @@ public:
 		(this rounding isn't a perfect rounding -- look at the description below)
 
 		and if temp_table_len is smaller than value_size we'll clear the rest words
-		int table
+		in the table
 	*/
 	void SetFromTable(const uint * temp_table, uint temp_table_len)
 	{
@@ -161,7 +162,7 @@ public:
 					can set a carry and then there'll be a small problem
 					for optimization
 				*/
-				if( table[0] != 0xffffffff )
+				if( table[0] != TTMATH_UINT_MAX_VALUE )
 					++table[0];
 			}
 		}
@@ -178,7 +179,7 @@ public:
 	*
 	*/
 
-#if !defined _M_X64 && !defined __x86_64__
+
 
 
 	/*!
@@ -375,7 +376,7 @@ public:
 
 				"leal (%%ebx,%%edx,4), %%ebx 	\n"
 
-				"movl %4, %%edx					\n"
+				"movl %%esi, %%edx				\n"
 				"clc							\n"
 			"1:									\n"
 
@@ -404,7 +405,7 @@ public:
 				"pop %%ebx						\n"
 
 				: "=a" (c)
-				: "c" (b), "d" (index), "b" (p1), "q" (value)
+				: "c" (b), "d" (index), "b" (p1), "S" (value)
 				: "cc", "memory" );
 
 		#endif
@@ -529,7 +530,7 @@ public:
 				"movl $0, %%edx					\n"
 
 				"movl (%%ebx), %%eax			\n"
-				"addl %4, %%eax					\n"
+				"addl %%esi, %%eax					\n"
 				"movl %%eax, (%%ebx)			\n"
 
 				"inc %%ebx						\n"
@@ -538,7 +539,7 @@ public:
 				"inc %%ebx						\n"
 
 				"movl (%%ebx), %%eax			\n"
-				"adcl %5, %%eax					\n"
+				"adcl %%edi, %%eax					\n"
 				"movl %%eax, (%%ebx)			\n"
 			"jnc 2f								\n"
 
@@ -570,7 +571,7 @@ public:
 				"pop %%ebx						\n"
 
 				: "=a" (c)
-				: "c" (b), "d" (index), "b" (p1), "m" (x1), "m" (x2)
+				: "c" (b), "d" (index), "b" (p1), "S" (x1), "D" (x2)
 				: "cc", "memory" );
 
 		#endif
@@ -773,7 +774,7 @@ public:
 
 				"leal (%%ebx,%%edx,4), %%ebx 	\n"
 
-				"movl %4, %%edx					\n"
+				"movl %%esi, %%edx					\n"
 				"clc							\n"
 			"1:									\n"
 
@@ -802,7 +803,7 @@ public:
 				"pop %%ebx						\n"
 
 				: "=a" (c)
-				: "c" (b), "d" (index), "b" (p1), "q" (value)
+				: "c" (b), "d" (index), "b" (p1), "S" (value)
 				: "cc", "memory" );
 
 		#endif
@@ -1173,8 +1174,8 @@ public:
 			"movl $-1, %0		\n"
 		"1:						\n"
 
-			: "=q" (result)
-			: "q" (x)
+			: "=R" (result)
+			: "R" (x)
 			: "cc" );
 
 		#endif
@@ -1336,7 +1337,7 @@ public:
 
 		#ifdef __GNUC__
 
-		asm __volatile__(
+		__asm__ __volatile__(
 		
 			"mull %%edx			\n"
 
@@ -3082,6 +3083,7 @@ public:
 
 	// these methods for 64bit processors are defined in 'ttmathuint64.h'
 
+	void SetFromTable(const unsigned int * temp_table, uint temp_table_len);	
 	uint Add(const UInt<value_size> & ss2, uint c=0);
 	uint AddInt(uint value, uint index = 0);
 	uint AddTwoInts(uint x2, uint x1, uint index);

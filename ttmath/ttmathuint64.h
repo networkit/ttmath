@@ -54,6 +54,67 @@ namespace ttmath
 
 #if defined _M_X64 || defined __x86_64__
 
+
+	/*!
+		this method copies the value stored in an another table
+		(warning: first values in temp_table are the highest words -- it's different
+		from our table)
+
+		we copy as many words as it is possible
+		
+		if temp_table_len is bigger than value_size we'll try to round 
+		the lowest word from table depending on the last not used bit in temp_table
+		(this rounding isn't a perfect rounding -- look at the description below)
+
+		and if temp_table_len is smaller than value_size we'll clear the rest words
+		in the table
+
+		warning: we're using 'temp_table' as a pointer at 32bit words
+	*/
+	template<uint value_size>
+	void UInt<value_size>::SetFromTable(const unsigned int * temp_table, uint temp_table_len)
+	{
+		uint temp_table_index = 0;
+		sint i; // 'i' with a sign
+
+		for(i=value_size-1 ; i>=0 && temp_table_index<temp_table_len; --i, ++temp_table_index)
+		{
+			table[i] = uint(temp_table[ temp_table_index ]) << 32;
+
+			++temp_table_index;
+
+			if( temp_table_index<temp_table_len )
+				table[i] |= temp_table[ temp_table_index ];
+		}
+
+
+		// rounding mantissa
+		if( temp_table_index < temp_table_len )
+		{
+			if( (temp_table[temp_table_index] & TTMATH_UINT_HIGHEST_BIT) != 0 )
+			{
+				/*
+					very simply rounding
+					if the bit from not used last word from temp_table is set to one
+					we're rouding the lowest word in the table
+
+					in fact there should be a normal addition but
+					we don't use Add() or AddTwoInts() because these methods 
+					can set a carry and then there'll be a small problem
+					for optimization
+				*/
+				if( table[0] != TTMATH_UINT_MAX_VALUE )
+					++table[0];
+			}
+		}
+
+		// cleaning the rest of the mantissa
+		for( ; i>=0 ; --i)
+			table[i] = 0;
+	}
+
+
+
 	/*!
 		this method adding ss2 to the this and adding carry if it's defined
 		(this = this + ss2 + c)
@@ -187,7 +248,7 @@ namespace ttmath
 
 				"leaq (%%rbx,%%rdx,8), %%rbx 	\n"
 
-				"movq %4, %%rdx					\n"
+				"movq %%rsi, %%rdx				\n"
 				"clc							\n"
 			"1:									\n"
 
@@ -220,7 +281,7 @@ namespace ttmath
 				"pop %%rbx						\n"
 
 				: "=a" (c)
-				: "c" (b), "d" (index), "b" (p1), "q" (value)
+				: "c" (b), "d" (index), "b" (p1), "S" (value)
 				: "cc", "memory" );
 
 		#endif
@@ -292,7 +353,7 @@ namespace ttmath
 				"movq $0, %%rdx					\n"
 
 				"movq (%%rbx), %%rax			\n"
-				"addq %4, %%rax					\n"
+				"addq %%rsi, %%rax					\n"
 				"movq %%rax, (%%rbx)			\n"
 
 				"inc %%rbx						\n"
@@ -305,7 +366,7 @@ namespace ttmath
 				"inc %%rbx						\n"
 
 				"movq (%%rbx), %%rax			\n"
-				"adcq %5, %%rax					\n"
+				"adcq %%rdi, %%rax					\n"
 				"movq %%rax, (%%rbx)			\n"
 			"jnc 2f								\n"
 
@@ -341,7 +402,7 @@ namespace ttmath
 				"pop %%rbx						\n"
 
 				: "=a" (c)
-				: "c" (b), "d" (index), "b" (p1), "q" (x1), "q" (x2)
+				: "c" (b), "d" (index), "b" (p1), "S" (x1), "D" (x2)
 				: "cc", "memory" );
 
 		#endif
@@ -481,7 +542,7 @@ namespace ttmath
 
 				"leaq (%%rbx,%%rdx,8), %%rbx 	\n"
 
-				"movq %4, %%rdx					\n"
+				"movq %%rsi, %%rdx					\n"
 				"clc							\n"
 			"1:									\n"
 
@@ -514,7 +575,7 @@ namespace ttmath
 				"pop %%rbx						\n"
 
 				: "=a" (c)
-				: "c" (b), "d" (index), "b" (p1), "q" (value)
+				: "c" (b), "d" (index), "b" (p1), "S" (value)
 				: "cc", "memory" );
 
 		#endif
@@ -775,7 +836,7 @@ namespace ttmath
 
 		#ifdef __GNUC__
 
-		asm __volatile__(
+		__asm__ __volatile__(
 		
 			"mulq %%rdx			\n"
 

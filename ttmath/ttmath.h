@@ -524,6 +524,218 @@ namespace ttmath
 	}
 
 
+	/*
+ 	 *
+	 *  inverse trigonometric functions
+	 *
+	 *
+	 */
+
+	/*!
+		arcus sin
+
+		we're calculating asin from the following formula:
+		asin(x) = x + (1*x^3)/(2*3) + (1*3*x^5)/(2*4*5) + (1*3*5*x^7)/(2*4*6*7) + ... 
+		where abs(x) <= 1
+
+		we're using this formula when x is from <0, 1/2>
+	*/
+	template<class ValueType>
+	ValueType ASin_0(const ValueType & x)
+	{
+	ValueType nominator, denominator, nominator_add, nominator_x, denominator_add, denominator_x;
+	ValueType two, result(x), x2(x);
+	ValueType nominator_temp, denominator_temp, old_result = result;
+	uint c = 0;
+
+	x2.Mul(x);
+	two = 2;
+
+	nominator.SetOne();
+	denominator     = two;
+	nominator_add   = nominator;
+	denominator_add = denominator;
+	nominator_x     = x;
+	denominator_x   = 3;
+
+		for(uint i=1 ; i<=TTMATH_ARITHMETIC_MAX_LOOP ; ++i)
+		{
+			c += nominator_x.Mul(x2);
+			nominator_temp = nominator_x;	
+			c += nominator_temp.Mul(nominator);
+			denominator_temp = denominator;
+			c += denominator_temp.Mul(denominator_x);
+			c += nominator_temp.Div(denominator_temp);
+
+			// if there is a carry somewhere we only break the calculating
+			// the result should be ok -- it's from <-pi/2, pi/2>
+			if( c ) 
+				break;
+
+			result.Add(nominator_temp);
+			
+			if( result == old_result )
+				 // there's no sense to calculate more
+				break;
+
+			old_result = result;
+
+
+			c += nominator_add.Add(two);
+			c += denominator_add.Add(two);
+			c += nominator.Mul(nominator_add);
+			c += denominator.Mul(denominator_add);
+			c += denominator_x.Add(two);
+		}
+
+	return result;
+	}
+
+
+
+	/*!
+		arcus sin
+
+		we're calculating asin from the following formula:
+		asin(x) = pi/2 - sqrt(2)*sqrt(1-x) * asin_temp
+		asin_temp = 1 + (1*(1-x))/((2*3)*(2)) + (1*3*(1-x)^2)/((2*4*5)*(4)) + (1*3*5*(1-x)^3)/((2*4*6*7)*(8)) + ... 
+
+		where abs(x) <= 1
+
+		we're using this formula when x is from (1/2, 1>
+	*/
+	template<class ValueType>
+	ValueType ASin_1(const ValueType & x)
+	{
+	ValueType nominator, denominator, nominator_add, nominator_x, nominator_x_add, denominator_add, denominator_x;
+	ValueType denominator2;
+	ValueType one, two, result;
+	ValueType nominator_temp, denominator_temp, old_result;
+	uint c = 0;
+
+	two = 2;
+
+	one.SetOne();
+	nominator		= one;
+	result			= one;
+	old_result		= result;
+	denominator     = two;
+	nominator_add   = nominator;
+	denominator_add = denominator;
+	nominator_x     = one;
+	nominator_x.Sub(x);
+	nominator_x_add = nominator_x;
+	denominator_x   = 3;
+	denominator2	= two;
+
+
+		for(uint i=1 ; i<=TTMATH_ARITHMETIC_MAX_LOOP ; ++i)
+		{
+			nominator_temp = nominator_x;	
+			c += nominator_temp.Mul(nominator);
+			denominator_temp = denominator;
+			c += denominator_temp.Mul(denominator_x);
+			c += denominator_temp.Mul(denominator2);
+			c += nominator_temp.Div(denominator_temp);
+
+			// if there is a carry somewhere we only break the calculating
+			// the result should be ok -- it's from <-pi/2, pi/2>
+			if( c ) 
+				break;
+
+			result.Add(nominator_temp);
+			
+			if( result == old_result )
+				 // there's no sense to calculate more
+				break;
+
+			old_result = result;
+
+			c += nominator_x.Mul(nominator_x_add);
+			c += nominator_add.Add(two);
+			c += denominator_add.Add(two);
+			c += nominator.Mul(nominator_add);
+			c += denominator.Mul(denominator_add);
+			c += denominator_x.Add(two);
+			c += denominator2.Mul(two);
+		}
+
+		
+		nominator_x_add.exponent.AddOne(); // *2
+		one.exponent.SubOne(); // =0.5
+		nominator_x_add.Pow(one); // =sqrt(nominator_x_add)
+		result.Mul(nominator_x_add);
+
+		one.Set05Pi();
+		one.Sub(result);
+
+	return one;
+	}
+
+
+	/*!
+		arc sin (x)
+		x is from <-1,1>
+	*/
+	template<class ValueType>
+	ValueType ASin(ValueType x, ErrorCode * err = 0)
+	{
+		ValueType one;
+		one.SetOne();
+		bool change_sign = false;
+
+		if( x.GreaterWithoutSignThan(one) )
+		{
+			if( err )
+				*err = err_improper_argument;
+
+			return one;
+		}
+
+		if( x.IsSign() )
+		{
+			change_sign = true;
+			x.Abs();
+		}
+
+		one.exponent.SubOne(); // =0.5
+
+		ValueType result;
+
+		// asin(-x) = -asin(x)
+		if( x.GreaterWithoutSignThan(one) )
+			result = ASin_1(x);	
+		else
+			result = ASin_0(x);
+
+		if( change_sign )
+			result.ChangeSign();
+
+		if( err )
+			*err = err_ok;
+
+	return result;
+	}
+
+
+	/*!
+		arc cos (x)
+
+		we're using the formula:
+		acos(x) = pi/2 - asin(x)
+	*/
+	template<class ValueType>
+	ValueType ACos(const ValueType & x, ErrorCode * err = 0)
+	{
+	ValueType temp;
+
+		temp.Set05Pi();
+		temp.Sub(ASin(x,err));
+
+	return temp;
+	}
+
+
 } // namespace
 
 
