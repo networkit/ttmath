@@ -730,6 +730,24 @@ void ACos(int sindex, int amount_of_args, ValueType & result)
 }
 
 
+void ATan(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 1 )
+		Error( err_improper_amount_of_arguments );
+
+	result = ttmath::ATan(stack[sindex].value);
+}
+
+
+void ACTan(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 1 )
+		Error( err_improper_amount_of_arguments );
+
+	result = ttmath::ACTan(stack[sindex].value);
+}
+
+
 /*!
 	this method returns the value from a user-defined function
 
@@ -854,6 +872,8 @@ void CreateFunctionsTable()
 	InsertFunctionToTable(std::string("min"),   	&Parser<ValueType>::Min);
 	InsertFunctionToTable(std::string("asin"),   	&Parser<ValueType>::ASin);
 	InsertFunctionToTable(std::string("acos"),   	&Parser<ValueType>::ACos);
+	InsertFunctionToTable(std::string("atan"),   	&Parser<ValueType>::ATan);
+	InsertFunctionToTable(std::string("actan"),   	&Parser<ValueType>::ACTan);
 }
 
 

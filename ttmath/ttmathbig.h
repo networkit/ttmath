@@ -45,6 +45,8 @@
 
 #include "ttmathint.h"
 
+
+
 namespace ttmath
 {
 
@@ -59,8 +61,8 @@ class Big
 /*
 	value = mantissa * 2^exponent	
 
-	exponent - integer value with a sign
-	mantissa - integer value without a sing
+	exponent - an integer value with a sign
+	mantissa - an integer value without a sing
 
 	mantissa must be pushed into the left side that is the highest bit from 
 	mantissa must be one (of course if there's another value than zero) -- this job
@@ -205,7 +207,7 @@ public:
 		//	we must define this table as 'unsigned int' because 
 		//	on 32bits and 64bits platforms this table is 32bits
 	
-		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(uint));
+		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(int));
 		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT) + 2;
 		info = 0;
 	}
@@ -250,7 +252,7 @@ public:
 		0xb4130c93, 0xbc437944, 0xf4fd4452, 0xe2d74dd3, 0x645b2194, 0x41468794
 		};
 	
-		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(uint));
+		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(int));
 		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT) + 2;
 		info = 0;
 	}
@@ -275,7 +277,7 @@ public:
 		0x44a02554, 0x731cdc8e, 0xa17293d1, 0x228a4ef8, 0x6e1adf84, 0x08689fa8
 		};	
 
-		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(uint));
+		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(int));
 		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT);
 		info = 0;
 	}
@@ -301,10 +303,10 @@ public:
 	void SetMin()
 	{
 		info = 0;
-		SetSign();
 
 		mantissa.SetMaxValue();
 		exponent.SetMaxValue();
+		SetSign();
 
 		// we don't have to use 'Standardizing()' because the last bit from
 		// the mantissa is set
@@ -334,7 +336,7 @@ public:
 
 	/*!
 		it clears the sign
-		(there'll be a absolute value)
+		(there'll be an absolute value)
 
 			e.g.
 			-1 -> 1
@@ -397,6 +399,7 @@ public:
 	{
 	Int<exp> exp_offset( exponent );
 	Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
+
 	uint c = 0;
 
 		exp_offset.Sub( ss2.exponent );
@@ -410,7 +413,8 @@ public:
 			ss2   = *this;
 			*this = temp;
 		}
-		
+	
+
 		if( exp_offset > mantissa_size_in_bits )
 		{
 			// the second value is too short for taking into consideration in the sum
@@ -729,29 +733,9 @@ public:
 		1 - carry
 		2 - incorrect argument ('this' or 'pow')
 	*/
-	/*  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		there should be 'sint Pow(const Big<exp, man> & pow)'
-		but vc2005express doesn't want to compile it perfect, that means
-		when using 'Maximize Speed /O2' the result of compilation doesn't work property
-		for example 10^(1/2) is a big value
-		i don't know where is the problem, with this source code or in the compilator
-		(it is when we're using 'Big<3,10>' or bigger values in parsing)
-		/gcc 3.4.2 works perfect (with -O3 optimalization flag)/
-
-		(we also can change 'Div' instead modifying this 'Pow' -- it'll be the same effect,
-		this error is only when we're using our mathematic parser)
-
-		gcc 3.4.6 (FreeBSD) with -O3 doesn't work perfect as well -- there must be
-		without the reference
-	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-
-//#ifdef __GNUC__
-//	uint Pow(const Big<exp, man> & pow)
-//#else
-	uint Pow(Big<exp, man> pow)
-//#endif
+	uint Pow(const Big<exp, man> & pow)
 	{
-//		TTMATH_REFERENCE_ASSERT( pow )
+		TTMATH_REFERENCE_ASSERT( pow )
 
 		if( IsZero() )
 		{
@@ -767,6 +751,7 @@ public:
 		Big<exp, man> pow_frac( pow );
 		pow_frac.RemainFraction();
 
+
 		if( pow_frac.IsZero() )
 			return PowBInt( pow );
 
@@ -781,7 +766,7 @@ public:
 		uint c = temp.Ln(*this);
 		c += temp.Mul(pow);
 		c += Exp(temp);
-	
+
 	return (c==0)? 0 : 1;
 	}
 
@@ -1038,6 +1023,7 @@ public:
 		// m will be the value of the mantissa in range <1,2)
 		Big<exp,man> m(x);
 		m.exponent = -sint(man*TTMATH_BITS_PER_UINT - 1);
+
 	    LnSurrounding1(m);
 
 		Big<exp,man> exponent_temp;
@@ -1048,7 +1034,6 @@ public:
 
 		Big<exp,man> ln2;
 		ln2.SetLn2();
-
 		c += exponent_temp.Mul(ln2);
 		c += Add(exponent_temp);
 
@@ -1282,6 +1267,7 @@ public:
 		FromInt( sint(value) );
 	}
 
+
 #if defined _M_X64 || defined __x86_64__
 	/*!
 		a constructor for converting 'int' to this class
@@ -1301,17 +1287,18 @@ public:
 	void FromInt(Int<int_size> value)
 	{
 		info = 0;
+		bool is_sign = false;
 
 		if( value.IsSign() )
 		{
 			value.ChangeSign();
-			SetSign();
+			is_sign = true;
 		}
 
 		uint minimum_size = (int_size < man)? int_size : man;
-		sint compensation  = (sint)value.CompensationToLeft();
+		sint compensation = (sint)value.CompensationToLeft();
 		exponent          = (sint(int_size)-sint(man)) * sint(TTMATH_BITS_PER_UINT) - compensation;
-		
+
 		// copying the highest words
 		uint i;
 		for(i=1 ; i<=minimum_size ; ++i)
@@ -1320,6 +1307,9 @@ public:
 		// setting the rest of mantissa.table into zero (if some has left)
 		for( ; i<=man ; ++i)
 			mantissa.table[man-i] = 0;
+
+		if( is_sign )
+			SetSign();
 
 	}
 
@@ -1367,6 +1357,7 @@ public:
 	/*!
 		the default assignment operator
 	*/
+	
 	Big<exp,man> & operator=(const Big<exp,man> & value)
 	{
 		info = value.info;
@@ -1375,26 +1366,27 @@ public:
 
 	return *this;
 	}
-
+	
 
 	/*!
 		a constructor for copying from another object of this class
 	*/
+	
 	Big(const Big<exp,man> & value)
 	{
 		operator=(value);
 	}
-
+	
 
 	/*!
 		a method for converting the value into the string with a base equal 'base'
 
 		input:
-			base - the base on which the value will be showed
+			base - the base on which the value will be shown
 
-			if 'always_scientific' is true the result will be showed in 'scientific' mode
+			if 'always_scientific' is true the result will be shown in 'scientific' mode
 
-			if 'always_scientific' is false the result will be showed
+			if 'always_scientific' is false the result will be shown
 			either as 'scientific' or 'normal' mode, it depends whether the abs(exponent)
 			is greater than 'when_scientific' or not, if it's greater the value
 			will be printed as 'scientific'
@@ -1407,8 +1399,8 @@ public:
 			(zero characters at the end -- after the comma operator)
 
 			if 'max_digit_after_comma' is equal or greater than zero
-			that only 'max_digit_after_comma' after the comma operator will be showed
-			(if 'max_digit_after_comma' is equal zero there'll be showed only 
+			that only 'max_digit_after_comma' after the comma operator will be shown
+			(if 'max_digit_after_comma' is equal zero there'll be shown only 
 			integer value without the comma)
 				for example when the value is:
 					12.345678 and max_digit_after_comma is 4
@@ -1431,7 +1423,7 @@ public:
 	{
 		static char error_overflow_msg[] = "overflow";
 		result.erase();
-
+		
 		if(base<2 || base>16)
 		{
 			result = error_overflow_msg;
@@ -1612,19 +1604,17 @@ private:
 		// the sign don't interest us here
 		temp.mantissa = mantissa;
 		temp.exponent = exponent;
-
 		c += temp.Div( base_ );
 
 		// moving all bits of the mantissa into the right 
 		// (how many times to move depend on the exponent)
 		c += temp.ToString_MoveMantissaIntoRight();
 
-		// on account of we take 'new_exp' as small as it's
+		// because we took 'new_exp' as small as it was
 		// possible ([log base (2^exponent)] + 1) that after the division 
 		// (temp.Div( base_ )) the value of exponent should be equal zero or 
 		// minimum smaller than zero then we've got the mantissa which has 
 		// maximum valid bits
-
 		temp.mantissa.ToString(new_man, base);
 
 		// because we had used a bigger type for calculating I think we 
@@ -1651,6 +1641,7 @@ private:
 	uint ToString_Log(const Big<exp,man> & x, uint base)
 	{
 		TTMATH_REFERENCE_ASSERT( x )
+		TTMATH_ASSERT( base>=2 && base<=16 )
 
 		Big<exp,man> temp;
 		temp.SetOne();
@@ -1669,41 +1660,29 @@ private:
 		// (LnSurrounding1() will return one immediately)
 		uint c = Ln(x);
 
+		static Big<exp,man> log_history[15] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+		uint index = base - 2;
 
-		/*
-		 *
-		 *	this is only temporarily (for testing)
-		 *
-		 */
-
-//		static Big<exp,man> log_history[15] = { 0l,0l,0l,0l,0l,0l,0l,0l,0l,0l,
-//			0l,0l,0l,0l,0l };
-		static Big<exp,man> log_history[15] = { 0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0 };
-
-		Big<exp,man> * log_value = log_history + base - 2;
-
-		if( log_value->IsZero() )
+		if( log_history[index].IsZero() )
 		{
 			// we don't have 'base' in 'log_history' then we calculate it now
 			Big<exp,man> base_(base);
 			c += temp.Ln(base_);
-		    c += Div(temp);
+			c += Div(temp);
 
 			// the next time we'll get the 'Ln(base)' from the history,
 			// this 'log_history' can have (16-2+1) items max
-
-			*log_value = temp;
+			log_history[index] = temp;
 		}
 		else
 		{
-			// we've calculated the 'Ln(base)' beforehand and we're using it now
-
-			c += Div( *log_value );
+			// we've calculated the 'Ln(base)' beforehand and we're getting it now
+			c += Div( log_history[index] );
 		}
 
 	return (c==0)? 0 : 1;
 	}
+
 
 
 	/*!
@@ -1721,6 +1700,7 @@ private:
 		// because we would cat the highest bits of the mantissa
 		if( !exponent.IsSign() )
 			return 1;
+
 
 		if( exponent <= -sint(man*TTMATH_BITS_PER_UINT) )
 			// if 'exponent' is <= than '-sint(man*TTMATH_BITS_PER_UINT)'
@@ -2613,7 +2593,7 @@ public:
 	return temp;
 	}
 
-	Big<exp,man> & operator-=(const Big<exp,man> & ss2) const
+	Big<exp,man> & operator-=(const Big<exp,man> & ss2)
 	{
 		Sub(ss2);
 
@@ -2631,7 +2611,7 @@ public:
 	}
 
 
-	Big<exp,man> & operator+=(const Big<exp,man> & ss2) const
+	Big<exp,man> & operator+=(const Big<exp,man> & ss2)
 	{
 		Add(ss2);
 
@@ -2649,7 +2629,7 @@ public:
 	}
 
 
-	Big<exp,man> & operator*=(const Big<exp,man> & ss2) const
+	Big<exp,man> & operator*=(const Big<exp,man> & ss2)
 	{
 		Mul(ss2);
 
@@ -2667,7 +2647,7 @@ public:
 	}
 
 
-	Big<exp,man> & operator/=(const Big<exp,man> & ss2) const
+	Big<exp,man> & operator/=(const Big<exp,man> & ss2)
 	{
 		Div(ss2);
 

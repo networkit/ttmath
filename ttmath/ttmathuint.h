@@ -2519,7 +2519,7 @@ public:
 
 
 	/*!
-		this operator convert an UInt<another_size> type to this class
+		this operator converts an UInt<another_size> type to this class
 
 		it doesn't return a carry
 	*/
@@ -2589,7 +2589,6 @@ public:
 	{
 	}
 
-
 	/*!
 		a copy constructor
 	*/
@@ -2597,6 +2596,7 @@ public:
 	{
 		FromUInt(u);
 	}
+
 
 
 	/*!
@@ -2608,6 +2608,8 @@ public:
 		// look that 'size' we still set as 'value_size' and not as u.value_size
 		FromUInt(u);
 	}
+
+
 
 
 	/*!

@@ -261,7 +261,9 @@ namespace ttmath
 	*	trigonometric functions
 	*
 	*/
-	
+
+	namespace auxiliaryfunctions
+	{
 
 	/*!
 		an auxiliary function for calculating the Sin
@@ -420,6 +422,7 @@ namespace ttmath
 	return result;
 	}
 
+	} // namespace auxiliaryfunctions
 
 	/*!
 		this function calulates the Sin
@@ -427,6 +430,8 @@ namespace ttmath
 	template<class ValueType>
 	ValueType Sin(ValueType x)
 	{
+	using namespace auxiliaryfunctions;
+
 	ValueType one;
 	bool change_sign;	
 	
@@ -530,6 +535,9 @@ namespace ttmath
 	 *
 	 *
 	 */
+
+	namespace auxiliaryfunctions
+	{
 
 	/*!
 		arcus sin
@@ -673,6 +681,9 @@ namespace ttmath
 	}
 
 
+	} // namespace auxiliaryfunctions
+
+
 	/*!
 		arc sin (x)
 		x is from <-1,1>
@@ -680,6 +691,8 @@ namespace ttmath
 	template<class ValueType>
 	ValueType ASin(ValueType x, ErrorCode * err = 0)
 	{
+	using namespace auxiliaryfunctions;
+
 		ValueType one;
 		one.SetOne();
 		bool change_sign = false;
@@ -736,10 +749,213 @@ namespace ttmath
 	}
 
 
+
+	namespace auxiliaryfunctions
+	{
+
+
+	/*!
+		arc tan (x) where x is in <0; 0.5)
+		(x can be in (-0.5 ; 0.5) too)
+
+		we're using the Taylor series expanded in zero:
+		atan(x) = x - (x^3)/3 + (x^5)/5 - (x^7)/7 + ...
+	*/
+	template<class ValueType>
+	ValueType ATan0(const ValueType & x)
+	{
+		ValueType nominator, denominator, nominator_add, denominator_add, temp;
+		ValueType result, old_result;
+		bool adding = false;
+		uint c = 0;
+
+		result        = x;
+		old_result    = result;
+		nominator     = x;
+		nominator_add = x;
+		nominator_add.Mul(x);
+
+		denominator.SetOne();
+		denominator_add = 2;
+
+		for(uint i=1 ; i<=TTMATH_ARITHMETIC_MAX_LOOP ; ++i)
+		{
+			c += nominator.Mul(nominator_add);
+			c += denominator.Add(denominator_add);
+	
+			temp = nominator;
+			c += temp.Div(denominator);
+
+			if( c )
+				// the result should be ok
+				break;
+
+			if( adding )
+				result.Add(temp);
+			else
+				result.Sub(temp);
+
+			if( result == old_result )
+				 // there's no sense to calculate more
+				break;
+
+			old_result = result;
+			adding     = !adding;
+		}
+
+	return result;
+	}
+
+
+	/*!
+		arc tan (x) where x is in <0 ; 1>
+	*/
+	template<class ValueType>
+	ValueType ATan01(const ValueType & x)
+	{
+		ValueType half;
+		half.SetDotOne();
+
+		/*
+			it would be better if we chose about sqrt(2)-1=0.41... instead of 0.5 here
+
+			because as you can see below:
+			when x = sqrt(2)-1
+			abs(x) = abs( (x-1)/(1+x) )
+			so when we're calculating values around x
+			then they will be better converged to each other
+
+			for example if we have x=0.4999 then during calculating ATan0(0.4999)
+			we have to make about 141 iterations but when we have x=0.5
+			then during calculating ATan0( (x-1)/(1+x) ) we have to make 
+			only about 89 iterations (both for Big<3,9>)
+
+			in the future this 0.5 can be changed
+		*/
+		if( x.SmallerWithoutSignThan(half) )
+			return ATan0(x);
+
+
+		/*
+			x>=0.5 and x<=1
+			(x can be even smaller than 0.5)
+
+			y = atac(x)
+			x = tan(y)
+
+			tan(y-b) = (tan(y)-tab(b)) / (1+tan(y)*tan(b))
+			y-b      = atan( (tan(y)-tab(b)) / (1+tan(y)*tan(b)) )
+			y        = b + atan( (x-tab(b)) / (1+x*tan(b)) )
+
+			let b = pi/4
+			tan(b) = tan(pi/4) = 1
+			y = pi/4 + atan( (x-1)/(1+x) )
+
+			so
+			atac(x) = pi/4 + atan( (x-1)/(1+x) )
+			when x->1 (x converges to 1) the (x-1)/(1+x) -> 0
+			and we can use ATan0() function here
+		*/
+
+		ValueType n(x),d(x),one,result;
+
+		one.SetOne();
+		n.Sub(one);
+		d.Add(one);
+		n.Div(d);
+
+		result = ATan0(n);
+
+		n.Set05Pi();
+		n.exponent.SubOne(); // =pi/4
+		result.Add(n);
+
+	return result;
+	}
+
+
+	/*!
+		arc tan (x) where x > 1
+
+		we're using the formula:
+		atan(x) = pi/2 - atan(1/x) for x>0
+	*/
+	template<class ValueType>
+	ValueType ATanGreaterThanPlusOne(const ValueType & x)
+	{
+	ValueType temp, atan;
+
+		temp.SetOne();
+		
+		if( temp.Div(x) )
+		{
+			// if there was a carry here that means x is very big
+			// and atan(1/x) fast converged to 0
+			atan.SetZero();
+		}
+		else
+			atan = ATan01(temp);
+		
+		temp.Set05Pi();
+		temp.Sub(atan);
+
+	return temp;
+	}
+
+	} // namespace auxiliaryfunctions
+
+
+	/*!
+		arc tan
+	*/
+	template<class ValueType>
+	ValueType ATan(ValueType x)
+	{
+	using namespace auxiliaryfunctions;
+
+		ValueType one, result;
+		one.SetOne();
+		bool change_sign = false;
+
+		// if x is negative we're using the formula:
+		// atan(-x) = -atan(x)
+		if( x.IsSign() )
+		{
+			change_sign = true;
+			x.Abs();
+		}
+
+		if( x.GreaterWithoutSignThan(one) )
+			result = ATanGreaterThanPlusOne(x);
+		else
+			result = ATan01(x);
+
+		if( change_sign )
+			result.ChangeSign();
+
+	return result;
+	}
+
+
+	/*!
+		arc ctan
+	
+		we're using the formula:
+		actan(x) = pi/2 - atan(x)
+	*/
+	template<class ValueType>
+	ValueType ACTan(const ValueType & x)
+	{
+	ValueType result;
+
+		result.Set05Pi();
+		result.Sub(ATan(x));
+
+	return result;
+	}
+
+
 } // namespace
-
-
-
 
 
 #endif

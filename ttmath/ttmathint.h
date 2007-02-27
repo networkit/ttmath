@@ -493,8 +493,11 @@ public:
 			UInt<value_size>::table[i] = p.table[i];
 
 
-		if( i < value_size )
+//		if( i < value_size )
+
+		if( value_size > argument_size )
 		{	
+			// 'this' is longer than 'p'
 			uint fill = (p.table[argument_size-1] & TTMATH_UINT_HIGHEST_BIT)? TTMATH_UINT_MAX_VALUE : 0;
 
 			for( ; i<value_size ; ++i)
@@ -514,7 +517,7 @@ public:
 
 
 	/*!
-		this operator convert an UInt<another_size> type to this class
+		this operator converts an UInt<another_size> type to this class
 
 		it doesn't return a carry
 	*/

@@ -4,3 +4,4 @@ TODO TTMath Library
 * to add the method Mod (a remainder from a division) for the Big type
 * to add operators (or functions) and, or, xor
 * to add functions for generating random values
+* to add constructors (UInt, Int) for 64bit platforms (constractors which take int and unsigned)

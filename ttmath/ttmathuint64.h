@@ -109,7 +109,7 @@ namespace ttmath
 		}
 
 		// cleaning the rest of the mantissa
-		for( ; i>=0 ; --i)
+		for( ; i >= 0 ; --i)
 			table[i] = 0;
 	}
 
