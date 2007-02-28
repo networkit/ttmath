@@ -133,7 +133,40 @@ namespace ttmath
 	return result;
 	}
 
-	
+
+
+	/*!
+		it returns the sign of the value
+		e.g.  -2 = 1 
+		       0 = 0
+		      10 = 1
+	*/
+	template<class ValueType>
+	ValueType Sgn(ValueType x)
+	{
+		x.Sgn();
+
+	return x;
+	}
+
+
+	/*!
+		the remainder from the division
+
+		e.g.
+		mod( 12.6 ;  3) =  0.6   because 12.6 = 3*4 + 0.6
+		mod(-12.6 ;  3) = -0.6
+		mod( 12.6 ; -3) =  0.6
+		mod(-12.6 ; -3) = -0.6
+	*/
+	template<class ValueType>
+	ValueType Mod(ValueType a, const ValueType & b)
+	{
+		a.Mod(b);
+
+	return a;
+	}
+
 	/*!
 		this method skips the fraction from x
 		e.g  2.2  = 2

@@ -349,6 +349,28 @@ public:
 
 
 	/*!
+		it remains the 'sign' of the value
+		e.g.  -2 = 1 
+		       0 = 0
+		      10 = 1
+	*/
+	void Sgn()
+	{
+		if( IsSign() )
+		{
+			SetOne();
+			SetSign();
+		}
+		else
+		if( IsZero() )
+			SetZero();
+		else
+			SetOne();
+	}
+
+
+
+	/*!
 		it sets the sign
 
 			e.g.
@@ -567,6 +589,36 @@ public:
 
 	return (c==0)? 0 : 1;
 	}
+
+
+	/*!
+		the remainder from the division
+
+		e.g.
+		 12.6 mod  3 =  0.6   because 12.6 = 3*4 + 0.6
+		-12.6 mod  3 = -0.6
+		 12.6 mod -3 =  0.6
+		-12.6 mod -3 = -0.6
+
+		it means:
+		in other words: this(old) = ss2 * q + this(new)(result)
+	*/
+	uint Mod(const Big<exp, man> & ss2)
+	{
+	TTMATH_REFERENCE_ASSERT( ss2 )
+
+	uint c = 0;
+
+		Big<exp, man> temp(*this);
+
+		c += temp.Div(ss2);
+		temp.SkipFraction();
+		c += temp.Mul(ss2);
+		c += Sub(temp);
+
+	return (c==0)? 0 : 1;
+	}
+
 
 
 	/*!

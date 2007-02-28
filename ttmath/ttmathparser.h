@@ -748,6 +748,32 @@ void ACTan(int sindex, int amount_of_args, ValueType & result)
 }
 
 
+void Sgn(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 1 )
+		Error( err_improper_amount_of_arguments );
+
+	result = ttmath::Sgn(stack[sindex].value);
+}
+
+
+void Mod(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 2 )
+		Error( err_improper_amount_of_arguments );
+
+	if( stack[sindex+2].value.IsZero() )
+		Error( err_improper_argument );
+
+	result = stack[sindex].value;
+	uint c = result.Mod(stack[sindex+2].value);
+
+	if( c )
+		Error( err_overflow );
+}
+
+
+
 /*!
 	this method returns the value from a user-defined function
 
@@ -874,6 +900,8 @@ void CreateFunctionsTable()
 	InsertFunctionToTable(std::string("acos"),   	&Parser<ValueType>::ACos);
 	InsertFunctionToTable(std::string("atan"),   	&Parser<ValueType>::ATan);
 	InsertFunctionToTable(std::string("actan"),   	&Parser<ValueType>::ACTan);
+	InsertFunctionToTable(std::string("sgn"),   	&Parser<ValueType>::Sgn);
+	InsertFunctionToTable(std::string("mod"),   	&Parser<ValueType>::Mod);
 }
 
 
@@ -1728,8 +1756,6 @@ ErrorCode Parse(const char * str)
 	
 	stack.resize( default_stack_size );
 
-//	char buf_temp[] = "-(1)";
-//	pstring = buf_temp;
 
 	try
 	{
