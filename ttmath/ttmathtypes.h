@@ -61,7 +61,7 @@
 */
 #define TTMATH_MAJOR_VER		0
 #define TTMATH_MINOR_VER		7
-#define TTMATH_REVISION_VER		1
+#define TTMATH_REVISION_VER		2
 
 
 /*!
@@ -205,6 +205,7 @@ namespace ttmath
 		err_interrupt,
 		err_overflow,
 		err_unknown_function,
+		err_unknown_operator,
 		err_unexpected_semicolon_operator,
 		err_improper_amount_of_arguments,
 		err_improper_argument,

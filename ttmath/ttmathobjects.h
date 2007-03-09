@@ -69,16 +69,18 @@ public:
 
 	ErrorCode Add(const std::string & name, const std::string & value, int param = 0)
 	{
-		Table::iterator i = table.find(name);
+		if( !CorrectCharacters(name) )
+			return err_incorrect_name;
 
-		if( i != table.end() )
-			// we have this object in our table
-			return err_object_exists;
-	
+		if( AreBigLetters(name) )
+		{
+			std::string name_copy(name);
+			ToSmallLetters(name_copy);
 
-		table.insert( std::make_pair(name, ObjectValue(value, param)) );
-
-	return err_ok;
+			return AddAfterChecking(name_copy, value, param);
+		}
+		else
+			return AddAfterChecking(name, value, param);
 	}
 
 
@@ -110,7 +112,7 @@ public:
 			// we don't have this variable in our table
 			return err_unknown_object;
 	
-		i->second.value  = value;
+		i->second.value = value;
 		i->second.param = param;
 
 	return err_ok;
@@ -173,6 +175,80 @@ public:
 private:
 
 	Table table;
+
+
+	bool CorrectCharacter(int c, bool digit)
+	{
+		if( (c>='a' && c<='z') || (c>='A' && c<='Z') )
+			return true;
+
+		if( digit && (c>='0' && c<='9') )
+			return true;
+
+	return false;
+	}
+
+
+	bool CorrectCharacters(const std::string & name)
+	{
+		if( name.empty() )
+			return false;
+
+		if( !CorrectCharacter(name[0], false) )
+			return false;
+
+		std::string::const_iterator i=name.begin();
+
+		for(++i ; i!=name.end() ; ++i)
+			if( !CorrectCharacter(*i, true) )
+				return false;
+		
+	return true;
+	}
+	
+
+	static int SmallLetter(int c)
+	{
+		if( c>='A' && c<='Z' )
+			return c-'A'+'a';
+
+	return c;
+	}
+
+
+	static bool AreBigLetters(const std::string & name)
+	{
+		std::string::const_iterator i;
+
+		for(i=name.begin() ; i!=name.end() ; ++i)
+			if( *i>='A' && *i<='Z' )
+				return true;
+
+	return false;
+	}
+
+
+	void ToSmallLetters(std::string & name)
+	{
+		std::string::iterator i;
+
+		for(i=name.begin() ; i!=name.end() ; ++i)
+			*i = SmallLetter(*i);
+	}
+
+
+	ErrorCode AddAfterChecking(const std::string & name, const std::string & value, int param)
+	{
+		Table::iterator i = table.find(name);
+
+		if( i != table.end() )
+			// we have this object in our table
+			return err_object_exists;
+
+		table.insert( std::make_pair(name, ObjectValue(value, param)) );
+
+	return err_ok;
+	}
 
 };
 

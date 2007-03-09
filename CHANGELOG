@@ -1,3 +1,13 @@
+Version 0.7.2 (2007.03.09):
+	* added: Big::Mod - the remainder from a division
+	* added: Big::Sgn - the 'sign' from the value (-1,0,1)
+	* added: global functions Mod and Sgn too
+	* added: checking whether an user gives a correct value of a variable or function
+      (user-defined variables/functions in the mathematical parser)
+	* added: into the parser: logical operators: > < >= <= == != && ||
+	* added: into the parser: logical functions: and() or() not() if()
+	* added: ErrorCode::err_unknown_operator when the parser couldn't read an operator
+
 Version 0.7.1 (2007.02.27):
 	* fixed the error 'overflow during printing' which was caused
 	  by Big::FromInt(Int<int_size> value) (the sign has to be set at the end)

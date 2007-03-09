@@ -65,12 +65,27 @@ namespace ttmath
 	
 	x = [+|-]Value[operator[+|-]Value][operator[+|-]Value]...
 	where:
-		operator can be:
+		an operator can be:
+			^ (pow)  (the highest priority)
+
+			* (mul) 
+			/ (div)   (* and / have the same priority)
+
 			+ (add)
-			- (sub)
-			* (mul)
-			/ (div)
-			^ (pow)
+			- (sub)   (+ and - have the same priority)
+
+			< (lower than)
+			> (greater than)
+			<= (lower or equal than)
+			>= (greater or equal than)
+			== (equal)
+			!= (not equal)   (all above logical operators have the same priority)
+			
+			and (logical and)
+
+			or (logical or) (the lowest priority)
+
+
 		and Value can be:
 			constant e.g. 100
 			variable e.g. pi
@@ -89,6 +104,8 @@ namespace ttmath
 		"(1+2)*(2+3)"
 		"log(2;1234)"    there's a semicolon here (not a comma), we use it in functions
 		                 for separating parameters
+	    "1 < 2"  (the result will be: 1)
+	    "4 < 3"  (the result will be: 0)
 		etc.
 
 	we can also use a semicolon for separating any 'x' input strings
@@ -96,7 +113,6 @@ namespace ttmath
 		"1+2;4+5"
 	the result will be on the stack as follows:
 		"3"
-		"semicolon operator"
 		"9"
 */
 template<class ValueType>
@@ -120,7 +136,7 @@ private:
 
 		enum Type
 		{
-			none,add,sub,mul,div,pow	
+			none,add,sub,mul,div,pow,lt,gt,let,get,eq,neq,lor,land
 		};
 
 
@@ -134,6 +150,23 @@ private:
 
 			switch( type )
 			{		
+			case lor:
+				priority = 4;
+				break;
+
+			case land:
+				priority = 5;
+				break;
+
+			case eq:
+			case neq:
+			case lt:
+			case gt:
+			case let:
+			case get:
+				priority = 7;
+				break;
+
 			case add:
 			case sub:
 				priority = 10;
@@ -336,6 +369,17 @@ typedef void (ValueType::*pfunction_var)();
 */
 typedef std::map<std::string, pfunction> FunctionsTable;
 FunctionsTable functions_table;
+
+
+/*!
+	table of mathematic operators
+
+	this map consists of:
+		std::string - operators's name
+		MatOperator::Type - type of the operator
+*/
+typedef std::map<std::string, typename MatOperator::Type> OperatorsTable;
+OperatorsTable operators_table;
 
 
 /*!
@@ -773,6 +817,66 @@ void Mod(int sindex, int amount_of_args, ValueType & result)
 }
 
 
+void If(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 3 )
+		Error( err_improper_amount_of_arguments );
+
+
+	if( !stack[sindex].value.IsZero() )
+		result = stack[sindex+2].value;
+	else
+		result = stack[sindex+4].value;
+}
+
+
+void Or(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args < 2 )
+		Error( err_improper_amount_of_arguments );
+
+	for(int i=0 ; i<amount_of_args ; ++i)
+	{
+		if( !stack[sindex+i*2].value.IsZero() )
+		{
+			result.SetOne();
+			return;
+		}
+	}
+
+	result.SetZero();
+}
+
+
+void And(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args < 2 )
+		Error( err_improper_amount_of_arguments );
+
+	for(int i=0 ; i<amount_of_args ; ++i)
+	{
+		if( stack[sindex+i*2].value.IsZero() )
+		{
+			result.SetZero();
+			return;
+		}
+	}
+
+	result.SetOne();
+}
+
+
+void Not(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 1 )
+		Error( err_improper_amount_of_arguments );
+
+
+	if( stack[sindex].value.IsZero() )
+		result.SetOne();
+	else
+		result.SetZero();
+}
 
 /*!
 	this method returns the value from a user-defined function
@@ -876,7 +980,7 @@ void InsertVariableToTable(const std::string & variable_name, pfunction_var pf)
 
 
 /*!
-	this method create the table of functions
+	this method creates the table of functions
 */
 void CreateFunctionsTable()
 {
@@ -902,6 +1006,10 @@ void CreateFunctionsTable()
 	InsertFunctionToTable(std::string("actan"),   	&Parser<ValueType>::ACTan);
 	InsertFunctionToTable(std::string("sgn"),   	&Parser<ValueType>::Sgn);
 	InsertFunctionToTable(std::string("mod"),   	&Parser<ValueType>::Mod);
+	InsertFunctionToTable(std::string("if"),   		&Parser<ValueType>::If);
+	InsertFunctionToTable(std::string("or"),   		&Parser<ValueType>::Or);
+	InsertFunctionToTable(std::string("and"),  		&Parser<ValueType>::And);
+	InsertFunctionToTable(std::string("not"),  		&Parser<ValueType>::Not);
 }
 
 
@@ -1176,10 +1284,64 @@ return 0;
 }
 
 
+void InsertOperatorToTable(const std::string & name, typename MatOperator::Type type)
+{
+	operators_table.insert( std::make_pair(name, type) );
+}
+
+/*!
+	this method creates the table of operators
+*/
+void CreateMathematicalOperatorsTable()
+{
+	InsertOperatorToTable(std::string("||"), MatOperator::lor);
+	InsertOperatorToTable(std::string("&&"), MatOperator::land);
+	InsertOperatorToTable(std::string("!="), MatOperator::neq);
+	InsertOperatorToTable(std::string("=="), MatOperator::eq);
+	InsertOperatorToTable(std::string(">="), MatOperator::get);
+	InsertOperatorToTable(std::string("<="), MatOperator::let);
+	InsertOperatorToTable(std::string(">"),  MatOperator::gt);
+	InsertOperatorToTable(std::string("<"),  MatOperator::lt);
+	InsertOperatorToTable(std::string("-"),  MatOperator::sub);
+	InsertOperatorToTable(std::string("+"),  MatOperator::add);
+	InsertOperatorToTable(std::string("/"),  MatOperator::div);
+	InsertOperatorToTable(std::string("*"),  MatOperator::mul);
+	InsertOperatorToTable(std::string("^"),  MatOperator::pow);
+}
+
+
+bool CanBeMathematicalOperator(unsigned char c)
+{
+	if( c=='|' || c=='&' || c=='!' || c=='=' || c=='<' || c=='>' ||
+		c=='*' || c=='/' || c=='+' || c=='-' || c=='^' )
+	return true;
+
+return false;
+}
 
 
 /*!
-	this method's reading one of the mathematic operators
+	this method reads a mathematical (or logical) operator
+*/
+void ReadMathematicalOperator(Item & result)
+{
+std::string oper;
+
+	for( ; CanBeMathematicalOperator(*pstring) ; ++pstring )
+		oper += *pstring;
+
+	typename OperatorsTable::iterator iter = operators_table.find(oper);
+
+	if( iter == operators_table.end() )
+		Error( err_unknown_operator );
+
+	result.type = Item::mat_operator;
+	result.moperator.SetType( iter->second );
+}
+
+
+/*!
+	this method reads a mathematic operators
 	or the final bracket or the semicolon operator
 
 	return values:
@@ -1189,46 +1351,26 @@ return 0;
 int ReadOperator(Item & result)
 {
 	SkipWhiteCharacters();
-	result.type = Item::mat_operator;
-
-	switch( *pstring )
-	{
-	case 0:
-		return 1;
-
-	case '-':
-		result.moperator.SetType( MatOperator::sub );
-		break;
-
-	case '+':
-		result.moperator.SetType( MatOperator::add );
-		break;
-
-	case '*':
-		result.moperator.SetType( MatOperator::mul );
-		break;
-
-	case '/':
-		result.moperator.SetType( MatOperator::div );
-		break;
 	
-	case '^':
-		result.moperator.SetType( MatOperator::pow );
-		break;
-
-	case ')':
+	if( *pstring == 0 )
+		return 1;
+	else
+	if( *pstring == ')' )
+	{
 		result.type = Item::last_bracket;
-		break;
-
-	case ';':
+		++pstring;
+	}
+	else
+	if( *pstring == ';' )
+	{
 		result.type = Item::semicolon;
-		break;
-
-	default:
+		++pstring;
+	}
+	else
+	if( CanBeMathematicalOperator(*pstring) )
+		ReadMathematicalOperator(result);
+	else
 		Error( err_unknown_character );
-	}	
-
-	++pstring;
 
 return 0;
 }
@@ -1246,9 +1388,40 @@ void MakeStandardMathematicOperation(ValueType & value1, typename MatOperator::T
 {
 int res;
 
-
 	switch( mat_operator )
 	{
+	case MatOperator::land:
+		(!value1.IsZero() && !value2.IsZero()) ? value1.SetOne() : value1.SetZero();
+		break;
+
+	case MatOperator::lor:
+		(!value1.IsZero() || !value2.IsZero()) ? value1.SetOne() : value1.SetZero();
+		break;
+
+	case MatOperator::eq:
+		(value1 == value2) ? value1.SetOne() : value1.SetZero();
+		break;
+
+	case MatOperator::neq:
+		(value1 != value2) ? value1.SetOne() : value1.SetZero();
+		break;
+
+	case MatOperator::lt:
+		(value1 < value2) ? value1.SetOne() : value1.SetZero();
+		break;
+
+	case MatOperator::gt:
+		(value1 > value2) ? value1.SetOne() : value1.SetZero();
+		break;
+
+	case MatOperator::let:
+		(value1 <= value2) ? value1.SetOne() : value1.SetZero();
+		break;
+
+	case MatOperator::get:
+		(value1 >= value2) ? value1.SetOne() : value1.SetZero();
+		break;
+
 	case MatOperator::sub:
 		if( value1.Sub(value2) ) Error( err_overflow );
 		break;
@@ -1663,11 +1836,12 @@ Parser(): default_stack_size(100)
 
 	CreateFunctionsTable();
 	CreateVariablesTable();
+	CreateMathematicalOperatorsTable();
 }
 
 
 /*!
-	the copying operator
+	the assignment operator
 */
 Parser<ValueType> & operator=(const Parser<ValueType> & p)
 {
@@ -1679,11 +1853,12 @@ Parser<ValueType> & operator=(const Parser<ValueType> & p)
 	error = err_ok;
 
 	/*
-		we don't have to call 'CreateFunctionsTable()' and 'CreateVariablesTable()'
+		we don't have to call 'CreateFunctionsTable()' etc.
 		we can only copy these tables
 	*/
 	functions_table   = p.functions_table;
 	variables_table   = p.variables_table;
+	operators_table   = p.operators_table;
 
 	visited_variables = p.visited_variables;
 	visited_functions = p.visited_functions;
