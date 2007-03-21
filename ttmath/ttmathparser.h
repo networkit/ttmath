@@ -81,9 +81,9 @@ namespace ttmath
 			== (equal)
 			!= (not equal)   (all above logical operators have the same priority)
 			
-			and (logical and)
+			&& (logical and)
 
-			or (logical or) (the lowest priority)
+			|| (logical or) (the lowest priority)
 
 
 		and Value can be:
@@ -393,6 +393,14 @@ typedef std::map<std::string, pfunction_var> VariablesTable;
 VariablesTable variables_table;
 
 
+
+/*!
+	you can't calculate the factorial if the argument is greater than 'factorial_max'
+	default value is zero which means there are not any limitations
+*/
+ValueType factorial_max;
+
+
 /*!
 	we're using this method for reporting an error
 */
@@ -601,6 +609,9 @@ void Factorial(int sindex, int amount_of_args, ValueType & result)
 
 	ErrorCode err;
 	
+	if( !factorial_max.IsZero() && stack[sindex].value > factorial_max )
+		Error( err_too_big_factorial );
+
 	result = ttmath::Factorial(stack[sindex].value, &err, pstop_calculating);
 
 	if(err != err_ok)
@@ -1833,6 +1844,7 @@ Parser(): default_stack_size(100)
 	pfunction_local_variables = 0;
 	base = 10;
 	error = err_ok;
+	factorial_max.SetZero();
 
 	CreateFunctionsTable();
 	CreateVariablesTable();
@@ -1851,6 +1863,7 @@ Parser<ValueType> & operator=(const Parser<ValueType> & p)
 	pfunction_local_variables = 0;
 	base = p.base;
 	error = err_ok;
+	factorial_max = p.factorial_max;
 
 	/*
 		we don't have to call 'CreateFunctionsTable()' etc.
@@ -1917,6 +1930,18 @@ void SetVariables(const Objects * pv)
 void SetFunctions(const Objects * pf)
 {
 	puser_functions = pf;
+}
+
+
+/*!
+	you will not be allowed to calculate the factorial 
+	if its argument is greater than 'm'
+	there'll be: ErrorCode::err_too_big_factorial
+	default 'factorial_max' is zero which means you can calculate what you want to
+*/
+void SetFactorialMax(const ValueType & m)
+{
+	factorial_max = m;
 }
 
 
