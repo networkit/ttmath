@@ -45,6 +45,8 @@
     \brief template class UInt<uint>
 */
 
+#include <iostream>
+#include <iomanip>
 
 #include "ttmathtypes.h"
 
@@ -54,7 +56,7 @@ namespace ttmath
 {
 
 /*! 
-	\brief it implements a big integer value without a sign
+	\brief UInt implements a big integer value without a sign
 
 	value_size - how many bytes specify our value
 		on 32bit platforms: value_size=1 -> 4 bytes -> 32 bits
@@ -71,6 +73,47 @@ public:
 		the first value (index 0) means the lowest word of this value
 	*/
 	uint table[value_size];
+
+
+	/*!
+		this method is only for debugging purposes or when we want to make
+		a table of a variable (constant) in ttmathbig.h
+
+		it prints the table in a nice form of several columns
+	*/
+	void PrintTable(std::ostream & output) const
+	{
+		// how many columns there'll be
+		const int columns = 8;
+
+		int c = 1;
+		for(int i=value_size-1 ; i>=0 ; --i)
+		{
+			output	<< "0x" << std::setfill('0');
+			
+			#ifdef TTMATH_PLATFORM32
+				output << std::setw(8);
+			#else
+				output << std::setw(16);
+			#endif
+				
+			output << std::hex << table[i];
+			
+			if( i>0 )
+			{
+				output << ", ";		
+			
+				if( ++c > columns )
+				{
+					output << std::endl;
+					c = 1;
+				}
+			}
+		}
+		
+		output << std::endl;
+	}
+
 
 
 	/*!
@@ -106,7 +149,7 @@ public:
 		this method sets the max value which this class can hold
 		(all bits will be one)
 	*/
-	void SetMaxValue()
+	void SetMax()
 	{
 		for(uint i=0 ; i<value_size ; ++i)
 			table[i] = TTMATH_UINT_MAX_VALUE;
@@ -117,12 +160,14 @@ public:
 		this method sets the min value which this class can hold
 		(for an unsigned integer value the zero is the smallest value)
 	*/
-	void SetMinValue()
+	void SetMin()
 	{
 		SetZero();
 	}
 
-#if !defined _M_X64 && !defined __x86_64__
+
+
+#ifdef TTMATH_PLATFORM32
 
 	/*!
 		this method copies the value stored in an another table
@@ -833,7 +878,7 @@ public:
 	}
 
 
-#if !defined _M_X64 && !defined __x86_64__
+#ifdef TTMATH_PLATFORM32
 
 
 	/*!
@@ -1140,7 +1185,9 @@ public:
 	return moving;
 	}
 
-#if !defined _M_X64 && !defined __x86_64__
+
+
+#ifdef TTMATH_PLATFORM32
 
 	/*
 		this method returns the number of the highest set bit in one 32-bit word
@@ -1218,7 +1265,8 @@ public:
 	}
 	
 
-#if !defined _M_X64 && !defined __x86_64__
+
+#ifdef TTMATH_PLATFORM32
 
 	/*!
 		this method sets a special bit in the 'value'
@@ -1291,7 +1339,9 @@ public:
 
 public:
 
-#if !defined _M_X64 && !defined __x86_64__
+
+
+#ifdef TTMATH_PLATFORM32
 
 
 	/*!
@@ -1534,18 +1584,26 @@ public:
 	*/
 	void Mul2Big(const UInt<value_size> & ss2, UInt<value_size*2> & result)
 	{
-	uint r2,r1,x1size,x2size,x1start,x2start;
+	uint r2,r1;
+	uint x1size=value_size, x2size=value_size;
+	uint x1start=0, x2start=0;
 
 		result.SetZero();
 
-		for(x1size=value_size ; x1size>0 && table[x1size-1]==0 ; --x1size);
-		for(x2size=value_size ; x2size>0 && ss2.table[x2size-1]==0 ; --x2size);
+		if( value_size > 2 )
+		{	
+			// if the value_size is smaller than or equal to 2
+			// there is no sense to set x1size (and others) to another values
 
-		if( x1size==0 || x2size==0 )
-			return;
+			for(x1size=value_size ; x1size>0 && table[x1size-1]==0 ; --x1size);
+			for(x2size=value_size ; x2size>0 && ss2.table[x2size-1]==0 ; --x2size);
 
-		for(x1start=0 ; x1start<x1size && table[x1start]==0 ; ++x1start);
-		for(x2start=0 ; x2start<x2size && ss2.table[x2start]==0 ; ++x2start);
+			if( x1size==0 || x2size==0 )
+				return;
+
+			for(x1start=0 ; x1start<x1size && table[x1start]==0 ; ++x1start);
+			for(x2start=0 ; x2start<x2size && ss2.table[x2start]==0 ; ++x2start);
+		}
 
 		for(uint x1=x1start ; x1<x1size ; ++x1)
 		{
@@ -1570,7 +1628,7 @@ public:
 	
 public:
 
-	#if !defined _M_X64 && !defined __x86_64__
+	#ifdef TTMATH_PLATFORM32
 
 
 	/*!
@@ -2486,7 +2544,7 @@ public:
 		this method converts an UInt<another_size> type to this class
 
 		this operation has mainly sense if the value from p is 
-		equal or smaller than that one which is returned from UInt<value_size>::SetMaxValue()
+		equal or smaller than that one which is returned from UInt<value_size>::SetMax()
 
 		it returns a carry if the value 'p' is too big
 	*/
@@ -2519,6 +2577,18 @@ public:
 
 
 	/*!
+		this method converts the uint type to this class
+	*/
+	void FromUInt(uint value)
+	{
+		for(uint i=1 ; i<value_size ; ++i)
+			table[i] = 0;
+
+		table[0] = value;
+	}
+
+
+	/*!
 		this operator converts an UInt<another_size> type to this class
 
 		it doesn't return a carry
@@ -2541,29 +2611,60 @@ public:
 		return *this;
 	}
 
+
 	/*!
-		this method convert an uint type to this class
+		this method converts the uint type to this class
 	*/
 	UInt<value_size> & operator=(uint i)
 	{
-		SetZero();
-		table[0] = i;
+		FromUInt(i);
 
 	return *this;
 	}
 
 
 	/*!
-		a constructor for converting an uint to this class
+		a constructor for converting the uint to this class
 	*/
 	UInt(uint i)
 	{
-		operator=(i);
+		FromUInt(i);
+	}
+
+
+
+	/*!
+		this method converts the sint type to this class
+
+		we provide operator(sint) and the constructor(sint) in order to allow
+		the programmer do that:
+			UInt<..> type = 10;
+
+		this constant 10 has the int type (signed int), if we don't give such
+		operators and constructors the compiler will not compile the program,
+		because it has to make a conversion and doesn't know into which type
+		(the UInt class has operator=(const char*), operator=(uint) etc.)
+	*/
+	UInt<value_size> & operator=(sint i)
+	{
+		FromUInt(uint(i));
+
+	return *this;
 	}
 
 
 	/*!
-		a constructor for converting string to this class (with base=10)
+		a constructor for converting the sint to this class
+
+		look at the description of UInt::operator=(sint)
+	*/
+	UInt(sint i)
+	{
+		FromUInt(uint(i));
+	}
+
+	/*!
+		a constructor for converting a string to this class (with the base=10)
 	*/
 	UInt(const char * s)
 	{
@@ -2572,7 +2673,7 @@ public:
 
 
 	/*!
-		a constructor for converting string to this class (with base=10)
+		a constructor for converting a string to this class (with the base=10)
 	*/
 	UInt(const std::string & s)
 	{
@@ -2615,10 +2716,9 @@ public:
 	/*!
 		a destructor
 	*/
-	virtual ~UInt()
+	~UInt()
 	{
 	}
-
 
 
 	/*!
@@ -3081,10 +3181,13 @@ public:
 	}
 
 
-#if defined _M_X64 || defined __x86_64__
+#ifdef TTMATH_PLATFORM64
 
-	// these methods for 64bit processors are defined in 'ttmathuint64.h'
-
+	// these methods are for 64bit processors and are defined in 'ttmathuint64.h'
+	UInt<value_size> & operator=(unsigned int i);
+	UInt(unsigned int i);
+	UInt<value_size> & operator=(signed int i);
+	UInt(signed int i);
 	void SetFromTable(const unsigned int * temp_table, uint temp_table_len);	
 	uint Add(const UInt<value_size> & ss2, uint c=0);
 	uint AddInt(uint value, uint index = 0);

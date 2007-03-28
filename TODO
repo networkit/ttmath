@@ -1,7 +1,7 @@
 TODO TTMath Library
 ===================
 
-* to add operators (or functions) and, or, xor
-* to add functions for generating random values
-* to add constructors (UInt, Int) for 64bit platforms (constractors which take int and unsigned)
-* to add 'history' for functions like 'factorial' which take a lot of time during calculating
+* Add bitwise operators (or functions) and, or, xor
+* Add functions for generating random values
+
+

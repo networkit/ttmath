@@ -40,19 +40,19 @@
 
 /*!
 	\file ttmathbig.h
-    \brief A Class for representing big numbers
+    \brief A Class for representing floating point numbers
 */
 
 #include "ttmathint.h"
 
-
+#include <iostream>
 
 namespace ttmath
 {
 
 
 /*!
-	\brief it implements the big value
+	\brief Big implements the floating point numbers
 */
 template <uint exp,uint man>
 class Big
@@ -147,6 +147,7 @@ private:
 
 public:
 
+
 	/*!
 		it sets value zero
 	*/
@@ -167,19 +168,16 @@ public:
 	*/
 	void SetOne()
 	{
-		info = 0;
-		mantissa.SetOne();
-		exponent.SetZero();
-		Standardizing();
+		FromUInt(1);
 	}
 
 
 	/*!
 		it sets value 0.5
 	*/
-	void SetDotOne()
+	void Set05()
 	{
-		SetOne();
+		FromUInt(1);
 		exponent.SubOne();
 	}
 
@@ -189,6 +187,10 @@ public:
 	*/
 	void SetPi()
 	{
+	// this is a static table which represents the value Pi (mantissa of it)
+	// (first is the highest word)
+	// we must define this table as 'unsigned int' because 
+	// both on 32bit and 64bit platforms this table is 32bit
 	static const unsigned int temp_table[] = {
 		0xc90fdaa2, 0x2168c234, 0xc4c6628b, 0x80dc1cd1, 0x29024e08, 0x8a67cc74, 0x020bbea6, 0x3b139b22, 
 		0x514a0879, 0x8e3404dd, 0xef9519b3, 0xcd3a431b, 0x302b0a6d, 0xf25f1437, 0x4fe1356d, 0x6d51c245, 
@@ -199,13 +201,26 @@ public:
 		0x9b2783a2, 0xec07a28f, 0xb5c55df0, 0x6f4c52c9, 0xde2bcbf6, 0x95581718, 0x3995497c, 0xea956ae5, 
 		0x15d22618, 0x98fa0510, 0x15728e5a, 0x8aaac42d, 0xad33170d, 0x04507a33, 0xa85521ab, 0xdf1cba64, 
 		0xecfb8504, 0x58dbef0a, 0x8aea7157, 0x5d060c7d, 0xb3970f85, 0xa6e1e4c7, 0xabf5ae8c, 0xdb0933d7, 
-		0x1e8c94e0, 0x4a25619d, 0xcee3d226, 0x1ad2ee6b, 0xf0139f9d, 0x88e637cb
+		0x1e8c94e0, 0x4a25619d, 0xcee3d226, 0x1ad2ee6b, 0xf12ffa06, 0xd98a0864, 0xd8760273, 0x3ec86a64, 
+		0x521f2b18, 0x177b200c, 0xbbe11757, 0x7a615d6c, 0x770988c0, 0xbad946e2, 0x08e24fa0, 0x74e5ab31, 
+		0x43db5bfc, 0xe0fd108e, 0x4b82d120, 0xa9210801, 0x1a723c12, 0xa787e6d7, 0x88719a10, 0xbdba5b26, 
+		0x99c32718, 0x6af4e23c, 0x1a946834, 0xb6150bda, 0x2583e9ca, 0x2ad44ce8, 0xdbbbc2db, 0x04de8ef9, 
+		0x2e8efc14, 0x1fbecaa6, 0x287c5947, 0x4e6bc05d, 0x99b2964f, 0xa090c3a2, 0x233ba186, 0x515be7ed, 
+		0x1f612970, 0xcee2d7af, 0xb81bdd76, 0x2170481c, 0xd0069127, 0xd5b05aa9, 0x93b4ea98, 0x8d8fddc1, 
+		0x86ffb7dc, 0x90a6c08f, 0x4df435c9, 0x34028492, 0x36c3fab4, 0xd27c7026, 0xc1d4dcb2, 0x602646df // (last one was: 0x602646de) 
+		// 0xc9751e76, ...
+		// (the last word was rounded up because the next one is 0xc9751e76 -- first bit is one 0xc..)
+		// 128 32bit words for the mantissa -- about 1232 valid digits (decimal)
 		};
-		// 78 unsigned 32bits words
-		// this is static table which represents the value Pi (mantissa of its)
-		// (first is the highest word)
-		//	we must define this table as 'unsigned int' because 
-		//	on 32bits and 64bits platforms this table is 32bits
+
+		// the value of PI is comming from the website "Paul's 8192 Digits of Pi"
+		// http://www.escape.com/~paulg53/math/pi/8192.html
+		// 2999 digits were taken from this website
+		// (later they were compared with http://zenwerx.com/pi.php)
+		// and they were set into Big<1,300> type (using operator=(const char*) on 32bit platform)
+		// and then the first 128 words were taken into this table
+		// (TTMATH_BUILTIN_VARIABLES_SIZE on 32bit platform should have the value 128,
+		// and on 64bit platform value 64 (128/2=64))
 	
 		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(int));
 		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT) + 2;
@@ -235,7 +250,7 @@ public:
 
 	/*!
 		it sets value e
-		(the base of natural logarithm)
+		(the base of the natural logarithm)
 	*/
 	void SetE()
 	{
@@ -249,9 +264,24 @@ public:
 		0x8e4f1232, 0xeef28183, 0xc3fe3b1b, 0x4c6fad73, 0x3bb5fcbc, 0x2ec22005, 0xc58ef183, 0x7d1683b2, 
 		0xc6f34a26, 0xc1b2effa, 0x886b4238, 0x611fcfdc, 0xde355b3b, 0x6519035b, 0xbc34f4de, 0xf99c0238, 
 		0x61b46fc9, 0xd6e6c907, 0x7ad91d26, 0x91f7f7ee, 0x598cb0fa, 0xc186d91c, 0xaefe1309, 0x85139270, 
-		0xb4130c93, 0xbc437944, 0xf4fd4452, 0xe2d74dd3, 0x645b2194, 0x41468794
+		0xb4130c93, 0xbc437944, 0xf4fd4452, 0xe2d74dd3, 0x64f2e21e, 0x71f54bff, 0x5cae82ab, 0x9c9df69e, 
+		0xe86d2bc5, 0x22363a0d, 0xabc52197, 0x9b0deada, 0x1dbf9a42, 0xd5c4484e, 0x0abcd06b, 0xfa53ddef, 
+		0x3c1b20ee, 0x3fd59d7c, 0x25e41d2b, 0x669e1ef1, 0x6e6f52c3, 0x164df4fb, 0x7930e9e4, 0xe58857b6, 
+		0xac7d5f42, 0xd69f6d18, 0x7763cf1d, 0x55034004, 0x87f55ba5, 0x7e31cc7a, 0x7135c886, 0xefb4318a, 
+		0xed6a1e01, 0x2d9e6832, 0xa907600a, 0x918130c4, 0x6dc778f9, 0x71ad0038, 0x092999a3, 0x33cb8b7a, 
+		0x1a1db93d, 0x7140003c, 0x2a4ecea9, 0xf98d0acc, 0x0a8291cd, 0xcec97dcf, 0x8ec9b55a, 0x7f88a46b, 
+		0x4db5a851, 0xf44182e1, 0xc68a007e, 0x5e0dd902, 0x0bfd64b6, 0x45036c7a, 0x4e677d2c, 0x38532a3a
+		//0x23ba4442,...
+		// 128 32bit words for the mantissa -- about 1232 valid digits (decimal)
 		};
-	
+
+		// above value was calculated using Big<1,300> on 32bit platform
+		// and then the first 128 words were taken,
+		// the calculating was made by using ExpSurrounding0(1) method
+		// which took 1110 iterations
+		// (TTMATH_BUILTIN_VARIABLES_SIZE on 32bit platform should have the value 128,
+		// and on 64bit platform value 64 (128/2=64))
+
 		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(int));
 		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT) + 2;
 		info = 0;
@@ -274,11 +304,81 @@ public:
 		0x25669b33, 0x3564a337, 0x6a9c7f8a, 0x5e148e82, 0x074db601, 0x5cfe7aa3, 0x0c480a54, 0x17350d2c, 
 		0x955d5179, 0xb1e17b9d, 0xae313cdb, 0x6c606cb1, 0x078f735d, 0x1b2db31b, 0x5f50b518, 0x5064c18b, 
 		0x4d162db3, 0xb365853d, 0x7598a195, 0x1ae273ee, 0x5570b6c6, 0x8f969834, 0x96d4e6d3, 0x30af889b, 
-		0x44a02554, 0x731cdc8e, 0xa17293d1, 0x228a4ef8, 0x6e1adf84, 0x08689fa8
+		0x44a02554, 0x731cdc8e, 0xa17293d1, 0x228a4ef9, 0x8d6f5177, 0xfbcf0755, 0x268a5c1f, 0x9538b982, 
+		0x61affd44, 0x6b1ca3cf, 0x5e9222b8, 0x8c66d3c5, 0x422183ed, 0xc9942109, 0x0bbb16fa, 0xf3d949f2, 
+		0x36e02b20, 0xcee886b9, 0x05c128d5, 0x3d0bd2f9, 0x62136319, 0x6af50302, 0x0060e499, 0x08391a0c, 
+		0x57339ba2, 0xbeba7d05, 0x2ac5b61c, 0xc4e9207c, 0xef2f0ce2, 0xd7373958, 0xd7622658, 0x901e646a, 
+		0x95184460, 0xdc4e7487, 0x156e0c29, 0x2413d5e3, 0x61c1696d, 0xd24aaebd, 0x473826fd, 0xa0c238b9, 
+		0x0ab111bb, 0xbd67c724, 0x972cd18b, 0xfbbd9d42, 0x6c472096, 0xe76115c0, 0x5f6f7ceb, 0xac9f45ae, 
+		0xcecb72f1, 0x9c38339d, 0x8f682625, 0x0dea891e, 0xf07afff3, 0xa892374e, 0x175eb4af, 0xc8daadd9 // (last one was: 0xc8daadd8)
+		// 0x85db6ab0, ... 
+		// (the last word was rounded up because the next one is 0x85db6ab0 -- first bit is one 0x8..)
+		// 128 32bit words for the mantissa -- about 1232 valid digits (decimal)
 		};	
+
+		// above value was calculated using Big<1,300> on 32bit platform
+		// and then the first 128 words were taken,
+		// the calculating was made by using LnSurrounding1(2) method
+		// which took 3030 iterations
+		// (TTMATH_BUILTIN_VARIABLES_SIZE on 32bit platform should have the value 128,
+		// and on 64bit platform value 64 (128/2=64))
 
 		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(int));
 		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT);
+		info = 0;
+	}
+
+
+	/*!
+		it sets value ln(10)
+		the natural logarithm from value 10
+
+		I introduced this constant especially to make the conversion ToString()
+		being faster. In fact the method ToString() is keeping values of logarithms
+		it has calculated but it must calculate the logarithm at least once.
+		If a program, which uses this library, is running for a long time this
+		would be ok, but for programs which are running shorter, for example for
+		CGI applications which only once are printing values, this would be much
+		inconvenience. Then if we're printing with base (radix) 10 and the mantissa
+		of our value is smaller than or equal to TTMATH_BUILTIN_VARIABLES_SIZE
+		we don't calculate the logarithm but take it from this constant.
+	*/
+	void SetLn10()
+	{
+	static const unsigned int temp_table[] = {
+		0x935d8ddd, 0xaaa8ac16, 0xea56d62b, 0x82d30a28, 0xe28fecf9, 0xda5df90e, 0x83c61e82, 0x01f02d72, 
+		0x962f02d7, 0xb1a8105c, 0xcc70cbc0, 0x2c5f0d68, 0x2c622418, 0x410be2da, 0xfb8f7884, 0x02e516d6, 
+		0x782cf8a2, 0x8a8c911e, 0x765aa6c3, 0xb0d831fb, 0xef66ceb0, 0x4ab3c6fa, 0x5161bb49, 0xd219c7bb, 
+		0xca67b35b, 0x23605085, 0x8e93368d, 0x44789c4f, 0x5b08b057, 0xd5ede20f, 0x469ea58e, 0x9305e981, 
+		0xe2478fca, 0xad3aee98, 0x9cd5b42e, 0x6a271619, 0xa47ecb26, 0x978c5d4f, 0xdb1d28ea, 0x57d4fdc0, 
+		0xe40bf3cc, 0x1e14126a, 0x45765cde, 0x268339db, 0xf47fa96d, 0xeb271060, 0xaf88486e, 0xa9b7401e, 
+		0x3dfd3c51, 0x748e6d6e, 0x3848c8d2, 0x5faf1bca, 0xe88047f1, 0x7b0d9b50, 0xa949eaaa, 0xdf69e8a5, 
+		0xf77e3760, 0x4e943960, 0xe38a5700, 0xffde2db1, 0xad6bfbff, 0xd821ba0a, 0x4cb0466d, 0x61ba648e, 
+		0xef99c8e5, 0xf6974f36, 0x3982a78c, 0xa45ddfc8, 0x09426178, 0x19127a6e, 0x3b70fcda, 0x2d732d47, 
+		0xb5e4b1c8, 0xc0e5a10a, 0xaa6604a5, 0x324ec3dc, 0xbc64ea80, 0x6e198566, 0x1f1d366c, 0x20663834, 
+		0x4d5e843f, 0x20642b97, 0x0a62d18e, 0x478f7bd5, 0x8fcd0832, 0x4a7b32a6, 0xdef85a05, 0xeb56323a, 
+		0x421ef5e0, 0xb00410a0, 0xa0d9c260, 0x794a976f, 0xf6ff363d, 0xb00b6b33, 0xf42c58de, 0xf8a3c52d, 
+		0xed69b13d, 0xc1a03730, 0xb6524dc1, 0x8c167e86, 0x99d6d20e, 0xa2defd2b, 0xd006f8b4, 0xbe145a2a, 
+		0xdf3ccbb3, 0x189da49d, 0xbc1261c8, 0xb3e4daad, 0x6a36cecc, 0xb2d5ae5b, 0x89bf752f, 0xb5dfb353, 
+		0xff3065c4, 0x0cfceec8, 0x1be5a9a9, 0x67fddc57, 0xc4b83301, 0x006bf062, 0x4b40ed7a, 0x56c6cdcd, 
+		0xa2d6fe91, 0x388e9e3e, 0x48a93f5f, 0x5e3b6eb4, 0xb81c4a5b, 0x53d49ea6, 0x8e668aea, 0xba83c7f9 // (last one was: 0xba83c7f8)
+		///0xfb5f06c3, ...
+		//(the last word was rounded up because the next one is 0xfb5f06c3 -- first bit is one 0xf..)
+		// 128 32bit words for the mantissa -- about 1232 valid digits (decimal)
+		};	
+
+		// above value was calculated using Big<1,300> on 32bit platform
+		// and then the first 128 32bit words were taken,
+		// the calculating was made by using LnSurrounding1(10) method
+		// which took 16555 iterations
+		// (the formula used in LnSurrounding1(x) converges badly when
+	    // the x is greater than one but in fact we can use it, only the
+		// number of iterations will be greater)
+		// (TTMATH_BUILTIN_VARIABLES_SIZE on 32bit platform should have the value 128,
+		// and on 64bit platform value 64 (128/2=64))
+
+		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(int));
+		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT) + 2;
 		info = 0;
 	}
 
@@ -289,8 +389,8 @@ public:
 	void SetMax()
 	{
 		info = 0;
-		mantissa.SetMaxValue();
-		exponent.SetMaxValue();
+		mantissa.SetMax();
+		exponent.SetMax();
 
 		// we don't have to use 'Standardizing()' because the last bit from
 		// the mantissa is set
@@ -304,8 +404,8 @@ public:
 	{
 		info = 0;
 
-		mantissa.SetMaxValue();
-		exponent.SetMaxValue();
+		mantissa.SetMax();
+		exponent.SetMax();
 		SetSign();
 
 		// we don't have to use 'Standardizing()' because the last bit from
@@ -775,7 +875,29 @@ public:
 
 	return 0;
 	}
-	
+
+
+	/*!
+		power this = this ^ pow
+		this *must* be greater than zero (this > 0)
+		pow can be negative and with fraction
+
+		return values:
+		1 - carry
+		2 - incorrect argument ('this')
+	*/
+	uint PowFrac(const Big<exp, man> & pow)
+	{
+		TTMATH_REFERENCE_ASSERT( pow )
+
+		Big<exp, man> temp;
+		uint c = temp.Ln(*this);
+		c += temp.Mul(pow);
+		c += Exp(temp);
+
+	return (c==0)? 0 : 1;
+	}
+
 
 	/*!
 		power this = this ^ pow
@@ -803,23 +925,13 @@ public:
 		Big<exp, man> pow_frac( pow );
 		pow_frac.RemainFraction();
 
-
 		if( pow_frac.IsZero() )
 			return PowBInt( pow );
 
 		// pow is with fraction (not integer)
 		// result = e^(pow * ln(this) ) where 'this' must be greater than 0
 
-		// IsZero() was tested before
-		if( IsSign() )
-			return 2;
-
-		Big<exp, man> temp;
-		uint c = temp.Ln(*this);
-		c += temp.Mul(pow);
-		c += Exp(temp);
-
-	return (c==0)? 0 : 1;
+	return PowFrac(pow);
 	}
 
 
@@ -843,6 +955,10 @@ private:
 		denominator.SetOne();
 		denominator_i.SetOne();
 
+		// this is only to avoid getting a warning about an uninitialized object
+		// gcc 4.1.2 reports: 'old_value.info' may be used uninitialized in this function
+		// (in fact we will initialize it later when the condition 'testing' is fulfilled)
+		old_value.info = 0;
 	
 		// every 'step_test' times we make a test
 		const uint step_test = 5;
@@ -969,10 +1085,6 @@ private:
 
 		we're using the formula:
 		ln x = 2 * [ (x-1)/(x+1) + (1/3)((x-1)/(x+1))^3 + (1/5)((x-1)/(x+1))^5 + ... ]
-
-		parts - it's used for approximation, it means how many parts of the above formula
-		will be caltulated, when equals 0 then it is ommited
-
 	*/
 	void LnSurrounding1(const Big<exp,man> & x)
 	{
@@ -998,9 +1110,13 @@ private:
 
 		denominator.SetOne();
 		SetZero();
-		
-		// every 'step_test' times we make a test
 
+		// this is only to avoid getting a warning about an uninitialized object
+		// gcc 4.1.2 reports: 'old_value.info' may be used uninitialized in this function
+		// (in fact we will initialize it later when the condition 'testing' is fulfilled)
+		old_value.info = 0;
+
+		// every 'step_test' times we make a test
 		const uint step_test = 5;
 
 		// we begin from 1 in order to not testing at the beginning
@@ -1253,7 +1369,7 @@ public:
 		if( IsSign() )
 		{
 			Int<int_size> min;
-			min.SetMinValue();
+			min.SetMin();
 
 			if( result == min )
 				return 0;
@@ -1271,6 +1387,24 @@ public:
 
 
 	/*!
+		a method for converting 'uint' to this class
+	*/
+	void FromUInt(uint value)
+	{
+		info = 0;
+
+		for(uint i=0 ; i<man-1 ; ++i)
+			mantissa.table[i] = 0;
+
+		mantissa.table[man-1] = value;
+		exponent = -sint(man-1) * sint(TTMATH_BITS_PER_UINT);
+
+		// there shouldn't be a carry because 'value' has the 'uint' type 
+		Standardizing();
+	}
+
+
+	/*!
 		a method for converting 'sint' to this class
 	*/
 	void FromInt(sint value)
@@ -1279,19 +1413,14 @@ public:
 
 		if( value < 0 )
 		{
-			value  = -value;
+			value   = -value;
 			is_sign = true;
 		}
 
-		info = 0;
-		mantissa = value;
-		exponent.SetZero();
+		FromUInt(uint(value));
 
 		if( is_sign )
 			SetSign();
-
-		// there shouldn't be a carry because 'value' has the type 'sint'
-		Standardizing();
 	}
 
 
@@ -1307,29 +1436,99 @@ public:
 
 
 	/*!
-		a constructor for converting 'sint' and 'uint' to this class
+		an operator= for converting 'uint' to this class
+	*/
+	Big<exp, man> & operator=(uint value)
+	{
+		FromUInt(value);
+
+	return *this;
+	}
+
+
+	/*!
+		a constructor for converting 'sint' to this class
 	*/
 	Big(sint value)
 	{
 		FromInt(value);
 	}
 
+	/*!
+		a constructor for converting 'uint' to this class
+	*/
 	Big(uint value)
 	{
-		FromInt( sint(value) );
+		FromUInt(value);
 	}
+	
 
+#ifdef TTMATH_PLATFORM64
 
-#if defined _M_X64 || defined __x86_64__
 	/*!
-		a constructor for converting 'int' to this class
-		(on 64bit platforms 'sint' has 64 bits and 'int' has 32 bits
+		in 64bit platforms we must define additional operators and contructors
+		in order to allow a user initializing the objects in this way:
+			Big<...> type = 20;
+		or
+			Big<...> type; 
+			type = 30;
+
+		decimal constants such as 20, 30 etc. are integer literal of type int,
+		if the value is greater it can even be long int,
+		0 is an octal integer of type int
+		(ISO 14882 p2.13.1 Integer literals)
 	*/
-	Big(int value)
+
+	/*!
+		an operator= for converting 'signed int' to this class
+		***this operator is created only on a 64bit platform***
+		it takes one argument of 32bit
+
+		
+	*/
+	Big<exp, man> & operator=(signed int value)
 	{
-		FromInt( sint(value) );
+		FromInt(sint(value));
+
+	return *this;
 	}
+
+
+	/*!
+		an operator= for converting 'unsigned int' to this class
+		***this operator is created only on a 64bit platform***
+		it takes one argument of 32bit
+	*/
+	Big<exp, man> & operator=(unsigned int value)
+	{
+		FromUInt(uint(value));
+
+	return *this;
+	}
+
+
+	/*!
+		a constructor for converting 'signed int' to this class
+		***this constructor is created only on a 64bit platform***
+		it takes one argument of 32bit
+	*/
+	Big(signed int value)
+	{
+		FromInt(sint(value));
+	}
+
+	/*!
+		a constructor for converting 'unsigned int' to this class
+		***this constructor is created only on a 64bit platform***
+		it takes one argument of 32bit
+	*/
+	Big(unsigned int value)
+	{
+		FromUInt(uint(value));
+	}
+
 #endif
+
 
 
 	/*!
@@ -1401,7 +1600,7 @@ public:
 	/*!
 		a destructor
 	*/
-	virtual ~Big()
+	~Big()
 	{
 	}
 
@@ -1713,18 +1912,34 @@ private:
 		uint c = Ln(x);
 
 		static Big<exp,man> log_history[15] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+/*
+		static Big<exp,man> log_history[15] = { sint(0),sint(0),sint(0),sint(0),sint(0),
+												sint(0),sint(0),sint(0),sint(0),sint(0),
+												sint(0),sint(0),sint(0),sint(0),sint(0) };
+*/
 		uint index = base - 2;
 
 		if( log_history[index].IsZero() )
-		{
+		{	
 			// we don't have 'base' in 'log_history' then we calculate it now
-			Big<exp,man> base_(base);
-			c += temp.Ln(base_);
-			c += Div(temp);
+
+			if( base==10 && man<=TTMATH_BUILTIN_VARIABLES_SIZE )
+			{
+				// for the base equal 10 we're using SelLn10() instead of calculating it
+				// (only if we have sufficient big the constant)
+				temp.SetLn10();
+			}
+			else
+			{
+				Big<exp,man> base_(base);
+				c += temp.Ln(base_);
+			}
 
 			// the next time we'll get the 'Ln(base)' from the history,
 			// this 'log_history' can have (16-2+1) items max
 			log_history[index] = temp;
+
+			c += Div(temp);
 		}
 		else
 		{
@@ -2269,6 +2484,11 @@ private:
 
 		// we don't remove any white characters here
 
+		// this is only to avoid getting a warning about an uninitialized object
+		// gcc 4.1.2 reports: 'old_value.info' may be used uninitialized in this function
+		// (in fact we will initialize it later when the condition 'testing' is fulfilled)
+		old_value.info = 0;
+
 		power.SetOne();
 
 		for( ; (character=UInt<man>::CharToDigit(*source, base)) != -1 ; ++source, ++index )
@@ -2804,7 +3024,7 @@ public:
 	Big<exp,man> half;
 	uint c;
 
-		half.SetDotOne();
+		half.Set05();
 
 		if( IsSign() )
 		{

@@ -52,7 +52,7 @@ namespace ttmath
 
 
 /*!
-	\brief it implements a big integer value with a sign
+	\brief Int implements a big integer value with a sign
 
 	value_size - how many bytes specify our value
 		on 32bit platforms: value_size=1 -> 4 bytes -> 32 bits
@@ -68,9 +68,9 @@ public:
 		this method sets the max value which this class can hold
 		(all bits will be one besides the last one)
 	*/
-	void SetMaxValue()
+	void SetMax()
 	{
-		UInt<value_size>::SetMaxValue();
+		UInt<value_size>::SetMax();
 		UInt<value_size>::table[value_size-1] = ~ TTMATH_UINT_HIGHEST_BIT;
 	}
 
@@ -79,7 +79,7 @@ public:
 		this method sets the min value which this class can hold
 		(all bits will be zero besides the last one which is one)
 	*/
-	void SetMinValue()
+	void SetMin()
 	{
 		UInt<value_size>::SetZero();
 		UInt<value_size>::table[value_size-1] = TTMATH_UINT_HIGHEST_BIT;
@@ -92,7 +92,7 @@ public:
 	*/
 	void SetSignOne()
 	{
-		UInt<value_size>::SetMaxValue();
+		UInt<value_size>::SetMax();
 	}
 
 
@@ -106,10 +106,10 @@ public:
 	{
 	Int<value_size> temp;
 	
-		temp.SetMinValue();
+		temp.SetMin();
 
 		/*
-			if the value is equal that one which has been returned from SetMinValue
+			if the value is equal that one which has been returned from SetMin
 			that means we can't change sign because the value is too big (bigger about one)
 
 			e.g. when value_size = 1 and value is -2147483648 we can't change it to the
@@ -138,7 +138,8 @@ public:
 		e.g. 1  -> -1
 		     -2 -> -2
 		
-		from a positive value we always make a negative value
+		from a positive value we make a negative value,
+		if the value is negative we do nothing
 	*/
 	void SetSign()
 	{
@@ -382,8 +383,8 @@ public:
 				1. if the signs were the same that means the result is too big
 				(the result must be without a sign)
 				2. if the signs were different that means if the result
-				is different from that one which has been returned from SetMinValue()
-				that is carry (result too big) but if the result is equal SetMinValue()
+				is different from that one which has been returned from SetMin()
+				that is carry (result too big) but if the result is equal SetMin()
 				there'll be ok (and the next SetSign will has no effect because
 				the value is actually negative -- look at description of that case
 				in ChangeSign())
@@ -392,13 +393,13 @@ public:
 		{
 			/*
 				there can be one case where signs are different and
-				the result will be equal the value from SetMinValue()
+				the result will be equal the value from SetMin()
 				(this situation is ok)
 			*/
 			if( ss1_is_sign != ss2_is_sign )
 			{
 				Int<value_size> temp;
-				temp.SetMinValue();
+				temp.SetMin();
 				
 				if( operator!=(temp) )
 					/*
@@ -493,8 +494,6 @@ public:
 			UInt<value_size>::table[i] = p.table[i];
 
 
-//		if( i < value_size )
-
 		if( value_size > argument_size )
 		{	
 			// 'this' is longer than 'p'
@@ -513,6 +512,20 @@ public:
 		}
 
 	return 0;
+	}
+
+
+	/*!
+		this method converts the sint type into this class
+	*/
+	void FromInt(sint value)
+	{
+	uint fill = ( value<0 ) ? TTMATH_UINT_MAX_VALUE : 0;
+
+		for(uint i=1 ; i<value_size ; ++i)
+			UInt<value_size>::table[i] = fill;
+
+		UInt<value_size>::table[0] = uint(value);
 	}
 
 
@@ -542,32 +555,103 @@ public:
 
 
 	/*!
-		this method converts an sint type to this class
+		this method converts the sint type to this class
 	*/
 	Int<value_size> & operator=(sint i)
 	{
-		if(i<0)
-			SetSignOne();
-		else
-			UInt<value_size>::SetZero();
-
-		UInt<value_size>::table[0] = uint(i);
+		FromInt(i);
 
 	return *this;
 	}
 
 
 	/*!
-		a constructor for converting an uint to this class
+		a constructor for converting the uint to this class
 	*/
 	Int(sint i)
 	{
-		operator=(i);
+		FromInt(i);
 	}
 
 
 	/*!
-		a constructor for converting string to this class (with base=10)
+		this method converts the uint type to this class
+	*/
+	Int<value_size> & operator=(uint i)
+	{
+		UInt<value_size>::FromUInt(i);
+
+	return *this;
+	}
+
+
+	/*!
+		a constructor for converting the uint to this class
+	*/
+	Int(uint i)
+	{
+		UInt<value_size>::FromUInt(i);
+	}
+
+
+#ifdef TTMATH_PLATFORM64
+
+	/*!
+		this method converts the signed int type to this class
+
+		***this operator is created only on a 64bit platform***
+		it takes one argument of 32bit
+	*/
+	Int<value_size> & operator=(signed int i)
+	{
+		FromInt(sint(i));
+
+	return *this;
+	}
+
+
+	/*!
+		a constructor for converting the signed int to this class
+
+		***this constructor is created only on a 64bit platform***
+		it takes one argument of 32bit
+	*/
+	Int(signed int i)
+	{
+		FromInt(sint(i));
+	}
+
+
+	/*!
+		this method converts the unsigned int type to this class
+
+		***this operator is created only on a 64bit platform***
+		it takes one argument of 32bit
+	*/
+	Int<value_size> & operator=(unsigned int i)
+	{
+		UInt<value_size>::FromUInt(uint(i));
+
+	return *this;
+	}
+
+
+	/*!
+		a constructor for converting the unsigned int to this class
+
+		***this constructor is created only on a 64bit platform***
+		it takes one argument of 32bit
+	*/
+	Int(unsigned int i)
+	{
+		UInt<value_size>::FromUInt(uint(i));
+	}
+
+#endif
+
+
+	/*!
+		a constructor for converting string to this class (with the base=10)
 	*/
 	Int(const char * s)
 	{
@@ -576,7 +660,7 @@ public:
 
 
 	/*!
-		a constructor for converting string to this class (with base=10)
+		a constructor for converting a string to this class (with the base=10)
 	*/
 	Int(const std::string & s)
 	{
@@ -595,7 +679,7 @@ public:
 
 
 	/*!
-		a copy constructor
+		the copy constructor
 	*/
 	template<uint argument_size>
 	Int(const Int<argument_size> & u) : UInt<value_size>::size(value_size)
@@ -607,9 +691,9 @@ public:
 
 
 	/*!
-		a destructor
+		the destructor
 	*/
-	virtual ~Int()
+	~Int()
 	{
 	}
 
@@ -683,7 +767,7 @@ public:
 		{
 		Int<value_size> mmin;
 
-			mmin.SetMinValue();
+			mmin.SetMin();
 
 			/*
 				the reference to mmin will be automatically converted to the reference
@@ -699,7 +783,7 @@ public:
 		{
 		Int<value_size> mmax;
 
-			mmax.SetMaxValue();
+			mmax.SetMax();
 
 			if( UInt<value_size>::operator>( mmax ) )
 					return 1;
@@ -747,9 +831,18 @@ public:
 	*
 	*	methods for comparing
 	*
-	*	operators == and != will be the same as in the base class (UInt<value_size>)
 	*
 	*/
+
+	bool operator==(const Int<value_size> & l) const
+	{
+		return UInt<value_size>::operator==(l);
+	}
+
+	bool operator!=(const Int<value_size> & l) const
+	{
+		return UInt<value_size>::operator!=(l);
+	}
 
 	bool operator<(const Int<value_size> & l) const
 	{

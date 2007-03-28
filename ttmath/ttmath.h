@@ -46,126 +46,21 @@
 */
 
 #include "ttmathbig.h"
+#include "ttmathobjects.h"
 
 #include <string>
-
 
 
 namespace ttmath
 {
 
-	/*!
-		the factorial from given 'x'
-		e.g.
-		Factorial(4) = 4! = 1*2*3*4
-	*/
-	template<class ValueType>
-	ValueType Factorial(const ValueType & x, ErrorCode * err = 0, const volatile StopCalculating * stop = 0)
-	{
-	ValueType result;
+	/*
+ 	 *
+	 *  functions for rounding
+	 *
+	 *
+	 */
 
-		result.SetOne();
-		
-		if( x.IsSign() )
-		{
-			if( err )
-				*err = err_improper_argument;
-
-		return result;
-		}
-
-		if( !x.exponent.IsSign() && !x.exponent.IsZero() )
-		{
-			// when x.exponent>0 there's no sense to calculate the formula
-			// (we can't add one into the x bacause
-			// we don't have enough bits in the mantissa)
-			if( err )
-				*err = err_overflow;
-
-		return result;
-		}
-
-		ValueType multipler;
-		ValueType one;
-		uint carry = 0;
-
-		one        = result; // =1
-		multipler  = result; // =1
-
-		while( !carry && multipler < x )
-		{
-			if( stop && stop->WasStopSignal() )
-			{
-				if( err )
-					*err = err_interrupt;
-
-			return result;
-			}
-			
-			carry += multipler.Add(one);
-			carry += result.Mul(multipler);
-		}
-
-
-		if( err )
-		{
-			if( carry )
-				*err = err_overflow;
-			else
-				*err = err_ok;
-		}
-
-	return result;
-	}
-
-
-	/*!
-		absolute value of x
-		e.g.  -2 = 2 
-		       2 = 2
-	*/
-	template<class ValueType>
-	ValueType Abs(const ValueType & x)
-	{
-		ValueType result( x );
-		result.Abs();
-
-	return result;
-	}
-
-
-
-	/*!
-		it returns the sign of the value
-		e.g.  -2 = 1 
-		       0 = 0
-		      10 = 1
-	*/
-	template<class ValueType>
-	ValueType Sgn(ValueType x)
-	{
-		x.Sgn();
-
-	return x;
-	}
-
-
-	/*!
-		the remainder from the division
-
-		e.g.
-		mod( 12.6 ;  3) =  0.6   because 12.6 = 3*4 + 0.6
-		mod(-12.6 ;  3) = -0.6
-		mod( 12.6 ; -3) =  0.6
-		mod(-12.6 ; -3) = -0.6
-	*/
-	template<class ValueType>
-	ValueType Mod(ValueType a, const ValueType & b)
-	{
-		a.Mod(b);
-
-	return a;
-	}
 
 	/*!
 		this method skips the fraction from x
@@ -199,6 +94,94 @@ namespace ttmath
 
 	return result;
 	}
+
+
+
+	/*!
+		this function returns a value representing the smallest integer
+		that is greater than or equal to x
+
+		Ceil(-3.7) = -3
+		Ceil(-3.1) = -3
+		Ceil(-3.0) = -3
+		Ceil(4.0)  = 4
+		Ceil(4.2)  = 5
+		Ceil(4.8)  = 5
+	*/
+	template<class ValueType>
+	ValueType Ceil(const ValueType & x, ErrorCode * err = 0)
+	{
+		ValueType result(x);
+		uint c = 0;
+
+		result.SkipFraction();
+
+		if( result != x )
+		{
+			// x is with fraction
+			// if x is negative we don't have to do anything
+			if( !x.IsSign() )
+			{
+				ValueType one;
+				one.SetOne();
+
+				c += result.Add(one);
+			}
+		}
+
+		if( err )
+			*err = c ? err_overflow : err_ok;
+
+	return result;	
+	}
+
+
+	/*!
+		this function returns a value representing the largest integer
+		that is less than or equal to x
+
+		Floor(-3.6) = -4
+		Floor(-3.1) = -4
+		Floor(-3)   = -3
+		Floor(2)    = 2
+		Floor(2.3)  = 2
+		Floor(2.8)  = 2
+	*/
+	template<class ValueType>
+	ValueType Floor(const ValueType & x, ErrorCode * err = 0)
+	{
+		ValueType result(x);
+		uint c = 0;
+
+		result.SkipFraction();
+
+		if( result != x )
+		{
+			// x is with fraction
+			// if x is positive we don't have to do anything
+			if( x.IsSign() )
+			{
+				ValueType one;
+				one.SetOne();
+
+				c += result.Sub(one);
+			}
+		}
+
+		if( err )
+			*err = c ? err_overflow : err_ok;
+
+	return result;	
+	}
+
+
+
+	/*
+ 	 *
+	 *  logarithms and the exponent
+	 *
+	 *
+	 */
 
 	
 	/*!
@@ -277,13 +260,10 @@ namespace ttmath
 	{
 	ValueType result;
 
-		uint state = result.Exp(x);
+		uint c = result.Exp(x);
 
 		if( err )
-			if( state!=0 )
-				*err = err_overflow;
-			else
-				*err = err_ok;
+			*err = c ? err_overflow : err_ok;
 
 	return result;
 	}
@@ -299,7 +279,7 @@ namespace ttmath
 	{
 
 	/*!
-		an auxiliary function for calculating the Sin
+		an auxiliary function for calculating the Sine
 		(you don't have to call this function) 
 	*/
 	template<class ValueType>
@@ -349,7 +329,7 @@ namespace ttmath
 
 	
 	/*!
-		an auxiliary function for calculating the Sin
+		an auxiliary function for calculating the Sine
 		(you don't have to call this function) 
 
 		it returns Sin(x) where 'x' is from <0, PI/2>
@@ -457,8 +437,10 @@ namespace ttmath
 
 	} // namespace auxiliaryfunctions
 
+
+
 	/*!
-		this function calulates the Sin
+		this function calculates the Sine
 	*/
 	template<class ValueType>
 	ValueType Sin(ValueType x)
@@ -490,7 +472,7 @@ namespace ttmath
 
 	
 	/*!
-		this function calulates the Cos
+		this function calulates the Cosine
 		we're using the formula cos(x) = sin(x + PI/2)
 	*/
 	template<class ValueType>
@@ -506,14 +488,14 @@ namespace ttmath
 	
 
 	/*!
-		this function calulates the Tan
+		this function calulates the Tangent
 		we're using the formula tan(x) = sin(x) / cos(x)
 
 		it takes more time than calculating the Tan directly
 		from for example Taylor series but should be a bit preciser
 		because Tan receives its values from -infinity to +infinity
 		and when we calculate it from any series then we can make
-		a small mistake than calculating 'sin/cos'
+		a greater mistake than calculating 'sin/cos'
 	*/
 	template<class ValueType>
 	ValueType Tan(const ValueType & x, ErrorCode * err = 0)
@@ -536,14 +518,27 @@ namespace ttmath
 
 
 	/*!
-		this function calulates the CTan
+		this function calulates the Tangent
+		look at the description of Tan(...)
+
+		(the abbreviation of Tangent can be 'tg' as well)
+	*/
+	template<class ValueType>
+	ValueType Tg(const ValueType & x, ErrorCode * err = 0)
+	{
+		return Tan(x, err);
+	}
+
+
+	/*!
+		this function calulates the Cotangent
 		we're using the formula tan(x) = cos(x) / sin(x)
 
 		(why do we make it in this way? 
 		look at information in Tan() function)
 	*/
 	template<class ValueType>
-	ValueType CTan(const ValueType & x, ErrorCode * err = 0)
+	ValueType Cot(const ValueType & x, ErrorCode * err = 0)
 	{
 		ValueType result = Sin(x);
 
@@ -562,6 +557,19 @@ namespace ttmath
 	}
 
 
+	/*!
+		this function calulates the Cotangent
+		look at the description of Cot(...)
+
+		(the abbreviation of Cotangent can be 'ctg' as well)
+	*/
+	template<class ValueType>
+	ValueType Ctg(const ValueType & x, ErrorCode * err = 0)
+	{
+		return Cot(x, err);
+	}
+
+
 	/*
  	 *
 	 *  inverse trigonometric functions
@@ -573,7 +581,7 @@ namespace ttmath
 	{
 
 	/*!
-		arcus sin
+		an auxiliary function for calculating the Arc Sine
 
 		we're calculating asin from the following formula:
 		asin(x) = x + (1*x^3)/(2*3) + (1*3*x^5)/(2*4*5) + (1*3*5*x^7)/(2*4*6*7) + ... 
@@ -635,7 +643,7 @@ namespace ttmath
 
 
 	/*!
-		arcus sin
+		an auxiliary function for calculating the Arc Sine
 
 		we're calculating asin from the following formula:
 		asin(x) = pi/2 - sqrt(2)*sqrt(1-x) * asin_temp
@@ -718,7 +726,7 @@ namespace ttmath
 
 
 	/*!
-		arc sin (x)
+		this function calculates the Arc Sine
 		x is from <-1,1>
 	*/
 	template<class ValueType>
@@ -765,7 +773,7 @@ namespace ttmath
 
 
 	/*!
-		arc cos (x)
+		this function calculates the Arc Cosine
 
 		we're using the formula:
 		acos(x) = pi/2 - asin(x)
@@ -786,8 +794,9 @@ namespace ttmath
 	namespace auxiliaryfunctions
 	{
 
-
 	/*!
+		an auxiliary function for calculating the Arc Tangent
+
 		arc tan (x) where x is in <0; 0.5)
 		(x can be in (-0.5 ; 0.5) too)
 
@@ -841,13 +850,15 @@ namespace ttmath
 
 
 	/*!
-		arc tan (x) where x is in <0 ; 1>
+		an auxiliary function for calculating the Arc Tangent
+
+		where x is in <0 ; 1>
 	*/
 	template<class ValueType>
 	ValueType ATan01(const ValueType & x)
 	{
 		ValueType half;
-		half.SetDotOne();
+		half.Set05();
 
 		/*
 			it would be better if we chose about sqrt(2)-1=0.41... instead of 0.5 here
@@ -908,7 +919,8 @@ namespace ttmath
 
 
 	/*!
-		arc tan (x) where x > 1
+		an auxiliary function for calculating the Arc Tangent
+		where x > 1
 
 		we're using the formula:
 		atan(x) = pi/2 - atan(1/x) for x>0
@@ -939,7 +951,7 @@ namespace ttmath
 
 
 	/*!
-		arc tan
+		this function calculates the Arc Tangent
 	*/
 	template<class ValueType>
 	ValueType ATan(ValueType x)
@@ -971,13 +983,26 @@ namespace ttmath
 
 
 	/*!
-		arc ctan
+		this function calculates the Arc Tangent
+		look at the description of ATan(...)
+
+		(the abbreviation of Arc Tangent can be 'atg' as well)
+	*/
+	template<class ValueType>
+	ValueType ATg(const ValueType & x)
+	{
+		return ATan(x);
+	}
+
+
+	/*!
+		this function calculates the Arc Cotangent
 	
 		we're using the formula:
 		actan(x) = pi/2 - atan(x)
 	*/
 	template<class ValueType>
-	ValueType ACTan(const ValueType & x)
+	ValueType ACot(const ValueType & x)
 	{
 	ValueType result;
 
@@ -988,7 +1013,464 @@ namespace ttmath
 	}
 
 
+	/*!
+		this function calculates the Arc Cotangent
+		look at the description of ACot(...)
+
+		(the abbreviation of Arc Cotangent can be 'actg' as well)
+	*/
+	template<class ValueType>
+	ValueType ACtg(const ValueType & x)
+	{
+		return ACot(x);
+	}
+
+
+	/*
+ 	 *
+	 *  hyperbolic functions
+	 *
+	 *
+	 */
+
+
+	/*!
+		this function calculates the Hyperbolic Sine
+
+		we're using the formula sinh(x)= ( e^x - e^(-x) ) / 2
+	*/
+	template<class ValueType>
+	ValueType Sinh(const ValueType & x, ErrorCode * err = 0)
+	{
+		ValueType ex, emx;
+		uint c = 0;
+
+		c += ex.Exp(x);
+		c += emx.Exp(-x);
+
+		c += ex.Sub(emx);
+		c += ex.exponent.SubOne();
+
+		if( err )
+			*err = c ? err_overflow : err_ok;
+
+	return ex;
+	}
+
+
+	/*!
+		this function calculates the Hyperbolic Cosine
+
+		we're using the formula cosh(x)= ( e^x + e^(-x) ) / 2
+	*/
+	template<class ValueType>
+	ValueType Cosh(const ValueType & x, ErrorCode * err = 0)
+	{
+		ValueType ex, emx;
+		uint c = 0;
+
+		c += ex.Exp(x);
+		c += emx.Exp(-x);
+
+		c += ex.Add(emx);
+		c += ex.exponent.SubOne();
+
+		if( err )
+			*err = c ? err_overflow : err_ok;
+
+	return ex;
+	}
+
+
+	/*!
+		this function calculates the Hyperbolic Tangent
+
+		we're using the formula tanh(x)= ( e^x - e^(-x) ) / ( e^x + e^(-x) )
+	*/
+	template<class ValueType>
+	ValueType Tanh(const ValueType & x, ErrorCode * err = 0)
+	{
+		ValueType ex, emx, nominator, denominator;
+		uint c = 0;
+
+		c += ex.Exp(x);
+		c += emx.Exp(-x);
+
+		nominator = ex;
+		c += nominator.Sub(emx);
+		denominator = ex;
+		c += denominator.Add(emx);
+		
+		c += nominator.Div(denominator);
+
+		if( err )
+			*err = c ? err_overflow : err_ok;
+
+	return nominator;
+	}
+
+
+	/*!
+		this function calculates the Hyperbolic Tangent
+		look at the description of Tanh(...)
+
+		(the abbreviation of Hyperbolic Tangent can be 'tgh' as well)
+	*/
+	template<class ValueType>
+	ValueType Tgh(const ValueType & x, ErrorCode * err = 0)
+	{
+		return Tanh(x, err);
+	}
+
+	/*!
+		this function calculates the Hyperbolic Cotangent
+
+		we're using the formula coth(x)= ( e^x + e^(-x) ) / ( e^x - e^(-x) )
+	*/
+	template<class ValueType>
+	ValueType Coth(const ValueType & x, ErrorCode * err = 0)
+	{
+		if( x.IsZero() )
+		{
+			if( err )
+				*err = err_improper_argument;
+
+			return x;
+		}
+
+		ValueType ex, emx, nominator, denominator;
+		uint c = 0;
+
+		c += ex.Exp(x);
+		c += emx.Exp(-x);
+
+		nominator = ex;
+		c += nominator.Add(emx);
+		denominator = ex;
+		c += denominator.Sub(emx);
+		
+		c += nominator.Div(denominator);
+
+		if( err )
+			*err = c ? err_overflow : err_ok;
+
+	return nominator;
+	}
+
+
+	/*!
+		this function calculates the Hyperbolic Cotangent
+		look at the description of Coth(...)
+
+		(the abbreviation of Hyperbolic Cotangent can be 'ctgh' as well)
+	*/
+	template<class ValueType>
+	ValueType Ctgh(const ValueType & x, ErrorCode * err = 0)
+	{
+		return Coth(x, err);
+	}
+
+
+
+
+	/*
+ 	 *
+	 *  functions for converting between degrees and radians
+	 *
+	 *
+	 */
+
+
+	/*!
+		this function converts degrees to radians
+		
+		it returns: x * pi / 180
+	*/
+	template<class ValueType>
+	ValueType DegToRad(const ValueType & x, ErrorCode * err = 0)
+	{
+	ValueType result, delimiter;
+	uint c = 0;
+
+		result.SetPi();
+		c += result.Mul(x);
+
+		delimiter = 180;
+		c += result.Div(delimiter);
+
+		if( err )
+			*err = c ? err_overflow : err_ok;
+
+	return result;
+	}
+
+
+	/*!
+		this function converts radians to degrees
+		
+		it returns: x * 180 / pi
+	*/
+	template<class ValueType>
+	ValueType RadToDeg(const ValueType & x, ErrorCode * err = 0)
+	{
+	ValueType result, delimiter;
+	uint c = 0;
+
+		result = 180;
+		c += result.Mul(x);
+
+		delimiter.SetPi();
+		c += result.Div(delimiter);
+
+		if( err )
+			*err = c ? err_overflow : err_ok;
+
+	return result;
+	}
+
+
+	/*!
+		this function converts degrees in the long format into one value
+
+		long format: (degrees, minutes, seconds)
+		minutes and seconds must be greater than or equal zero
+
+		result: 
+		if d>=0 : result= d + ((s/60)+m)/60
+		if d<0  : result= d - ((s/60)+m)/60
+
+		((s/60)+m)/60 = (s+60*m)/3600 (second version is faster because 
+		there's only one division)
+
+		for example:
+		DegToDeg(10, 30, 0) = 10.5
+		DegToDeg(10, 24, 35.6)=10.4098(8)
+	*/
+	template<class ValueType>
+	ValueType DegToDeg(	const ValueType & d, const ValueType & m, const ValueType & s,
+						ErrorCode * err = 0)
+	{
+	ValueType delimiter, multipler;
+	uint c = 0;
+
+		if( m.IsSign() || s.IsSign() )
+		{
+			if( err )
+				*err = err_improper_argument;
+
+			return delimiter;
+		}
+
+		multipler = 60;
+		delimiter = 3600;
+
+		c += multipler.Mul(m);
+		c += multipler.Add(s);
+		c += multipler.Div(delimiter);
+
+		if( d.IsSign() )
+			multipler.ChangeSign();
+
+		c += multipler.Add(d);
+
+		if( err )
+			*err = c ? err_overflow : err_ok;
+
+	return multipler;
+	}
+
+
+	/*!
+		this function converts degrees in the long format to radians
+	*/
+	template<class ValueType>
+	ValueType DegToRad(	const ValueType & d, const ValueType & m, const ValueType & s,
+						ErrorCode * err = 0)
+	{
+		ValueType temp_deg = DegToDeg(d,m,s,err);
+
+		if( err && *err!=err_ok )
+			return temp_deg;
+
+	return DegToRad(temp_deg, err);
+	}
+
+
+	/*
+ 	 *
+	 *  another functions
+	 *
+	 *
+	 */
+
+
+	/*!
+		this function calculates the square root
+
+		Sqrt(9) = 3
+	*/
+	template<class ValueType>
+	ValueType Sqrt(ValueType x, ErrorCode * err = 0)
+	{
+		if( x.IsSign() )
+		{
+			if( err )
+				*err = err_improper_argument;
+
+		return x;
+		}
+
+		if( x.IsZero() )
+		{
+			// Sqrt(0) = 0
+			if( err )
+				*err = err_ok;
+
+		return x;
+		}
+
+		ValueType pow;
+		pow.Set05();
+
+		// PowFrac can return only a carry because x is greater than zero
+		uint c = x.PowFrac(pow);
+
+		if( err )
+			*err = c ? err_overflow : err_ok;
+
+	return x;
+	}
+
+
+	/*!
+		the factorial from given 'x'
+		e.g.
+		Factorial(4) = 4! = 1*2*3*4
+	*/
+	template<class ValueType>
+	ValueType Factorial(const ValueType & x, ErrorCode * err = 0, const volatile StopCalculating * stop = 0)
+	{
+	static History<ValueType> history;
+	ValueType result;
+
+		result.SetOne();
+		
+		if( x.IsSign() )
+		{
+			if( err )
+				*err = err_improper_argument;
+
+		return result;
+		}
+
+		if( !x.exponent.IsSign() && !x.exponent.IsZero() )
+		{
+			// when x.exponent>0 there's no sense to calculate the formula
+			// (we can't add one into the x bacause
+			// we don't have enough bits in the mantissa)
+			if( err )
+				*err = err_overflow;
+
+		return result;
+		}
+
+		ErrorCode err_tmp;
+
+		if( history.Get(x, result, err_tmp) )
+		{
+			if( err )
+				*err = err_tmp;
+		
+			return result;
+		}
+
+		ValueType multipler;
+		ValueType one;
+		uint carry = 0;
+
+		one        = result; // =1
+		multipler  = result; // =1
+
+		while( !carry && multipler < x )
+		{
+			if( stop && stop->WasStopSignal() )
+			{
+				if( err )
+					*err = err_interrupt;
+
+			return result;
+			}
+			
+			carry += multipler.Add(one);
+			carry += result.Mul(multipler);
+		}
+
+		err_tmp = carry ? err_overflow : err_ok;
+		history.Add(x, result, err_tmp);
+
+		if( err )
+			*err = carry ? err_overflow : err_ok;
+
+	return result;
+	}
+
+
+	/*!
+		absolute value of x
+		e.g.  -2 = 2 
+		       2 = 2
+	*/
+	template<class ValueType>
+	ValueType Abs(const ValueType & x)
+	{
+		ValueType result( x );
+		result.Abs();
+
+	return result;
+	}
+
+
+	/*!
+		it returns the sign of the value
+		e.g.  -2 = 1 
+		       0 = 0
+		      10 = 1
+	*/
+	template<class ValueType>
+	ValueType Sgn(ValueType x)
+	{
+		x.Sgn();
+
+	return x;
+	}
+
+
+	/*!
+		the remainder from a division
+
+		e.g.
+		mod( 12.6 ;  3) =  0.6   because 12.6 = 3*4 + 0.6
+		mod(-12.6 ;  3) = -0.6
+		mod( 12.6 ; -3) =  0.6
+		mod(-12.6 ; -3) = -0.6
+	*/
+	template<class ValueType>
+	ValueType Mod(ValueType a, const ValueType & b)
+	{
+		a.Mod(b);
+
+	return a;
+	}
+
+
+
 } // namespace
 
+
+/*!
+	this is for convenience for the user
+	he can only use '#include <ttmath/ttmath.h>' even if he uses the parser
+*/
+#include "ttmathparser.h"
 
 #endif

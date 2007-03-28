@@ -52,13 +52,91 @@ namespace ttmath
 	*
 	*/
 
-#if defined _M_X64 || defined __x86_64__
+#ifdef TTMATH_PLATFORM64
+
+
+
+	/*!
+		in 64bit platforms we must define additional operators and contructors
+		in order to allow a user initializing the objects in this way:
+			UInt<...> type = 20;
+		or
+			UInt<...> type; 
+			type = 30;
+
+		decimal constants such as 20, 30 etc. are integer literal of type int,
+		if the value is greater it can even be long int,
+		0 is an octal integer of type int
+		(ISO 14882 p2.13.1 Integer literals)
+	*/
+
+	/*!
+		this operator converts the unsigned int type to this class
+
+		***this operator is created only on a 64bit platform***
+		it takes one argument of 32bit
+	*/
+	template<uint value_size>
+	UInt<value_size> & UInt<value_size>::operator=(unsigned int i)
+	{
+		FromUInt(uint(i));
+
+	return *this;
+	}
+
+
+	/*!
+		a constructor for converting the unsigned int to this class
+
+		***this constructor is created only on a 64bit platform***
+		it takes one argument of 32bit
+	*/
+	template<uint value_size>
+	UInt<value_size>::UInt(unsigned int i)
+	{
+		FromUInt(uint(i));
+	}
+
+
+	/*!
+		an operator for converting the signed int to this class
+
+		***this constructor is created only on a 64bit platform***
+		it takes one argument of 32bit
+
+		look at the description of UInt::operator=(sint)
+	*/
+	template<uint value_size>
+	UInt<value_size> & UInt<value_size>::operator=(signed int i)
+	{
+		FromUInt(uint(i));
+
+	return *this;
+	}
+
+
+	/*!
+		a constructor for converting the signed int to this class
+
+		***this constructor is created only on a 64bit platform***
+		it takes one argument of 32bit
+
+		look at the description of UInt::operator=(sint)
+	*/
+	template<uint value_size>
+	UInt<value_size>::UInt(signed int i)
+	{
+		FromUInt(uint(i));
+	}
+
 
 
 	/*!
 		this method copies the value stored in an another table
 		(warning: first values in temp_table are the highest words -- it's different
 		from our table)
+
+		***this method is created only on a 64bit platform***
 
 		we copy as many words as it is possible
 		
@@ -119,6 +197,8 @@ namespace ttmath
 		this method adding ss2 to the this and adding carry if it's defined
 		(this = this + ss2 + c)
 
+		***this method is created only on a 64bit platform***
+
 		c must be zero or one (might be a bigger value than 1)
 		function returns carry (1) (if it was)
 	*/
@@ -131,16 +211,8 @@ namespace ttmath
 
 
 		#ifndef __GNUC__
-
 			#error "another compiler than GCC is currently not supported in 64bit mode"
-
-			/*
-				this part might be compiled with for example visual c
-			*/
-			__asm
-			{
-			}
-		#endif		
+		#endif
 			
 
 		#ifdef __GNUC__
@@ -206,7 +278,8 @@ namespace ttmath
 		this method adds one word (at a specific position)
 		and returns a carry (if it was)
 
-		e.g.
+		***this method is created only on a 64bit platform***
+
 
 		if we've got (value_size=3):
 			table[0] = 10;
@@ -229,14 +302,8 @@ namespace ttmath
 	register uint c;
 
 		#ifndef __GNUC__
-
 			#error "another compiler than GCC is currently not supported in 64bit mode"
-
-			__asm
-			{
-			}
-		#endif		
-
+		#endif
 
 		#ifdef __GNUC__
 			__asm__ __volatile__(
@@ -297,6 +364,8 @@ namespace ttmath
 		and these words begin on the 'index' position
 		(it's used in the multiplication algorithm 2)
 
+		***this method is created only on a 64bit platform***
+
 		index should be equal or smaller than value_size-2 (index <= value_size-2)
 		x1 - lower word, x2 - higher word
 
@@ -330,14 +399,8 @@ namespace ttmath
 	register uint c;
 
 		#ifndef __GNUC__
-
 			#error "another compiler than GCC is currently not supported in 64bit mode"
-
-			__asm
-			{
-			}
-		#endif		
-			
+		#endif
 
 		#ifdef __GNUC__
 			__asm__ __volatile__(
@@ -420,6 +483,8 @@ namespace ttmath
 		carry if it has been defined
 		(this = this - ss2 - c)
 
+		***this method is created only on a 64bit platform***
+
 		c must be zero or one (might be a bigger value than 1)
 		function returns carry (1) (if it was)
 	*/
@@ -431,15 +496,8 @@ namespace ttmath
 	register uint * p2 = const_cast<uint*>(ss2.table);
 
 		#ifndef __GNUC__
-
-		#error "another compiler than GCC is currently not supported in 64bit mode"
-
-			__asm
-			{
-			}
-
+			#error "another compiler than GCC is currently not supported in 64bit mode"
 		#endif
-
 
 		#ifdef __GNUC__
 			__asm__  __volatile__(
@@ -499,7 +557,7 @@ namespace ttmath
 		this method subtracts one word (at a specific position)
 		and returns a carry (if it was)
 
-		e.g.
+		***this method is created only on a 64bit platform***
 
 		if we've got (value_size=3):
 			table[0] = 10;
@@ -522,14 +580,8 @@ namespace ttmath
 	register uint c;
 
 		#ifndef __GNUC__
-
 			#error "another compiler than GCC is currently not supported in 64bit mode"
-
-			__asm
-			{
-			}
-		#endif		
-			
+		#endif
 
 		#ifdef __GNUC__
 			__asm__ __volatile__(
@@ -589,6 +641,8 @@ namespace ttmath
 		this method moving once all bits into the left side
 		return value <- this <- C
 
+		***this method is created only on a 64bit platform***
+
 		the lowest bit will hold value of 'c' and
 		function returns the highest bit
 	*/
@@ -598,16 +652,9 @@ namespace ttmath
 	register sint b = value_size;
 	register uint * p1 = table;
 
-
 		#ifndef __GNUC__
-
 			#error "another compiler than GCC is currently not supported in 64bit mode"
-
-			__asm
-			{
-			}
 		#endif
-
 
 		#ifdef __GNUC__
 		__asm__  __volatile__(
@@ -653,6 +700,8 @@ namespace ttmath
 		this method moving once all bits into the right side
 		C -> *this -> return value
 
+		***this method is created only on a 64bit platform***
+
 		the highest bit will be held value of 'c' and
 		function returns the lowest bit
 	*/
@@ -664,12 +713,7 @@ namespace ttmath
 
 
 		#ifndef __GNUC__
-
 			#error "another compiler than GCC is currently not supported in 64bit mode"
-
-			__asm
-			{
-			}
 		#endif
 
 
@@ -718,6 +762,8 @@ namespace ttmath
 	/*
 		this method returns the number of the highest set bit in one 32-bit word
 		if the 'x' is zero this method returns '-1'
+
+		***this method is created only on a 64bit platform***
 	*/
 	template<uint value_size>
 	sint UInt<value_size>::FindLeadingBitInWord(uint x)
@@ -725,14 +771,8 @@ namespace ttmath
 	register sint result;
 
 		#ifndef __GNUC__
-
 			#error "another compiler than GCC is currently not supported in 64bit mode"
-
-			__asm
-			{
-			}
 		#endif
-
 
 		#ifdef __GNUC__
 			__asm__  __volatile__(
@@ -758,6 +798,8 @@ namespace ttmath
 		this method sets a special bit in the 'value'
 		and returns the result
 
+		***this method is created only on a 64bit platform***
+
 		bit is from <0,31>
 
 		e.g.
@@ -769,14 +811,8 @@ namespace ttmath
 	uint UInt<value_size>::SetBitInWord(uint value, uint bit)
 	{
 		#ifndef __GNUC__
-		
 			#error "another compiler than GCC is currently not supported in 64bit mode"
-		
-		__asm
-			{
-			}
 		#endif
-
 
 		#ifdef __GNUC__
 			__asm__  __volatile__(
@@ -808,6 +844,8 @@ namespace ttmath
 	
 		this methos never returns a carry
 
+		***this method is created only on a 64bit platform***
+
 		it is an auxiliary method for version two of the multiplication algorithm
 	*/
 	template<uint value_size>
@@ -824,15 +862,8 @@ namespace ttmath
 	register uint result2_;
 
 		#ifndef __GNUC__
-
 			#error "another compiler than GCC is currently not supported in 64bit mode"
-
-			__asm
-			{
-			}
-
 		#endif
-
 
 		#ifdef __GNUC__
 
@@ -865,6 +896,8 @@ namespace ttmath
 	/*!
 		this method calculates 64bits word a:b / 32bits c (a higher, b lower word)
 		r = a:b / c and rest - remainder
+		
+		***this method is created only on a 64bit platform***
 
 		*
 		* WARNING:
@@ -884,14 +917,8 @@ namespace ttmath
 		*/
 
 		#ifndef __GNUC__
-
 			#error "another compiler than GCC is currently not supported in 64bit mode"
-
-			__asm
-			{
-			}
 		#endif
-
 
 		#ifdef __GNUC__
 		

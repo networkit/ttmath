@@ -1,4 +1,4 @@
-#include <ttmath/ttmathuint.h>
+#include <ttmath/ttmath.h>
 #include <iostream>
 
 
@@ -18,7 +18,7 @@ void CalculatingWithCarry(const ttmath::UInt<2> & a, const ttmath::UInt<2> & b)
 {
 ttmath::UInt<2> atemp;
 
-	std::cout << "Calculating with carry" << std::endl;
+	std::cout << "Calculating with a carry" << std::endl;
 	std::cout << "a = " << a << std::endl;
 	std::cout << "b = " << b << std::endl;
 
@@ -53,17 +53,19 @@ ttmath::UInt<2> atemp;
 int main()
 {
 // on 32bit platforms: 'a' and 'b' have 2-words (two 32bit words)
-// in other words a,b are from <0, 2^64 - 1>
+// it means a,b are from <0, 2^64 - 1>
 ttmath::UInt<2> a,b;
 	
 	// conversion from 'const char *'
 	a = "123456";
-	b = "9876";
+	
+	// conversion from int
+	b = 9876;
 	
 	SimpleCalculating(a,b);
 	
 	// 'a' will have the max value which can be held in this type
-	a.SetMaxValue();
+	a.SetMax();
 	
 	// conversion from 'int'
 	b = 5;
@@ -72,7 +74,7 @@ ttmath::UInt<2> a,b;
 }
 
 /*
-the result:
+the result (on 32 bit platform):
 
 Simple calculating
 a = 123456
@@ -81,7 +83,7 @@ a + b = 133332
 a - b = 113580
 a * b = 1219251456
 a / b = 12
-Calculating with carry
+Calculating with a carry
 a = 18446744073709551615
 b = 5
 a + b = (carry: the result is too big) 4

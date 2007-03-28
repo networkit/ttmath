@@ -1,9 +1,49 @@
+Version 0.8.0 (2007.03.28):
+	* added: into the parser: SetFactorialMax()
+	* added: DegToDeg(deg, min, sec), DegToRad(deg), DegToRad(deg, min, sec),
+	  RadToDeg(rad), Ceil(x), Floor(x), Sqrt(x), Sinh(x), Cosh(x),
+	  Tanh(x) /Tgh(x)/, Coth(x) /Ctgh(x)/
+	* changed: class Objects in ttmathobjects.h has been completely rewritten,
+	  we can change the names of user-defined variables or functions, and the
+	  names are case-sensitive now
+	* added: class History which is used in functions which take a lot of time
+	  during calculating e.g. Factorial(x)
+	* added: Tg(x) a wrapper for Tan(x)
+	* changed: CTan(x) is Cot(x) now
+	* added: Ctg(x) a wrapper for Cot(x) 
+	* added: ATg(x) a wrapper for ATan(x)
+	* changed: ACTan(x) is ACot(x) now
+	* added: ACtg(x) a wrapper for ACot(x)
+	* added: UInt::PrintTable() (for debugging etc.)
+	* changed: the methods Big::SetPi() Big::SetE() and Big::SetLn2() have
+	  been rewritten, now they have 128 32bit words (it's about 1232 valid
+	  decimal digits)
+	* fixed: previous values from Big::SetPi() Big::SetE() and
+	  Big::SetLn2() were not too much accurate (last 2-3 words were wrong)
+	* added: Big::SetLn10() (128 32bit words as well)
+	* added: macro: TTMATH_BUILTIN_VARIABLES_SIZE which is equal 128u on
+	  32bit platforms and 64ul on 64bit platforms (128/2=64)
+	* added: macros: TTMATH_PLATFORM32 and TTMATH_PLATFORM64
+	* changed: a small optimisation in UInt::Mul2Big()
+	* added: at the end of ttmath.h: #include "ttmathparser.h"
+	  this is for convenience for a programmer, he can only use #include
+	  with ttmath.h even if he uses the parser
+	* added: to samples: big.cpp, parser.cpp
+	* added/changes/fixed: in copy-constructors and operators= in Int,
+	  Uint and Big (more info in the commit log)
+	* renamed Big::SetDotOne() into Big::Set05()
+	* changes: a few small optimisations in Big
+	* deleted: the word 'virtual' from destructors: UInt, Int, Big
+	  (types in this library are not projected to be base-classes for
+	  another ones derived from them)
+	* and more small changes (look at the commit log)	
+
 Version 0.7.2 (2007.03.09):
 	* added: Big::Mod - the remainder from a division
 	* added: Big::Sgn - the 'sign' from the value (-1,0,1)
 	* added: global functions Mod and Sgn too
-	* added: checking whether an user gives a correct value of a variable or function
-      (user-defined variables/functions in the mathematical parser)
+	* added: checking whether a user gives a correct value of a variable or function
+	  (user-defined variables/functions in the mathematical parser)
 	* added: into the parser: logical operators: > < >= <= == != && ||
 	* added: into the parser: logical functions: and() or() not() if()
 	* added: ErrorCode::err_unknown_operator when the parser couldn't read an operator

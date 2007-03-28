@@ -42,7 +42,7 @@
 
 /*!
 	\file ttmathparser.h
-    \brief Mathematical parser
+    \brief A mathematical parser
 */
 
 #include <fstream>
@@ -654,13 +654,13 @@ void Tan(int sindex, int amount_of_args, ValueType & result)
 		Error( err );
 }
 
-void CTan(int sindex, int amount_of_args, ValueType & result)
+void Cot(int sindex, int amount_of_args, ValueType & result)
 {
 	if( amount_of_args != 1 )
 		Error( err_improper_amount_of_arguments );
 
 	ErrorCode err;
-	result = ttmath::CTan(stack[sindex].value, &err);
+	result = ttmath::Cot(stack[sindex].value, &err);
 
 	if(err != err_ok)
 		Error( err );
@@ -794,12 +794,12 @@ void ATan(int sindex, int amount_of_args, ValueType & result)
 }
 
 
-void ACTan(int sindex, int amount_of_args, ValueType & result)
+void ACot(int sindex, int amount_of_args, ValueType & result)
 {
 	if( amount_of_args != 1 )
 		Error( err_improper_amount_of_arguments );
 
-	result = ttmath::ACTan(stack[sindex].value);
+	result = ttmath::ACot(stack[sindex].value);
 }
 
 
@@ -889,6 +889,147 @@ void Not(int sindex, int amount_of_args, ValueType & result)
 		result.SetZero();
 }
 
+
+void DegToRad(int sindex, int amount_of_args, ValueType & result)
+{
+	ErrorCode err;
+
+	if( amount_of_args == 1 )
+	{
+		result = ttmath::DegToRad(stack[sindex].value, &err);
+	}
+	else
+	if( amount_of_args == 3 )
+	{
+		result = ttmath::DegToRad(	stack[sindex].value, stack[sindex+2].value,
+									stack[sindex+4].value, &err);
+	}
+	else
+		Error( err_improper_amount_of_arguments );
+
+
+	if( err != err_ok )
+		Error( err );
+}
+
+
+void RadToDeg(int sindex, int amount_of_args, ValueType & result)
+{
+	ErrorCode err;
+
+	if( amount_of_args != 1 )
+		Error( err_improper_amount_of_arguments );
+	
+	result = ttmath::RadToDeg(stack[sindex].value, &err);
+
+	if( err != err_ok )
+		Error( err );
+}
+
+
+void DegToDeg(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 3 )
+		Error( err_improper_amount_of_arguments );
+
+	ErrorCode err;
+	result = ttmath::DegToDeg(	stack[sindex].value, stack[sindex+2].value,
+								stack[sindex+4].value, &err);
+
+	if( err != err_ok )
+		Error( err );
+}
+
+void Ceil(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 1 )
+		Error( err_improper_amount_of_arguments );
+
+	ErrorCode err;
+	result = ttmath::Ceil(stack[sindex].value, &err);
+
+	if( err != err_ok )
+		Error( err );
+}
+
+
+void Floor(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 1 )
+		Error( err_improper_amount_of_arguments );
+
+	ErrorCode err;
+	result = ttmath::Floor(stack[sindex].value, &err);
+
+	if( err != err_ok )
+		Error( err );
+}
+
+void Sqrt(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 1 )
+		Error( err_improper_amount_of_arguments );
+
+	ErrorCode err;
+	result = ttmath::Sqrt(stack[sindex].value, &err);
+
+	if( err != err_ok )
+		Error( err );
+}
+
+
+void Sinh(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 1 )
+		Error( err_improper_amount_of_arguments );
+
+	ErrorCode err;
+	result = ttmath::Sinh(stack[sindex].value, &err);
+
+	if( err != err_ok )
+		Error( err );
+}
+
+
+void Cosh(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 1 )
+		Error( err_improper_amount_of_arguments );
+
+	ErrorCode err;
+	result = ttmath::Cosh(stack[sindex].value, &err);
+
+	if( err != err_ok )
+		Error( err );
+}
+
+
+void Tanh(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 1 )
+		Error( err_improper_amount_of_arguments );
+
+	ErrorCode err;
+	result = ttmath::Tanh(stack[sindex].value, &err);
+
+	if( err != err_ok )
+		Error( err );
+}
+
+
+void Coth(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 1 )
+		Error( err_improper_amount_of_arguments );
+
+	ErrorCode err;
+	result = ttmath::Coth(stack[sindex].value, &err);
+
+	if( err != err_ok )
+		Error( err );
+}
+
+
 /*!
 	this method returns the value from a user-defined function
 
@@ -902,7 +1043,7 @@ bool GetValueOfUserDefinedFunction(const std::string & function_name, int amount
 	const char * string_value;
 	int param;
 
-	if( puser_functions->GetValueParam(function_name, &string_value, &param) != err_ok )
+	if( puser_functions->GetValueAndParam(function_name, &string_value, &param) != err_ok )
 		return false;
 
 	if( param != amount_of_args )
@@ -1003,7 +1144,9 @@ void CreateFunctionsTable()
 	InsertFunctionToTable(std::string("sin"),   	&Parser<ValueType>::Sin);
 	InsertFunctionToTable(std::string("cos"),   	&Parser<ValueType>::Cos);
 	InsertFunctionToTable(std::string("tan"),   	&Parser<ValueType>::Tan);
-	InsertFunctionToTable(std::string("ctan"),  	&Parser<ValueType>::CTan);
+	InsertFunctionToTable(std::string("tg"),	   	&Parser<ValueType>::Tan);
+	InsertFunctionToTable(std::string("cot"),  		&Parser<ValueType>::Cot);
+	InsertFunctionToTable(std::string("ctg"),  		&Parser<ValueType>::Cot);
 	InsertFunctionToTable(std::string("int"),   	&Parser<ValueType>::Int);
 	InsertFunctionToTable(std::string("round"), 	&Parser<ValueType>::Round);
 	InsertFunctionToTable(std::string("ln"),    	&Parser<ValueType>::Ln);
@@ -1014,13 +1157,27 @@ void CreateFunctionsTable()
 	InsertFunctionToTable(std::string("asin"),   	&Parser<ValueType>::ASin);
 	InsertFunctionToTable(std::string("acos"),   	&Parser<ValueType>::ACos);
 	InsertFunctionToTable(std::string("atan"),   	&Parser<ValueType>::ATan);
-	InsertFunctionToTable(std::string("actan"),   	&Parser<ValueType>::ACTan);
+	InsertFunctionToTable(std::string("atg"),   	&Parser<ValueType>::ATan);
+	InsertFunctionToTable(std::string("acot"),   	&Parser<ValueType>::ACot);
+	InsertFunctionToTable(std::string("actg"),   	&Parser<ValueType>::ACot);
 	InsertFunctionToTable(std::string("sgn"),   	&Parser<ValueType>::Sgn);
 	InsertFunctionToTable(std::string("mod"),   	&Parser<ValueType>::Mod);
 	InsertFunctionToTable(std::string("if"),   		&Parser<ValueType>::If);
 	InsertFunctionToTable(std::string("or"),   		&Parser<ValueType>::Or);
 	InsertFunctionToTable(std::string("and"),  		&Parser<ValueType>::And);
 	InsertFunctionToTable(std::string("not"),  		&Parser<ValueType>::Not);
+	InsertFunctionToTable(std::string("degtorad"),	&Parser<ValueType>::DegToRad);
+	InsertFunctionToTable(std::string("radtodeg"),	&Parser<ValueType>::RadToDeg);
+	InsertFunctionToTable(std::string("degtodeg"),	&Parser<ValueType>::DegToDeg);
+	InsertFunctionToTable(std::string("ceil"),		&Parser<ValueType>::Ceil);
+	InsertFunctionToTable(std::string("floor"),		&Parser<ValueType>::Floor);
+	InsertFunctionToTable(std::string("sqrt"),		&Parser<ValueType>::Sqrt);
+	InsertFunctionToTable(std::string("sinh"),		&Parser<ValueType>::Sinh);
+	InsertFunctionToTable(std::string("cosh"),		&Parser<ValueType>::Cosh);
+	InsertFunctionToTable(std::string("tanh"),		&Parser<ValueType>::Tanh);
+	InsertFunctionToTable(std::string("tgh"),		&Parser<ValueType>::Tanh);
+	InsertFunctionToTable(std::string("coth"),		&Parser<ValueType>::Coth);
+	InsertFunctionToTable(std::string("ctgh"),		&Parser<ValueType>::Coth);
 }
 
 

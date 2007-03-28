@@ -1,2 +1,24 @@
+TTMath - a bignum library for C++
 
+TTMath is a small library which allows one to perform arithmetic operations
+with big unsigned integer, big signed integer and big floating point
+numbers. It provides standard mathematical operations like adding,
+subtracting, multiplying, dividing etc. With the library also goes
+a mathematical parser which helps you solving input formulas read directly
+from a user.
 
+TTMath is developed under the (new) BSD licence which means that it is free
+for both personal and commercial use but the library has some technical
+limitations: you can use it only on i386 and Amd64, another platforms are
+not supported (Intel 64bit platforms were not tested but should work as
+well), and you can use this library only with the C++ programming language. 
+
+The main goal of the library is to allow one to use big values in the same
+way as the standard types like int, float, etc. It does not need to be
+compiled first because the whole library is written as the C++ templates.
+This means only C++ developers can use this library and one thing they have
+to do is to use  'include' directive of the preprocessor. How big the
+values can be is set directly in the source code by the programmer.
+
+Author: Tomasz Sowa <t.sowa AnTispam slimaczek.pl>
+Home page: http://sourceforge.net/projects/ttmath

@@ -36,160 +36,83 @@
  */
 
 
-
 #ifndef headerfilettmathobject
 #define headerfilettmathobject
+
+/*!
+	\file ttmathobjects.h
+    \brief Mathematic functions.
+*/
 
 #include "ttmathtypes.h"
 
 #include <string>
+#include <list>
 #include <map>
-#include <algorithm>
+
 
 
 namespace ttmath
 {
 
+/*!
+	objects of this class are used with the mathematical parser
+	they hold variables or functions defined by a user
 
+	each object has its own table in which we're keeping variables or functions
+*/
 class Objects
 {
 public:
 
-	struct ObjectValue
+
+	/*!
+		one item (variable or function)
+		'items' will be on the table
+	*/
+	struct Item
 	{
+		// name of a variable of a function
 		std::string value;
+
+		// number of parameters required by the function
+		// (if there's a variable this 'param' is ignored)
 		int param;
 
-		ObjectValue() {}
-		ObjectValue(const std::string & v, int p) : value(v), param(p) {}
+		Item() {}
+		Item(const std::string & v, int p) : value(v), param(p) {}
 	};
 
-	typedef std::map<std::string, ObjectValue> Table;
+	// 'Table' is the type of our table
+	typedef std::map<std::string, Item> Table;
+	typedef	Table::iterator Iterator;
 	typedef	Table::const_iterator CIterator;
 
-	ErrorCode Add(const std::string & name, const std::string & value, int param = 0)
-	{
-		if( !CorrectCharacters(name) )
-			return err_incorrect_name;
-
-		if( AreBigLetters(name) )
-		{
-			std::string name_copy(name);
-			ToSmallLetters(name_copy);
-
-			return AddAfterChecking(name_copy, value, param);
-		}
-		else
-			return AddAfterChecking(name, value, param);
-	}
 
 
-	bool Empty() const
-	{
-		return table.empty();
-	}
-
-	void Clear()
-	{
-		return table.clear();
-	}
-
-	CIterator Begin() const
-	{
-		return table.begin();
-	}
-
-	CIterator End() const
-	{
-		return table.end();
-	}
-
-	ErrorCode Edit(const std::string & name, const std::string & value, int param = 0)
-	{
-		Table::iterator i = table.find(name);
-
-		if( i == table.end() )
-			// we don't have this variable in our table
-			return err_unknown_object;
-	
-		i->second.value = value;
-		i->second.param = param;
-
-	return err_ok;
-	}
-
-
-	ErrorCode Delete(const std::string & name)
-	{
-		Table::iterator i = table.find(name);
-
-		if( i == table.end() )
-			// we don't have this variable in our table
-			return err_unknown_object;
-
-		table.erase( i );
-
-	return err_ok;
-	}
-
-
-	ErrorCode GetValue(const std::string & name, const char * * value) const
-	{
-		Table::const_iterator i = table.find(name);
-
-		if( i == table.end() )
-		{
-			// we don't have this variable in our table
-			*value = 0;
-			return err_unknown_object;
-		}
-
-		*value = i->second.value.c_str();
-
-	return err_ok;
-	}
-
-	ErrorCode GetValueParam(const std::string & name, const char * * value, int * param) const
-	{
-		Table::const_iterator i = table.find(name);
-
-		if( i == table.end() )
-		{
-			// we don't have this variable in our table
-			*value = 0;
-			return err_unknown_object;
-		}
-
-		*value = i->second.value.c_str();
-		*param = i->second.param;
-
-	return err_ok;
-	}
-
-	Table * GetTable()
-	{
-		return &table;
-	}
-
-
-private:
-
-	Table table;
-
-
-	bool CorrectCharacter(int c, bool digit)
+	/*!
+		this method returns true if a character 'c' is a character
+		which can be in a name
+		
+		if 'can_be_digit' is true that means when the 'c' is a digit this 
+		method returns true otherwise it returns false
+	*/
+	static bool CorrectCharacter(int c, bool can_be_digit)
 	{
 		if( (c>='a' && c<='z') || (c>='A' && c<='Z') )
 			return true;
 
-		if( digit && (c>='0' && c<='9') )
+		if( can_be_digit && (c>='0' && c<='9') )
 			return true;
 
 	return false;
 	}
 
 
-	bool CorrectCharacters(const std::string & name)
+	/*!
+		this method returns true if the name can be as a name of an object
+	*/
+	static bool IsNameCorrect(const std::string & name)
 	{
 		if( name.empty() )
 			return false;
@@ -205,52 +128,355 @@ private:
 		
 	return true;
 	}
-	
 
-	static int SmallLetter(int c)
+
+	/*!
+		this method adds one object (variable of function) into the table
+	*/
+	ErrorCode Add(const std::string & name, const std::string & value, int param = 0)
 	{
-		if( c>='A' && c<='Z' )
-			return c-'A'+'a';
+		if( !IsNameCorrect(name) )
+			return err_incorrect_name;
 
-	return c;
-	}
-
-
-	static bool AreBigLetters(const std::string & name)
-	{
-		std::string::const_iterator i;
-
-		for(i=name.begin() ; i!=name.end() ; ++i)
-			if( *i>='A' && *i<='Z' )
-				return true;
-
-	return false;
-	}
-
-
-	void ToSmallLetters(std::string & name)
-	{
-		std::string::iterator i;
-
-		for(i=name.begin() ; i!=name.end() ; ++i)
-			*i = SmallLetter(*i);
-	}
-
-
-	ErrorCode AddAfterChecking(const std::string & name, const std::string & value, int param)
-	{
-		Table::iterator i = table.find(name);
+		Iterator i = table.find(name);
 
 		if( i != table.end() )
 			// we have this object in our table
 			return err_object_exists;
 
-		table.insert( std::make_pair(name, ObjectValue(value, param)) );
+		table.insert( std::make_pair(name, Item(value, param)) );
 
 	return err_ok;
 	}
 
-};
+
+	/*!
+		this method returns 'true' if the table is empty
+	*/
+	bool Empty() const
+	{
+		return table.empty();
+	}
+
+
+	/*!
+		this method clears the table
+	*/
+	void Clear()
+	{
+		return table.clear();
+	}
+
+
+	/*!
+		this method returns 'const_iterator' on the first item on the table
+	*/
+	CIterator Begin() const
+	{
+		return table.begin();
+	}
+
+
+	/*!
+		this method returns 'const_iterator' pointing at the space after last item
+		(returns table.end())
+	*/
+	CIterator End() const
+	{
+		return table.end();
+	}
+
+
+	/*!
+		this method changes the value and the number of parameters for a specific object
+	*/
+	ErrorCode EditValue(const std::string & name, const std::string & value, int param = 0)
+	{
+		if( !IsNameCorrect(name) )
+			return err_incorrect_name;
+
+		Iterator i = table.find(name);
+
+		if( i == table.end() )
+			return err_unknown_object;
+	
+		i->second.value = value;
+		i->second.param = param;
+
+	return err_ok;
+	}
+
+
+	/*!
+		this method changes the name of a specific object
+	*/
+	ErrorCode EditName(const std::string & old_name, const std::string & new_name)
+	{
+		if( !IsNameCorrect(old_name) || !IsNameCorrect(new_name) )
+			return err_incorrect_name;
+
+		Iterator old_i = table.find(old_name);
+		if( old_i == table.end() )
+			return err_unknown_object;
+		
+		if( old_name == new_name )
+			// the new name is the same as the old one
+			// we treat it as a normal situation
+			return err_ok;
+
+		ErrorCode err = Add(new_name, old_i->second.value, old_i->second.param);
+		
+		if( err == err_ok ) 
+		{
+			old_i = table.find(old_name);
+			TTMATH_ASSERT( old_i != table.end() )
+
+			table.erase(old_i);
+		}
+
+	return err;
+	}
+
+
+	/*!
+		this method deletes an object
+	*/
+	ErrorCode Delete(const std::string & name)
+	{
+		if( !IsNameCorrect(name) )
+			return err_incorrect_name;
+
+		Iterator i = table.find(name);
+
+		if( i == table.end() )
+			return err_unknown_object;
+
+		table.erase( i );
+
+	return err_ok;
+	}
+
+
+	/*!
+		this method sets the value of a specific object
+	*/
+	ErrorCode GetValue(const std::string & name, std::string & value) const
+	{
+		if( !IsNameCorrect(name) )
+			return err_incorrect_name;
+
+		CIterator i = table.find(name);
+
+		if( i == table.end() )
+		{
+			value.clear();
+			return err_unknown_object;
+		}
+
+		value = i->second.value;
+
+	return err_ok;
+	}
+
+
+	/*!
+		this method sets the value of a specific object
+		(this version is used for not copying the whole string)
+	*/
+	ErrorCode GetValue(const std::string & name, const char ** value) const
+	{
+		if( !IsNameCorrect(name) )
+			return err_incorrect_name;
+
+		CIterator i = table.find(name);
+
+		if( i == table.end() )
+		{
+			*value = 0;
+			return err_unknown_object;
+		}
+
+		*value = i->second.value.c_str();
+
+	return err_ok;
+	}
+
+
+	/*!
+		this method sets the value and the number of parameters
+		of a specific object
+	*/
+	ErrorCode GetValueAndParam(const std::string & name, std::string & value, int * param) const
+	{
+		if( !IsNameCorrect(name) )
+			return err_incorrect_name;
+
+		CIterator i = table.find(name);
+
+		if( i == table.end() )
+		{
+			value.empty();
+			*param = 0;
+			return err_unknown_object;
+		}
+
+		value = i->second.value;
+		*param = i->second.param;
+
+	return err_ok;
+	}
+
+
+	/*!
+		this method sets the value and the number of parameters
+		of a specific object
+		(this version is used for not copying the whole string)
+	*/
+	ErrorCode GetValueAndParam(const std::string & name, const char ** value, int * param) const
+	{
+		if( !IsNameCorrect(name) )
+			return err_incorrect_name;
+
+		CIterator i = table.find(name);
+
+		if( i == table.end() )
+		{
+			*value = 0;
+			*param = 0;
+			return err_unknown_object;
+		}
+
+		*value = i->second.value.c_str();
+		*param = i->second.param;
+
+	return err_ok;
+	}
+
+
+	/*!
+		this method returns a pointer into the table
+	*/
+	Table * GetTable()
+	{
+		return &table;
+	}
+
+
+private:
+
+	Table table;
+
+}; // end of class Objects
+
+
+
+
+
+
+
+/*!
+	objects of the class History are used to keep values in functions
+	which take a lot of time during calculating, for instance in the 
+	function Factorial(x)
+
+	it means that when we're calculating e.g. Factorial(1000) and the 
+	Factorial finds that we have calculated it before, the value (result)
+	is taken from the history
+*/
+template<class ValueType>
+class History
+{
+	/*!
+		one item in the History's object holds a key, a value for the key
+		and a corresponding error code
+	*/
+	struct Item
+	{
+		ValueType key, value;
+		ErrorCode err;
+	};
+
+
+	/*!
+		we use std::list for simply deleting the first item
+		but because we're searching through the whole container
+		(in the method Get) the container should not be too big
+		(linear time of searching)
+	*/
+	typedef std::list<Item> buffer_type;
+	buffer_type buffer;
+	typename buffer_type::size_type buffer_max_size;
+
+public:
+	
+	/*!
+		default constructor
+		default max size of the History's container is 10 items
+	*/
+	History()
+	{
+		buffer_max_size = 10;
+	}
+
+
+	/*!
+		a constructor which takes another value of the max size
+		of the History's container
+	*/
+	History(typename buffer_type::size_type new_size)
+	{
+		buffer_max_size = new_size;
+	}
+
+
+	/*!
+		this method adds one item into the History
+		if the size of the container is greater than buffer_max_size
+		the first item will be removed
+	*/
+	void Add(const ValueType & key, const ValueType & value, ErrorCode err)
+	{
+		Item item;
+		item.key   = key;
+		item.value = value;
+		item.err   = err;
+
+		buffer.insert( buffer.end(), item );
+
+		if( buffer.size() > buffer_max_size )
+			buffer.erase(buffer.begin());
+	}
+
+
+	/*!
+		this method checks whether we have an item which has the key equal 'key'
+
+		if there's such item the method sets the 'value' and the 'err'
+		and returns true otherwise it returns false and 'value' and 'err'
+		remain unchanged
+	*/
+	bool Get(const ValueType & key, ValueType & value, ErrorCode & err)
+	{
+		typename buffer_type::iterator i = buffer.begin();
+
+		for( ; i != buffer.end() ; ++i )
+		{
+			if( i->key == key )
+			{
+				value = i->value;
+				err   = i->err;
+				return true;
+			}
+		}
+
+	return false;
+	}
+
+}; // end of class History
+
+
+
+
 
 } // namespace
 
