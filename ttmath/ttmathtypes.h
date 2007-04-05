@@ -58,10 +58,14 @@
 
 /*!
 	the version of the library
+
+	TTMATH_PRERELEASE_VER is either zero or one
+	if zero that means this is the release version of the library
 */
 #define TTMATH_MAJOR_VER		0
 #define TTMATH_MINOR_VER		8
-#define TTMATH_REVISION_VER		0
+#define TTMATH_REVISION_VER		1
+#define TTMATH_PRERELEASE_VER	1
 
 
 /*!

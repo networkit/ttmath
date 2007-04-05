@@ -1342,6 +1342,199 @@ namespace ttmath
 	}
 
 
+
+	namespace auxiliaryfunctions
+	{
+
+		template<class ValueType>
+		bool RootCheckIndexSign(ValueType & x, const ValueType & index, ErrorCode * err)
+		{
+			if( index.IsSign() )
+			{
+				// index cannot be negative
+				if( err )
+					*err = err_improper_argument;
+
+			return true;
+			}
+
+		return false;
+		}
+
+
+		template<class ValueType>
+		bool RootCheckIndexZero(ValueType & x, const ValueType & index, ErrorCode * err)
+		{
+			if( index.IsZero() )
+			{
+				if( x.IsZero() )
+				{
+					// there isn't root(0;0)
+					if( err )
+						*err = err_improper_argument;
+
+				return true;
+				}
+		
+				// root(x;0) is 1 (if x!=0)
+				x.SetOne();
+
+				if( err )
+					*err = err_ok;
+
+			return true;
+			}
+
+		return false;
+		}
+
+
+		template<class ValueType>
+		bool RootCheckIndexOne(ValueType & x, const ValueType & index, ErrorCode * err)
+		{
+			ValueType one;
+			one.SetOne();
+
+			if( index == one )
+			{
+				//root(x;1) is x
+				// we do it because if we used the PowFrac function
+				// we would lose the precision
+				if( err )
+					*err = err_ok;
+
+			return true;
+			}
+
+		return false;
+		}
+
+
+		template<class ValueType>
+		bool RootCheckIndexFrac(ValueType & x, const ValueType & index, ErrorCode * err)
+		{
+			ValueType indexfrac(index);
+			indexfrac.RemainFraction();
+
+			if( !indexfrac.IsZero() )
+			{
+				// index must be integer
+				if( err )
+					*err = err_improper_argument;
+
+			return true;
+			}
+
+		return false;
+		}
+
+
+		template<class ValueType>
+		bool RootCheckXZero(ValueType & x, const ValueType & index, ErrorCode * err)
+		{
+			if( x.IsZero() )
+			{
+				// root(0;index) is zero (if index!=0)
+				x.SetZero();
+
+				if( err )
+					*err = err_ok;
+
+			return true;
+			}
+
+		return false;
+		}
+
+
+		template<class ValueType>
+		bool RootCheckIndex(ValueType & x, const ValueType & index, ErrorCode * err, bool * change_sign)
+		{
+			*change_sign = false;
+
+			if( index.Mod2() )
+			{
+				// index is odd (1,3,5...)
+				if( x.IsSign() )
+				{
+					*change_sign = true;
+					x.Abs();
+				}
+			}
+			else
+			{
+				// index is even
+				// x cannot be negative
+				if( x.IsSign() )
+				{
+					if( err )
+						*err = err_improper_argument;
+
+					return true;
+				}
+			}
+
+		return false;
+		}
+
+	}
+
+
+	/*!
+		indexth Root of x
+		index must be integer and not negative <0;1;2;3....)
+
+		if index==0 the result is one
+		if x==0 the result is zero and we assume root(0;0) is not defined
+
+		if index is even (2;4;6...) the result is x^(1/index) and x>0
+		if index is odd (1;2;3;...) the result is either 
+			-(abs(x)^(1/index)) if x<0    or
+			       x^(1/index)) if x>0
+
+		(for index==1 the result is equal x)
+	*/
+	template<class ValueType>
+	ValueType Root(ValueType x, const ValueType & index, ErrorCode * err = 0)
+	{
+		using namespace auxiliaryfunctions;
+
+		if( RootCheckIndexSign(x, index, err) ) return x;
+		if( RootCheckIndexZero(x, index, err) ) return x;
+		if( RootCheckIndexOne (x, index, err) ) return x;
+		if( RootCheckIndexFrac(x, index, err) ) return x;
+		if( RootCheckXZero(x, index, err) ) return x;
+
+		// index integer and index!=0
+		// x!=0
+
+		uint c = 0;
+		bool change_sign;
+		if( RootCheckIndex(x, index, err, &change_sign ) ) return x;
+
+		ValueType newindex;
+		newindex.SetOne();
+		c += newindex.Div(index);
+		c += x.PowFrac(newindex); // here can only be a carry
+
+		if( change_sign )
+			x.SetSign();
+
+		if( err )
+			*err = c ? err_overflow : err_ok;
+
+	return x;
+	}
+
+
+
+
+
+
+
+
+
+
 	/*!
 		the factorial from given 'x'
 		e.g.
@@ -1432,7 +1625,7 @@ namespace ttmath
 
 	/*!
 		it returns the sign of the value
-		e.g.  -2 = 1 
+		e.g.  -2 = -1 
 		       0 = 0
 		      10 = 1
 	*/

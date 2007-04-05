@@ -1030,6 +1030,18 @@ void Coth(int sindex, int amount_of_args, ValueType & result)
 }
 
 
+void Root(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 2 )
+		Error( err_improper_amount_of_arguments );
+
+	ErrorCode err;
+	result = ttmath::Root(stack[sindex].value, stack[sindex+2].value, &err);
+
+	if( err != err_ok )
+		Error( err );
+}
+
 /*!
 	this method returns the value from a user-defined function
 
@@ -1178,6 +1190,7 @@ void CreateFunctionsTable()
 	InsertFunctionToTable(std::string("tgh"),		&Parser<ValueType>::Tanh);
 	InsertFunctionToTable(std::string("coth"),		&Parser<ValueType>::Coth);
 	InsertFunctionToTable(std::string("ctgh"),		&Parser<ValueType>::Coth);
+	InsertFunctionToTable(std::string("root"),		&Parser<ValueType>::Root);
 }
 
 

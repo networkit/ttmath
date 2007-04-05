@@ -450,7 +450,7 @@ public:
 
 	/*!
 		it remains the 'sign' of the value
-		e.g.  -2 = 1 
+		e.g.  -2 = -1 
 		       0 = 0
 		      10 = 1
 	*/
@@ -883,6 +883,7 @@ public:
 		pow can be negative and with fraction
 
 		return values:
+		0 - ok
 		1 - carry
 		2 - incorrect argument ('this')
 	*/
@@ -892,6 +893,10 @@ public:
 
 		Big<exp, man> temp;
 		uint c = temp.Ln(*this);
+
+		if( c!= 0 )
+			return c;
+
 		c += temp.Mul(pow);
 		c += Exp(temp);
 
@@ -904,6 +909,7 @@ public:
 		pow can be negative and with fraction
 
 		return values:
+		0 - ok
 		1 - carry
 		2 - incorrect argument ('this' or 'pow')
 	*/
