@@ -1442,6 +1442,47 @@ public:
 	return 0;
 	}
 
+	/*!
+		multiplication: result = this * ss2
+
+		we're using this method only when result_size is greater than value_size
+		if so there will not be a carry
+	*/
+	template<uint result_size>
+	uint MulInt(uint ss2, UInt<result_size> & result)
+	{
+	uint r2,r1;
+	uint x1size=value_size;
+	uint x1start=0;
+
+		if( value_size >= result_size )
+			return 1;
+
+		result.SetZero();
+
+		if( value_size > 2 )
+		{	
+			// if the value_size is smaller than or equal to 2
+			// there is no sense to set x1size and x1start to another values
+
+			for(x1size=value_size ; x1size>0 && table[x1size-1]==0 ; --x1size);
+
+			if( x1size==0 )
+				return 0;
+
+			for(x1start=0 ; x1start<x1size && table[x1start]==0 ; ++x1start);
+		}
+
+		for(uint x1=x1start ; x1<x1size ; ++x1)
+		{
+			MulTwoWords(table[x1], ss2, &r2, &r1 );
+			result.AddTwoInts(r2,r1,x1);
+		}
+
+	return 0;
+	}
+
+
 
 	/*!
 		the multiplication 'this' = 'this' * ss2

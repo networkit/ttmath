@@ -593,7 +593,74 @@ public:
 	return Add(ss2);
 	}
 		
-	
+
+	/*!
+		Multiplication this = this * ss2 (ss2 is uint)
+
+		ss2 without a sign
+	*/
+	uint MulUInt(uint ss2)
+	{
+	UInt<man+1> man_result;
+	uint i,c = 0;
+
+		// man_result = mantissa * ss2.mantissa
+		mantissa.MulInt(ss2, man_result);
+
+		int bit = UInt<man>::FindLeadingBitInWord(man_result.table[man]); // man - last word
+		
+		if( bit!=-1 && uint(bit) > (TTMATH_BITS_PER_UINT/2) )
+		{
+			// 'i' will be from 0 to TTMATH_BITS_PER_UINT
+			i = man_result.CompensationToLeft();
+			c  = exponent.Add( TTMATH_BITS_PER_UINT - i );
+
+			for(i=0 ; i<man ; ++i)
+				mantissa.table[i] = man_result.table[i+1];
+		}
+		else
+		{
+			if( bit != -1 )
+			{
+				man_result.Rcr(bit+1, 0);
+				c += exponent.Add(bit+1);
+			}
+
+			for(i=0 ; i<man ; ++i)
+				mantissa.table[i] = man_result.table[i];
+		}
+
+		c += Standardizing();
+
+	return (c==0)? 0 : 1;
+	}
+
+
+	/*!
+		Multiplication this = this * ss2 (ss2 is sint)
+
+		ss2 with a sign
+	*/
+	uint MulInt(sint ss2)
+	{
+		if( IsSign() == (ss2<0) )
+		{
+			// the signs are the same, the result is positive
+			Abs();
+		}
+		else
+		{
+			// the signs are different, the result is negative
+			SetSign();
+		}
+
+		if( ss2<0 )
+			ss2 = 0 - ss2;
+
+	return MulUInt( uint(ss2) );
+	}
+
+
 	/*!
 		multiplication this = this * ss2
 		this method returns carry
@@ -1275,6 +1342,48 @@ public:
 	*
 	*/
 
+	/*!
+		this method sets 'result' as the one word of type uint
+
+		if the value is too big this method returns a carry (1)
+	*/
+	uint ToUInt(uint & result, bool test_sign = true) const
+	{
+		result = 0;
+
+		if( IsZero() )
+			return 0;
+
+		if( test_sign && IsSign() )
+			// the result should be positive
+			return 1;
+
+		sint maxbit = -sint(man*TTMATH_BITS_PER_UINT);
+
+		if( exponent > maxbit + sint(TTMATH_BITS_PER_UINT) )
+			// if exponent > (maxbit + sint(TTMATH_BITS_PER_UINT)) the value can't be passed
+			// into the 'sint' type (it's too big)
+			return 1;
+
+		if( exponent <= maxbit )
+			// our value is from the range of (-1,1) and we return zero
+			return 0;
+
+		UInt<man> mantissa_temp(mantissa);
+		// exponent is from a range of (maxbit, maxbit + sint(TTMATH_BITS_PER_UINT) >
+		sint how_many_bits = exponent.ToInt();
+
+		// how_many_bits is negative, we'll make it positive
+		how_many_bits = -how_many_bits;
+	
+		// we're taking into account only the last word in a mantissa table
+		mantissa_temp.Rcr( how_many_bits % TTMATH_BITS_PER_UINT, 0 );
+		result = mantissa_temp.table[ man-1 ];
+
+	return 0;
+	}
+
+
 
 	/*!
 		this method sets 'result' as the one word of type sint
@@ -1284,42 +1393,23 @@ public:
 	uint ToInt(sint & result) const
 	{
 		result = 0;
+		uint result_uint;
 
-		if( IsZero() )
-			return 0;
-		
-		sint maxbit = -sint(man*TTMATH_BITS_PER_UINT);
-
-		if( exponent > maxbit + sint(TTMATH_BITS_PER_UINT) )
-			// if exponent > (maxbit + sint(TTMATH_BITS_PER_UINT)) the value can't be passed
-			// into the 'sint' type (it's too big)
+		if( ToUInt(result_uint, false) )
 			return 1;
 
-		if( exponent <= maxbit )
-			// our value is from range (-1,1) and we return zero
-			return 0;
-
-		UInt<man> mantissa_temp(mantissa);
-		// exponent is from a range of (-maxbit,0>
-		sint how_many_bits = exponent.ToInt();
-
-		// how_many_bits is negative, we'll make it positive
-		how_many_bits = -how_many_bits;
-	
-		// we're taking into an account only the last word in a mantissa table
-		mantissa_temp.Rcr( how_many_bits % TTMATH_BITS_PER_UINT, 0 );
-		result = mantissa_temp.table[ man-1 ];
+		result = static_cast<sint>( result_uint );
 
 		// the exception for the minimal value
-		if( IsSign() && result == TTMATH_UINT_HIGHEST_BIT )
+		if( IsSign() && result_uint == TTMATH_UINT_HIGHEST_BIT )
 			return 0;
 
-		if( (result & TTMATH_UINT_HIGHEST_BIT) != 0 )
+		if( (result_uint & TTMATH_UINT_HIGHEST_BIT) != 0 )
 			// the value is too big
 			return 1;
 
 		if( IsSign() )
-			result = -sint(result);
+			result = -result;
 
 	return 0;
 	}
@@ -1343,7 +1433,6 @@ public:
 		if( exponent > maxbit + sint(int_size*TTMATH_BITS_PER_UINT) )
 			// if exponent > (maxbit + sint(int_size*TTMATH_BITS_PER_UINT)) the value can't be passed
 			// into the 'Int<int_size>' type (it's too big)
-			return 1;
 
 		if( exponent <= maxbit )
 			// our value is from range (-1,1) and we return zero

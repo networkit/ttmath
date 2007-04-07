@@ -1529,10 +1529,77 @@ namespace ttmath
 
 
 
+	namespace auxiliaryfunctions
+	{
+	
+	template<class ValueType>
+	uint FactorialInt(	const ValueType & x, ErrorCode * err,
+						const volatile StopCalculating * stop,
+						ValueType & result)
+	{
+		uint maxvalue = TTMATH_UINT_MAX_VALUE;
+
+		if( x < TTMATH_UINT_MAX_VALUE )
+			x.ToUInt(maxvalue);
+
+		uint multipler = 1;
+		uint carry     = 0;
+
+		while( !carry && multipler<maxvalue  )
+		{
+			if( stop && stop->WasStopSignal() )
+			{
+				if( err )
+					*err = err_interrupt;
+
+			return 2;
+			}
+			
+			++multipler;
+			carry += result.MulUInt(multipler);
+		}
+
+		if( err )
+			*err = carry ? err_overflow : err_ok;
+
+	return carry ? 1 : 0;
+	}
 
 
+	template<class ValueType>
+	int FactorialMore(	const ValueType & x, ErrorCode * err,
+						const volatile StopCalculating * stop,
+						ValueType & result)
+	{
+		ValueType multipler(TTMATH_UINT_MAX_VALUE);
+		ValueType one;
+
+		one.SetOne();
+		uint carry = 0;
+
+		while( !carry && multipler < x )
+		{
+			if( stop && stop->WasStopSignal() )
+			{
+				if( err )
+					*err = err_interrupt;
+
+			return 2;
+			}
+			
+			carry += multipler.Add(one);
+			carry += result.Mul(multipler);
+		}
+
+		if( err )
+			*err = carry ? err_overflow : err_ok;
+
+	return carry ? 1 : 0;
+	}
 
 
+	} // namespace
+	
 
 
 	/*!
@@ -1543,6 +1610,8 @@ namespace ttmath
 	template<class ValueType>
 	ValueType Factorial(const ValueType & x, ErrorCode * err = 0, const volatile StopCalculating * stop = 0)
 	{
+	using namespace auxiliaryfunctions;
+
 	static History<ValueType> history;
 	ValueType result;
 
@@ -1577,32 +1646,16 @@ namespace ttmath
 			return result;
 		}
 
-		ValueType multipler;
-		ValueType one;
-		uint carry = 0;
+		uint status = FactorialInt(x, err, stop, result);
+		if( status == 0 )
+			status = FactorialMore(x, err, stop, result);
 
-		one        = result; // =1
-		multipler  = result; // =1
-
-		while( !carry && multipler < x )
-		{
-			if( stop && stop->WasStopSignal() )
-			{
-				if( err )
-					*err = err_interrupt;
-
+		if( status == 2 )
+			// the calculation has been interrupted
 			return result;
-			}
-			
-			carry += multipler.Add(one);
-			carry += result.Mul(multipler);
-		}
 
-		err_tmp = carry ? err_overflow : err_ok;
+		err_tmp = status==1 ? err_overflow : err_ok;
 		history.Add(x, result, err_tmp);
-
-		if( err )
-			*err = carry ? err_overflow : err_ok;
 
 	return result;
 	}

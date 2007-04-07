@@ -618,6 +618,7 @@ void Factorial(int sindex, int amount_of_args, ValueType & result)
 		Error( err );
 }
 
+
 void Abs(int sindex, int amount_of_args, ValueType & result)
 {
 	if( amount_of_args != 1 )
@@ -2125,7 +2126,6 @@ ErrorCode Parse(const char * str)
 	error        = err_ok;
 	
 	stack.resize( default_stack_size );
-
 
 	try
 	{
