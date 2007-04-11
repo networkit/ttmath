@@ -819,7 +819,7 @@ public:
 
 				"leal (%%ebx,%%edx,4), %%ebx 	\n"
 
-				"movl %%esi, %%edx					\n"
+				"movl %%esi, %%edx				\n"
 				"clc							\n"
 			"1:									\n"
 
@@ -878,18 +878,31 @@ public:
 	}
 
 
+private:
+
+
 #ifdef TTMATH_PLATFORM32
 
 
 	/*!
-		this method moving once all bits into the left side
-		return value <- this <- C
+		this method moves all bits into the left hand side
+		return value <- this <- c
 
-		the lowest bit will hold value of 'c' and
-		function returns the highest bit
+		the lowest *bits* will be held the 'c' and
+		the state of one additional bit (on the left hand side)
+		will be returned
+
+		for example:
+		let this is 001010000
+		after Rcl2(3, 1) there'll be 010000111 and Rcl2 returns 1
 	*/
-	uint Rcl(uint c=0)
+	uint Rcl2(uint bits, uint c)
 	{
+		if( bits == 0 )
+			return 0;
+
+	TTMATH_ASSERT( bits>0 && bits<TTMATH_BITS_PER_UINT )
+		
 	register sint b = value_size;
 	register uint * p1 = table;
 
@@ -900,12 +913,16 @@ public:
 				push eax
 				push ebx
 				push ecx
+				push edx
 
-				mov ecx,[b]
-				mov ebx,[p1]
+				mov edx, [bits]
+			
+			a:	
+				xor eax, eax
+				sub eax, [c]
 
-				mov eax,0
-				sub eax,[c]
+				mov ecx, [b]
+				mov ebx, [p1]
 
 			p:
 				rcl dword ptr[ebx],1
@@ -917,10 +934,15 @@ public:
 
 			loop p
 
+				dec edx
+
+			jnz a
+
 				mov eax,0
 				adc eax,eax
 				mov [c],eax
 
+				pop edx
 				pop ecx
 				pop ebx
 				pop eax
@@ -931,12 +953,16 @@ public:
 		#ifdef __GNUC__
 		__asm__  __volatile__(
 		
+			"push %%esi			\n"
+			
+		"2:						\n"
+		
+			"xorl %%eax,%%eax	\n"
+			"subl %%edx,%%eax	\n"
+
 			"push %%ebx			\n"
 			"push %%ecx			\n"
-			
-			"movl $0,%%eax		\n"
-			"subl %%edx,%%eax	\n"
-		
+
 		"1:						\n"
 			"rcll $1,(%%ebx)	\n"
 			
@@ -947,14 +973,20 @@ public:
 			
 		"loop 1b				\n"
 			
-			"movl $0, %%edx		\n"
-			"adcl %%edx,%%edx	\n"
-
 			"pop %%ecx			\n"
 			"pop %%ebx			\n"
 
+			"decl %%esi			\n"
+
+		"jnz 2b					\n"
+
+			"movl $0, %%edx		\n"
+			"adcl %%edx, %%edx	\n"
+
+			"pop %%esi			\n"
+
 			: "=d" (c)
-			: "0" (c), "c" (b), "b" (p1)
+			: "0" (c), "c" (b), "b" (p1), "S" (bits)
 			: "%eax", "cc", "memory" );
 
 		#endif
@@ -965,14 +997,24 @@ public:
 
 
 	/*!
-		this method moving once all bits into the right side
-		C -> *this -> return value
+		this method moves all bits into the right hand side
+		C -> this -> return value
 
-		the highest bit will be held value of 'c' and
-		function returns the lowest bit
+		the highest *bits* will be held the 'c' and
+		the state of one additional bit (on the right hand side)
+		will be returned
+
+		for example:
+		let this is 000000010
+		after Rcr2(2, 1) there'll be 110000000 and Rcr2 returns 1
 	*/
-	uint Rcr(uint c=0)
+	uint Rcr2(uint bits, uint c)
 	{
+		if( bits == 0 )
+			return 0;
+
+	TTMATH_ASSERT( bits>0 && bits<TTMATH_BITS_PER_UINT )
+
 	register sint b = value_size;
 	register uint * p1 = table;
 
@@ -983,14 +1025,18 @@ public:
 				push eax
 				push ebx
 				push ecx
+				push edx
+
+				mov edx,[bits]
+
+			a:
+
+				xor eax,eax
+				sub eax,[c]
 
 				mov ebx,[p1]
 				mov ecx,[b]
-
 				lea ebx,[ebx+4*ecx]
-
-				mov eax,0
-				sub eax,[c]
 
 			p:
 				dec ebx
@@ -1001,11 +1047,16 @@ public:
 				rcr dword ptr [ebx],1
 
 			loop p
+				
+				dec edx
+
+			jnz a
 
 				mov eax,0
 				adc eax,eax
 				mov [c],eax
 
+				pop edx
 				pop ecx
 				pop ebx
 				pop eax
@@ -1016,12 +1067,17 @@ public:
 		#ifdef __GNUC__
 			__asm__  __volatile__(
 
+			"push %%esi			\n"
+
+
+		"2:						\n"
+
 			"push %%ebx			\n"
 			"push %%ecx			\n"
 
 			"leal (%%ebx,%%ecx,4),%%ebx  \n"
 			
-			"movl $0, %%eax		\n"
+			"xorl %%eax, %%eax	\n"
 			"subl %%edx, %%eax	\n"
 
 		"1:						\n"
@@ -1034,14 +1090,20 @@ public:
 			
 		"loop 1b				\n"
 
-			"movl $0, %%edx		\n"
-			"adcl %%edx,%%edx	\n"
-
 			"pop %%ecx			\n"
 			"pop %%ebx			\n"
 
+			"decl %%esi			\n"
+
+		"jnz 2b					\n"
+
+			"movl $0, %%edx		\n"
+			"adcl %%edx, %%edx	\n"
+
+			"pop %%esi			\n"
+
 			: "=d" (c)
-			: "0" (c), "c" (b), "b" (p1)
+			: "0" (c), "c" (b), "b" (p1), "S" (bits)
 			: "%eax", "cc", "memory" );
 
 		#endif
@@ -1051,6 +1113,47 @@ public:
 	}
 
 #endif
+
+
+	/*!    
+		an auxiliary method for moving bits into the left hand side
+
+		this method moves only words
+	*/
+	void RclMoveAllWords(	sint & all_words, uint & rest_bits, uint & last_c,
+							uint bits, uint c)
+	{	
+		rest_bits = sint(bits % TTMATH_BITS_PER_UINT);
+		all_words = sint(bits / TTMATH_BITS_PER_UINT);
+
+		if( all_words >= sint(value_size) )
+		{
+			if( all_words==value_size && rest_bits==0 )
+				last_c = table[0] & 1;
+
+			all_words = value_size; // not value_size - 1
+			rest_bits = 0;
+		}
+
+		if( all_words > 0 )
+		{
+			sint first;
+			sint second;
+
+			last_c = table[value_size - all_words] & 1; // all_words is greater than 0
+
+			// copying the first part of the value
+			for(first = value_size-1, second=first-all_words ; second>=0 ; --first, --second)
+				table[first] = table[second];
+
+			// sets the rest bits of value into 'c'
+			uint mask = c ? TTMATH_UINT_MAX_VALUE : 0;
+			for( ; first>=0 ; --first )
+				table[first] = mask;
+		}
+	}
+	
+public:
 
 	/*!
 		this method moving all bits into the left side 'bits' times
@@ -1062,39 +1165,92 @@ public:
 		the value c will be set into the lowest bits
 		and the method returns state of the last moved bit
 	*/
-	uint Rcl(uint bits, uint c)
+	uint Rcl(uint bits, uint c=0)
 	{
-	sint first;
-	sint second;
 	uint last_c = 0;
-	
-		if( bits > value_size*TTMATH_BITS_PER_UINT )
-			bits = value_size*TTMATH_BITS_PER_UINT;
+	sint all_words = 0;
+	uint rest_bits = bits;
 
-		sint all_words = sint(bits) / sint(TTMATH_BITS_PER_UINT);
+		if( bits >= TTMATH_BITS_PER_UINT )
+			RclMoveAllWords(all_words, rest_bits, last_c, bits, c);
 
-		if( all_words > 0 )
+
+		// rest_bits is from 0 to TTMATH_BITS_PER_UINT-1 now
+		if( rest_bits > 0 )
 		{
-			// copying the first part of the value
-			for(first = value_size-1, second=first-all_words ; second>=0 ; --first, --second)
+			// if rest_bits is greater than a half of TTMATH_BITS_PER_UINT
+			// we're moving bits into the right hand side
+			// (TTMATH_BITS_PER_UINT-rest_bits) times
+			// and then we're moving one word into left
+			if( rest_bits > TTMATH_BITS_PER_UINT/2 + 1 )
 			{
-				last_c = table[first] & 1;
-				table[first] = table[second];
+				uint temp = table[0];
+				Rcr2(TTMATH_BITS_PER_UINT-rest_bits,0);
+				last_c = table[value_size-1] & 1;
+				
+				for(uint i=value_size-1 ; i>0 ; --i)
+					table[i] = table[i-1];
+
+				table[0] = temp << rest_bits;
+
+				if( c )
+				{
+					uint mask = TTMATH_UINT_MAX_VALUE << rest_bits;
+					table[0] |= ~mask;
+				}
+			}
+			else
+			{
+				last_c = Rcl2(rest_bits, c);
 			}
 
-			// sets the rest bits of value into 'c'
-			uint mask = (c!=0)? TTMATH_UINT_MAX_VALUE : 0;
-			for( ; first>=0 ; --first )
-				table[first] = mask;
 		}
-
-		sint rest_bits = sint(bits) % sint(TTMATH_BITS_PER_UINT);
-		for( ; rest_bits > 0 ; --rest_bits )
-			last_c = Rcl(c);		
 
 	return last_c;
 	}
 
+private:
+
+	/*!    
+		an auxiliary method for moving bits into the right hand side
+
+		this method moves only words
+	*/
+	void RcrMoveAllWords(	sint & all_words, uint & rest_bits, uint & last_c,
+							uint bits, uint c)
+	{
+		rest_bits = sint(bits % TTMATH_BITS_PER_UINT);
+		all_words = sint(bits / TTMATH_BITS_PER_UINT);
+
+		if( all_words >= sint(value_size) )
+		{
+			if( all_words==value_size && rest_bits==0 )
+				last_c = (table[value_size-1] & TTMATH_UINT_HIGHEST_BIT) ? 1 : 0;
+
+			all_words = value_size; // not value_size - 1
+			rest_bits = 0;
+		}
+
+
+		if( all_words > 0 )
+		{
+			uint first;
+			uint second;
+
+			last_c = (table[all_words - 1] & TTMATH_UINT_HIGHEST_BIT) ? 1 : 0; // all_words is > 0
+
+			// copying the first part of the value
+			for(first=0, second=all_words ; second<value_size ; ++first, ++second)
+				table[first] = table[second];
+
+			// sets the rest bits of value into 'c'
+			uint mask = c ? TTMATH_UINT_MAX_VALUE : 0;
+			for( ; first<value_size ; ++first )
+				table[first] = mask;
+		}
+	}
+
+public:
 
 	/*!
 		this method moving all bits into the right side 'bits' times
@@ -1106,38 +1262,41 @@ public:
 		the value c will be set into the highest bits
 		and the method returns state of the last moved bit
 	*/
-	uint Rcr(uint bits, uint c)
+	uint Rcr(uint bits, uint c=0)
 	{
-	sint first;
-	sint second;
-	sint last_c = 0;
+	uint last_c    = 0;
+	sint all_words = 0;
+	uint rest_bits = bits;
 	
-		if( bits > value_size*TTMATH_BITS_PER_UINT )
-			bits = value_size*TTMATH_BITS_PER_UINT;
+		if( bits >= TTMATH_BITS_PER_UINT )
+			RcrMoveAllWords(all_words, rest_bits, last_c, bits, c);
 
-		sint all_words = sint(bits) / sint(TTMATH_BITS_PER_UINT);
-
-		if( all_words > 0 )
+		// rest_bits is from 0 to TTMATH_BITS_PER_UINT-1 now
+		if( rest_bits > 0 )
 		{
-			// copying the first part of the value
-			for(first=0, second=all_words ; second<sint(value_size) ; ++first, ++second)
+			if( rest_bits > TTMATH_BITS_PER_UINT/2 + 1 )
 			{
-				last_c = table[first] & TTMATH_UINT_HIGHEST_BIT;
-				table[first] = table[second];
+				uint temp = table[value_size-1];
+				Rcl2(TTMATH_BITS_PER_UINT-rest_bits,0);
+				last_c = (table[0] & TTMATH_UINT_HIGHEST_BIT) ? 1 : 0;
+				
+				for(uint i=0 ; i<value_size-1 ; ++i)
+					table[i] = table[i+1];
+
+				table[value_size-1] = temp >> rest_bits;
+
+				if( c )
+				{
+					uint mask = TTMATH_UINT_MAX_VALUE >> rest_bits;
+					table[value_size-1] |= ~mask;
+				}
+			}
+			else
+			{
+				last_c = Rcr2(rest_bits, c);
 			}
 
-			if( last_c )
-				last_c = 1; 
-
-			// sets the rest bits of value into 'c'
-			uint mask = (c!=0)? TTMATH_UINT_MAX_VALUE : 0;
-			for( ; first<sint(value_size) ; ++first )
-				table[first] = mask;
 		}
-
-		sint rest_bits = sint(bits) % sint(TTMATH_BITS_PER_UINT);
-		for( ; rest_bits > 0 ; --rest_bits )
-			last_c = Rcr(c);		
 
 	return last_c;
 	}
@@ -1175,14 +1334,14 @@ public:
 				table[i] = 0;
 		}
 
-		// moving the rest bits (max TTMATH_BITS_PER_UINT -- only one word)
-		while( !IsTheHighestBitSet() )
-		{
-			Rcl();
-			++moving;
-		}
+		uint moving2 = FindLeadingBitInWord( table[value_size-1] );
+		// moving2 is different from -1 because the value table[value_size-1]
+		// is not zero
 
-	return moving;
+		moving2 = TTMATH_BITS_PER_UINT - moving2 - 1;
+		Rcl(moving2);
+
+	return moving + moving2;
 	}
 
 
@@ -1545,7 +1704,7 @@ public:
 			if( Add(*this) )
 				return 1;
 
-			if( ss1.Rcl() )
+			if( ss1.Rcl(1) )
 				if( Add(ss2) )
 					return 1;
 		}
@@ -1934,7 +2093,7 @@ private:
 
 		
 	div_a:
-		c = Rcl(c);
+		c = Rcl(1, c);
 		c = rest.Add(rest,c);
 		c = rest.Sub(divisor,c);
 
@@ -1949,12 +2108,12 @@ private:
 		if(loop)
 			goto div_a;
 
-		c = Rcl(c);
+		c = Rcl(1, c);
 		return 0;
 
 
 	div_c:
-		c = Rcl(c);
+		c = Rcl(1, c);
 		c = rest.Add(rest,c);
 		c = rest.Add(divisor);
 
@@ -1967,7 +2126,7 @@ private:
 		if(loop)
 			goto div_c;
 
-		c = Rcl(c);
+		c = Rcl(1, c);
 		c = rest.Add(divisor);
 
 	return 0;
@@ -2048,7 +2207,7 @@ private:
 
 		if( CmpSmaller(divisor_copy, table_id) )
 		{
-			divisor_copy.Rcr();
+			divisor_copy.Rcr(1);
 			--bits_diff;
 		}
 
@@ -2324,16 +2483,17 @@ private:
 	{
 	uint c = 0;
 
+	// !!!!!!!!! change
 		for( d = 0 ; (v.table[n-1] & TTMATH_UINT_HIGHEST_BIT) == 0 ; ++d )
 		{
 			// we can move the bits only to the 'n-1' index but at the moment
 			// we don't have such method
 			// maybe it's time to write it now?
-			v.Rcl(0);
+			v.Rcl(1, 0);
 
 			c <<= 1;
 			
-			if( Rcl(0) )
+			if( Rcl(1, 0) )
 				c += 1;
 		}
 
@@ -3224,6 +3384,11 @@ public:
 
 #ifdef TTMATH_PLATFORM64
 
+private:
+	uint Rcl2(uint bits, uint c);
+	uint Rcr2(uint bits, uint c);
+
+public:
 	// these methods are for 64bit processors and are defined in 'ttmathuint64.h'
 	UInt<value_size> & operator=(unsigned int i);
 	UInt(unsigned int i);
@@ -3235,8 +3400,6 @@ public:
 	uint AddTwoInts(uint x2, uint x1, uint index);
 	uint Sub(const UInt<value_size> & ss2, uint c=0);
 	uint SubInt(uint value, uint index = 0);
-	uint Rcl(uint c=0);
-	uint Rcr(uint c=0);
 	static sint FindLeadingBitInWord(uint x);
 	static uint SetBitInWord(uint value, uint bit);
 	static void MulTwoWords(uint a, uint b, uint * result2, uint * result1);

@@ -416,7 +416,7 @@ namespace ttmath
 				"movq $0, %%rdx					\n"
 
 				"movq (%%rbx), %%rax			\n"
-				"addq %%rsi, %%rax					\n"
+				"addq %%rsi, %%rax				\n"
 				"movq %%rax, (%%rbx)			\n"
 
 				"inc %%rbx						\n"
@@ -429,7 +429,7 @@ namespace ttmath
 				"inc %%rbx						\n"
 
 				"movq (%%rbx), %%rax			\n"
-				"adcq %%rdi, %%rax					\n"
+				"adcq %%rdi, %%rax				\n"
 				"movq %%rax, (%%rbx)			\n"
 			"jnc 2f								\n"
 
@@ -638,17 +638,27 @@ namespace ttmath
 
 
 	/*!
-		this method moving once all bits into the left side
-		return value <- this <- C
+		this method moves all bits into the left hand side
+		return value <- this <- c
 
+		the lowest *bits* will be held the 'c' and
+		the state of one additional bit (on the left hand side)
+		will be returned
+
+		for example:
+		let this is 001010000
+		after Rcl2(3, 1) there'll be 010000111 and Rcl2 returns 1
+	
 		***this method is created only on a 64bit platform***
-
-		the lowest bit will hold value of 'c' and
-		function returns the highest bit
 	*/
 	template<uint value_size>
-	uint UInt<value_size>::Rcl(uint c)
+	uint UInt<value_size>::Rcl2(uint bits, uint c)
 	{
+		if( bits == 0 )
+			return 0;
+
+	TTMATH_ASSERT( bits>0 && bits<TTMATH_BITS_PER_UINT )
+
 	register sint b = value_size;
 	register uint * p1 = table;
 
@@ -659,12 +669,17 @@ namespace ttmath
 		#ifdef __GNUC__
 		__asm__  __volatile__(
 		
+			"push %%rsi			\n"
+			
+		
+		"2:						\n"
+
+			"xorq %%rax,%%rax	\n"
+			"subq %%rdx,%%rax	\n"
+
 			"push %%rbx			\n"
 			"push %%rcx			\n"
-			
-			"movq $0,%%rax		\n"
-			"subq %%rdx,%%rax	\n"
-		
+
 		"1:						\n"
 			"rclq $1,(%%rbx)	\n"
 			
@@ -679,14 +694,20 @@ namespace ttmath
 			
 		"loop 1b				\n"
 			
-			"movq $0, %%rdx		\n"
-			"adcq %%rdx,%%rdx	\n"
-
 			"pop %%rcx			\n"
 			"pop %%rbx			\n"
 
+			"decq %%rsi			\n"
+
+		"jnz 2b					\n"
+
+			"movq $0, %%rdx		\n"
+			"adcq %%rdx, %%rdx	\n"
+
+			"pop %%rsi			\n"
+
 			: "=d" (c)
-			: "0" (c), "c" (b), "b" (p1)
+			: "0" (c), "c" (b), "b" (p1), "S" (bits)
 			: "%rax", "cc", "memory" );
 
 		#endif
@@ -697,17 +718,27 @@ namespace ttmath
 
 
 	/*!
-		this method moving once all bits into the right side
-		C -> *this -> return value
+		this method moves all bits into the right hand side
+		C -> this -> return value
+
+		the highest *bits* will be held the 'c' and
+		the state of one additional bit (on the right hand side)
+		will be returned
+
+		for example:
+		let this is 000000010
+		after Rcr2(2, 1) there'll be 110000000 and Rcr2 returns 1
 
 		***this method is created only on a 64bit platform***
-
-		the highest bit will be held value of 'c' and
-		function returns the lowest bit
 	*/
 	template<uint value_size>
-	uint UInt<value_size>::Rcr(uint c)
+	uint UInt<value_size>::Rcr2(uint bits, uint c)
 	{
+		if( bits == 0 )
+			return 0;
+
+	TTMATH_ASSERT( bits>0 && bits<TTMATH_BITS_PER_UINT )
+
 	register sint b = value_size;
 	register uint * p1 = table;
 
@@ -720,12 +751,18 @@ namespace ttmath
 		#ifdef __GNUC__
 			__asm__  __volatile__(
 
+			"push %%rsi			\n"
+
+
+		"2:						\n"
+
+
 			"push %%rbx			\n"
 			"push %%rcx			\n"
 
 			"leaq (%%rbx,%%rcx,8),%%rbx  \n"
-		
-			"movq $0, %%rax		\n"
+
+			"xorq %%rax, %%rax	\n"
 			"subq %%rdx, %%rax	\n"
 
 		"1:						\n"
@@ -742,14 +779,20 @@ namespace ttmath
 			
 		"loop 1b				\n"
 
-			"movq $0, %%rdx		\n"
-			"adcq %%rdx,%%rdx	\n"
-
 			"pop %%rcx			\n"
 			"pop %%rbx			\n"
 
+			"decq %%rsi			\n"
+
+		"jnz 2b					\n"
+
+			"movq $0, %%rdx		\n"
+			"adcq %%rdx,%%rdx	\n"
+
+			"pop %%rsi			\n"
+
 			: "=d" (c)
-			: "0" (c), "c" (b), "b" (p1)
+			: "0" (c), "c" (b), "b" (p1), "S" (bits)
 			: "%rax", "cc", "memory" );
 
 		#endif

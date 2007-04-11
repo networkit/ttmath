@@ -561,7 +561,7 @@ public:
 			// values have the same signs
 			if( mantissa.Add(ss2.mantissa) )
 			{
-				mantissa.Rcr(1);
+				mantissa.Rcr(1,1);
 				c = exponent.AddOne();
 			}
 		}
@@ -570,7 +570,7 @@ public:
 			// values have different signs
 			if( mantissa.Sub(ss2.mantissa) )
 			{
-				mantissa.Rcl(1);
+				mantissa.Rcl(1,1);  // maybe without this rcl and subone()? !!!!
 				c = exponent.SubOne();
 			}
 		}
@@ -814,7 +814,7 @@ public:
 			if( start.Mul(start) )
 				return 1;
 
-			pow.Rcr();
+			pow.Rcr(1);
 		}
 
 		*this = result;
