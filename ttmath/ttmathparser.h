@@ -1043,6 +1043,60 @@ void Root(int sindex, int amount_of_args, ValueType & result)
 		Error( err );
 }
 
+
+
+void ASinh(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 1 )
+		Error( err_improper_amount_of_arguments );
+
+	ErrorCode err;
+	result = ttmath::ASinh(stack[sindex].value, &err);
+
+	if( err != err_ok )
+		Error( err );
+}
+
+
+void ACosh(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 1 )
+		Error( err_improper_amount_of_arguments );
+
+	ErrorCode err;
+	result = ttmath::ACosh(stack[sindex].value, &err);
+
+	if( err != err_ok )
+		Error( err );
+}
+
+
+void ATanh(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 1 )
+		Error( err_improper_amount_of_arguments );
+
+	ErrorCode err;
+	result = ttmath::ATanh(stack[sindex].value, &err);
+
+	if( err != err_ok )
+		Error( err );
+}
+
+
+void ACoth(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 1 )
+		Error( err_improper_amount_of_arguments );
+
+	ErrorCode err;
+	result = ttmath::ACoth(stack[sindex].value, &err);
+
+	if( err != err_ok )
+		Error( err );
+}
+
+
 /*!
 	this method returns the value from a user-defined function
 
@@ -1192,6 +1246,12 @@ void CreateFunctionsTable()
 	InsertFunctionToTable(std::string("coth"),		&Parser<ValueType>::Coth);
 	InsertFunctionToTable(std::string("ctgh"),		&Parser<ValueType>::Coth);
 	InsertFunctionToTable(std::string("root"),		&Parser<ValueType>::Root);
+	InsertFunctionToTable(std::string("asinh"),		&Parser<ValueType>::ASinh);
+	InsertFunctionToTable(std::string("acosh"),		&Parser<ValueType>::ACosh);
+	InsertFunctionToTable(std::string("atanh"),		&Parser<ValueType>::ATanh);
+	InsertFunctionToTable(std::string("atgh"),		&Parser<ValueType>::ATanh);
+	InsertFunctionToTable(std::string("acoth"),		&Parser<ValueType>::ACoth);
+	InsertFunctionToTable(std::string("actgh"),		&Parser<ValueType>::ACoth);
 }
 
 

@@ -1171,6 +1171,173 @@ namespace ttmath
 	}
 
 
+	/*
+ 	 *
+	 *  inverse hyperbolic functions
+	 *
+	 *
+	 */
+
+
+	/*!
+		inverse hyperbolic sine
+
+		asinh(x) = ln( x + sqrt(x^2 + 1) )
+	*/
+	template<class ValueType>
+	ValueType ASinh(const ValueType & x, ErrorCode * err = 0)
+	{
+		ValueType xx(x), one, result;
+		uint c = 0;
+		one.SetOne();
+
+		c += xx.Mul(x);
+		c += xx.Add(one);
+		one.exponent.SubOne(); // one=0.5
+		// xx is >= 1 
+		c += xx.PowFrac(one); // xx=sqrt(xx)
+		c += xx.Add(x);
+		c += result.Ln(xx); // xx > 0
+
+		// here can only be a carry
+		if( err )
+			*err = c ? err_overflow : err_ok;
+
+	return result;
+	}
+
+
+	/*!
+		inverse hyperbolic cosine
+
+		acosh(x) = ln( x + sqrt(x^2 - 1) )  x in <1, infinity)
+	*/
+	template<class ValueType>
+	ValueType ACosh(const ValueType & x, ErrorCode * err = 0)
+	{
+		ValueType xx(x), one, result;
+		uint c = 0;
+		one.SetOne();
+
+		if( x < one )
+		{
+			if( err )
+				*err = err_improper_argument;
+
+		return result;
+		}
+
+		c += xx.Mul(x);
+		c += xx.Sub(one);
+		// xx is >= 0
+		// we can't call a PowFrac when the 'x' is zero
+		// if x is 0 the sqrt(0) is 0
+		if( !xx.IsZero() )
+		{
+			one.exponent.SubOne(); // one=0.5
+			c += xx.PowFrac(one); // xx=sqrt(xx)
+		}
+		c += xx.Add(x);
+		c += result.Ln(xx); // xx >= 1
+
+		// here can only be a carry
+		if( err )
+			*err = c ? err_overflow : err_ok;
+
+	return result;
+	}
+
+
+	/*!
+		inverse hyperbolic tangent
+
+		atanh(x) = 0.5 * ln( (1+x) / (1-x) )  x in (-1, 1)
+	*/
+	template<class ValueType>
+	ValueType ATanh(const ValueType & x, ErrorCode * err = 0)
+	{
+		ValueType nominator(x), denominator, one, result;
+		uint c = 0;
+		one.SetOne();
+
+		if( !x.SmallerWithoutSignThan(one) )
+		{
+			if( err )
+				*err = err_improper_argument;
+
+		return result;
+		}
+
+		c += nominator.Add(one);
+		denominator = one;
+		c += denominator.Sub(x);
+		c += nominator.Div(denominator);
+		c += result.Ln(nominator);
+		c += result.exponent.SubOne();
+
+		// here can only be a carry
+		if( err )
+			*err = c ? err_overflow : err_ok;
+
+	return result;
+	}
+
+
+	/*!
+		inverse hyperbolic tantent
+	*/
+	template<class ValueType>
+	ValueType ATgh(const ValueType & x, ErrorCode * err = 0)
+	{
+		return ATanh(x, err);
+	}
+
+
+	/*!
+		inverse hyperbolic cotangent
+
+		acoth(x) = 0.5 * ln( (x+1) / (x-1) )  x in (-infinity, -1) or (1, infinity)
+	*/
+	template<class ValueType>
+	ValueType ACoth(const ValueType & x, ErrorCode * err = 0)
+	{
+		ValueType nominator(x), denominator(x), one, result;
+		uint c = 0;
+		one.SetOne();
+
+		if( !x.GreaterWithoutSignThan(one) )
+		{
+			if( err )
+				*err = err_improper_argument;
+
+		return result;
+		}
+
+		c += nominator.Add(one);
+		c += denominator.Sub(one);
+		c += nominator.Div(denominator);
+		c += result.Ln(nominator);
+		c += result.exponent.SubOne();
+
+		// here can only be a carry
+		if( err )
+			*err = c ? err_overflow : err_ok;
+
+	return result;
+	}
+
+
+	/*!
+		inverse hyperbolic cotantent
+	*/
+	template<class ValueType>
+	ValueType ACtgh(const ValueType & x, ErrorCode * err = 0)
+	{
+		return ACoth(x, err);
+	}
+
+
+
 
 
 	/*

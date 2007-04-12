@@ -182,10 +182,13 @@ public:
 	}
 
 
+
+private:
+
 	/*!
-		it sets value pi
+		sets the mantissa of the value pi
 	*/
-	void SetPi()
+	void SetMantissaPi()
 	{
 	// this is a static table which represents the value Pi (mantissa of it)
 	// (first is the highest word)
@@ -223,8 +226,19 @@ public:
 		// and on 64bit platform value 64 (128/2=64))
 	
 		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(int));
-		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT) + 2;
+	}
+
+public:
+
+
+	/*!
+		sets the value of pi
+	*/
+	void SetPi()
+	{
+		SetMantissaPi();
 		info = 0;
+		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT) + 2;
 	}
 
 
@@ -233,7 +247,8 @@ public:
 	*/
 	void Set05Pi()
 	{
-		SetPi();	
+		SetMantissaPi();
+		info = 0;
 		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT) + 1;
 	}
 
@@ -243,7 +258,8 @@ public:
 	*/
 	void Set2Pi()
 	{
-		SetPi();
+		SetMantissaPi();
+		info = 0;
 		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT) + 3;
 	}
 
@@ -495,10 +511,16 @@ public:
 	*/
 	void ChangeSign()
 	{
+		if( info & TTMATH_BIG_SIGN )
+		{
+			info &= ~TTMATH_BIG_SIGN;
+			return;
+		}
+
 		if( IsZero() )
 			return;
 
-		info = (info & (~TTMATH_BIG_SIGN)) | ((~info) & TTMATH_BIG_SIGN);
+		info |= TTMATH_BIG_SIGN;
 	}
 
 
