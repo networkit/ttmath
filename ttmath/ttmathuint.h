@@ -1490,6 +1490,48 @@ public:
 
 
 	/*!
+		this method performs a bitwise operation AND 
+	*/
+	void BitAnd(const UInt<value_size> & ss2)
+	{
+		for(uint x=0 ; x<value_size ; ++x)
+			table[x] &= ss2.table[x];
+	}
+
+
+	/*!
+		this method performs a bitwise operation OR 
+	*/
+	void BitOr(const UInt<value_size> & ss2)
+	{
+		for(uint x=0 ; x<value_size ; ++x)
+			table[x] |= ss2.table[x];
+	}
+
+
+	/*!
+		this method performs a bitwise operation XOR 
+	*/
+	void BitXor(const UInt<value_size> & ss2)
+	{
+		for(uint x=0 ; x<value_size ; ++x)
+			table[x] ^= ss2.table[x];
+	}
+
+
+	/*!
+		this method performs a bitwise operation NOT
+	*/
+	void BitNot()
+	{
+		for(uint x=0 ; x<value_size ; ++x)
+			table[x] = ~table[x];
+	}
+
+
+
+
+	/*!
 	 *
 	 * Multiplication
 	 *
@@ -1499,7 +1541,7 @@ public:
 public:
 
 
-
+	
 #ifdef TTMATH_PLATFORM32
 
 

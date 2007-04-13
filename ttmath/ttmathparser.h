@@ -1097,6 +1097,67 @@ void ACoth(int sindex, int amount_of_args, ValueType & result)
 }
 
 
+void BitAnd(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 2 )
+		Error( err_improper_amount_of_arguments );
+
+	uint err;
+	result = stack[sindex].value;
+	err = result.BitAnd(stack[sindex+2].value);
+
+	switch(err)
+	{
+	case 1:
+		Error( err_overflow );
+		break;
+	case 2:
+		Error( err_improper_argument );
+		break;
+	}
+}
+
+void BitOr(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 2 )
+		Error( err_improper_amount_of_arguments );
+
+	uint err;
+	result = stack[sindex].value;
+	err = result.BitOr(stack[sindex+2].value);
+
+	switch(err)
+	{
+	case 1:
+		Error( err_overflow );
+		break;
+	case 2:
+		Error( err_improper_argument );
+		break;
+	}
+}
+
+
+void BitXor(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 2 )
+		Error( err_improper_amount_of_arguments );
+
+	uint err;
+	result = stack[sindex].value;
+	err = result.BitXor(stack[sindex+2].value);
+
+	switch(err)
+	{
+	case 1:
+		Error( err_overflow );
+		break;
+	case 2:
+		Error( err_improper_argument );
+		break;
+	}
+}
+
 /*!
 	this method returns the value from a user-defined function
 
@@ -1252,6 +1313,12 @@ void CreateFunctionsTable()
 	InsertFunctionToTable(std::string("atgh"),		&Parser<ValueType>::ATanh);
 	InsertFunctionToTable(std::string("acoth"),		&Parser<ValueType>::ACoth);
 	InsertFunctionToTable(std::string("actgh"),		&Parser<ValueType>::ACoth);
+	InsertFunctionToTable(std::string("bitand"),	&Parser<ValueType>::BitAnd);
+	InsertFunctionToTable(std::string("bitor"),		&Parser<ValueType>::BitOr);
+	InsertFunctionToTable(std::string("bitxor"),	&Parser<ValueType>::BitXor);
+	InsertFunctionToTable(std::string("band"),		&Parser<ValueType>::BitAnd);
+	InsertFunctionToTable(std::string("bor"),		&Parser<ValueType>::BitOr);
+	InsertFunctionToTable(std::string("bxor"),		&Parser<ValueType>::BitXor);
 }
 
 

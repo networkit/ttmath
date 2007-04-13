@@ -1,7 +1,5 @@
 TODO TTMath Library
 ===================
 
-* Add bitwise operators (or functions) and, or, xor
 * Add functions for generating random values
-
-
+* Add something like NaN to the Big<> type

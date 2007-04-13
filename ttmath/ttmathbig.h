@@ -617,6 +617,145 @@ public:
 		
 
 	/*!
+		bitwise AND
+
+		this and ss2 must be >= 0
+		return values:
+			0 - ok
+			1 - carry
+			2 - this or ss2 was negative
+	*/
+	uint BitAnd(Big<exp, man> ss2)
+	{
+		if( IsSign() || ss2.IsSign() )
+			return 2;
+		
+	Int<exp> exp_offset( exponent );
+	Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
+
+	uint c = 0;
+
+		exp_offset.Sub( ss2.exponent );
+		exp_offset.Abs();
+
+		// abs(this) will be >= abs(ss2)
+		if( SmallerWithoutSignThan(ss2) )
+		{
+			Big<exp, man> temp(ss2);
+
+			ss2   = *this;
+			*this = temp;
+		}
+
+		if( exp_offset >= mantissa_size_in_bits )
+		{
+			// the second value is too short
+			SetZero();
+			return 0;
+		}
+
+		// exp_offset < mantissa_size_in_bits, moving 'exp_offset' times
+		ss2.mantissa.Rcr( exp_offset.ToInt(), 0 );
+		mantissa.BitAnd(ss2.mantissa);
+
+		c += Standardizing();
+
+	return (c==0)? 0 : 1;
+	}
+
+
+	/*!
+		bitwise OR
+
+		this and ss2 must be >= 0
+		return values:
+			0 - ok
+			1 - carry
+			2 - this or ss2 was negative
+	*/
+	uint BitOr(Big<exp, man> ss2)
+	{
+		if( IsSign() || ss2.IsSign() )
+			return 2;
+		
+	Int<exp> exp_offset( exponent );
+	Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
+
+	uint c = 0;
+
+		exp_offset.Sub( ss2.exponent );
+		exp_offset.Abs();
+
+		// abs(this) will be >= abs(ss2)
+		if( SmallerWithoutSignThan(ss2) )
+		{
+			Big<exp, man> temp(ss2);
+
+			ss2   = *this;
+			*this = temp;
+		}
+
+		if( exp_offset >= mantissa_size_in_bits )
+			// the second value is too short
+			return 0;
+
+		// exp_offset < mantissa_size_in_bits, moving 'exp_offset' times
+		ss2.mantissa.Rcr( exp_offset.ToInt(), 0 );
+		mantissa.BitOr(ss2.mantissa);
+
+		c += Standardizing();
+
+	return (c==0)? 0 : 1;
+	}
+
+
+	/*!
+		bitwise XOR
+
+		this and ss2 must be >= 0
+		return values:
+			0 - ok
+			1 - carry
+			2 - this or ss2 was negative
+	*/
+	uint BitXor(Big<exp, man> ss2)
+	{
+		if( IsSign() || ss2.IsSign() )
+			return 2;
+		
+	Int<exp> exp_offset( exponent );
+	Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
+
+	uint c = 0;
+
+		exp_offset.Sub( ss2.exponent );
+		exp_offset.Abs();
+
+		// abs(this) will be >= abs(ss2)
+		if( SmallerWithoutSignThan(ss2) )
+		{
+			Big<exp, man> temp(ss2);
+
+			ss2   = *this;
+			*this = temp;
+		}
+
+		if( exp_offset >= mantissa_size_in_bits )
+			// the second value is too short
+			return 0;
+
+		// exp_offset < mantissa_size_in_bits, moving 'exp_offset' times
+		ss2.mantissa.Rcr( exp_offset.ToInt(), 0 );
+		mantissa.BitXor(ss2.mantissa);
+
+		c += Standardizing();
+
+	return (c==0)? 0 : 1;
+	}
+
+
+
+	/*!
 		Multiplication this = this * ss2 (ss2 is uint)
 
 		ss2 without a sign
