@@ -1,3 +1,41 @@
+Version 0.8.1 (2007.04.17):
+	* fixed: Big::PowFrac(..) didn't return a correct error code
+	  (when 'this' was negative)
+	* added: Root(x; index) (and to the parser as well)
+	* added: macro: TTMATH_PRERELEASE_VER (can be either zero or one)
+	* added: UInt::MulInt(int, UInt<int another_size>::&)
+	* added: Big::MulUInt(uint)
+	* changed: Big::MulInt(sint)
+	* added: Big::ToUInt(uint &)
+	* changed: Big::ToInt(sint&)
+	* changed: Factorial() it uses Big::MulUInt() at the beginning
+	  (faster now especially more on a 32bit platform)
+	* added: doxygen.cfg for generating a documentation from the doxygen
+	* changed: UInt::Rcl(uint c=0) and UInt::Rcr(uint c=0) into
+	  UInt::Rcl2(uint bits, uint c) and UInt::Rcr2(uint bits, uint c)
+	  now they can move more than one bit and they are only private
+	* fixed: UInt::Rcl(uint bits, uint c) and UInt::Rcr(uint bits, uint c)
+	  didn't correctly return a carry if the 'bits' were equal
+	  to 'value_size*TTMATH_BITS_PER_UINT'
+	* changed: UInt::Rcl(uint bits, uint c) and UInt::Rcr(uint bits, uint c)
+	  into UInt::Rcl(uint bits, uint c=0) and
+	  UInt::Rcr(uint bits, uint c=0)
+	  they are faster now when the bits is greater than a half of
+	  the TTMATH_BITS_PER_UINT
+	* changed: UInt::CompensationToLeft() it's faster now
+	* changed: more small changes where there were UInt::Rcl(uint c=0) and
+	  UInt::Rcr(uint c=0) used
+	* changed: as the Big type uses UInt::Rcl() and UInt::Rcr() a lot then
+	  it is much faster now (about 5-25%)
+	* added: ASinh(), ACosh(), ATanh() /ATgh()/, ACoth() /ACtgh()/
+	  and to the parser as well
+	* added: UInt::BitAnd(), UInt::BitOr(), UInt::BitXor(), UInt::BitNot(),
+	  Big::BitAnd(), Big::BitOr(), Big::BitXor()
+	* added: to the parser: bitand(), bitor(), bitxor()
+	  /band(), bor(), bxor()/
+	* changed: the way of parsing operators in the mathematical parser
+	  (the parser is not too much greedy now)
+	
 Version 0.8.0 (2007.03.28):
 	* added: into the parser: SetFactorialMax()
 	* added: DegToDeg(deg, min, sec), DegToRad(deg), DegToRad(deg, min, sec),

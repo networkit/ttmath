@@ -549,7 +549,7 @@ public:
 		exp_offset.Sub( ss2.exponent );
 		exp_offset.Abs();
 
-		// abs(this) will be >= abs(ss2)
+		// (1) abs(this) will be >= abs(ss2)
 		if( SmallerWithoutSignThan(ss2) )
 		{
 			Big<exp, man> temp(ss2);
@@ -567,11 +567,12 @@ public:
 		else
 		if( exp_offset < mantissa_size_in_bits )
 		{
-			// moving 'exp_offset' times
+			// (2) moving 'exp_offset' times
 			ss2.mantissa.Rcr( exp_offset.ToInt(), 0 );
 		}
 		else
 		{
+			// (3) 
 			// exp_offset == mantissa_size_in_bits
 			// we're rounding 'this' about one (up or down depending on a ss2 sign)
 			ss2.mantissa.SetOne();
@@ -590,11 +591,12 @@ public:
 		else
 		{
 			// values have different signs
-			if( mantissa.Sub(ss2.mantissa) )
-			{
-				mantissa.Rcl(1,1);  // maybe without this rcl and subone()? !!!!
-				c = exponent.SubOne();
-			}
+			// there shouldn't be a carry here because
+			// (1) (2) and (3) guarantee that the mantissa of this
+			// is greater than the mantissa of the ss2
+			uint c_temp = mantissa.Sub(ss2.mantissa);
+
+			TTMATH_ASSERT( c_temp == 0 )
 		}
 
 		c += Standardizing();

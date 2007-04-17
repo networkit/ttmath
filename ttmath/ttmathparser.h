@@ -1619,13 +1619,22 @@ void CreateMathematicalOperatorsTable()
 }
 
 
-bool CanBeMathematicalOperator(unsigned char c)
-{
-	if( c=='|' || c=='&' || c=='!' || c=='=' || c=='<' || c=='>' ||
-		c=='*' || c=='/' || c=='+' || c=='-' || c=='^' )
-	return true;
+/*!
+	returns true if 'str2' is the substring of str1
 
-return false;
+	e.g.
+	true when str1="test" and str2="te"
+*/
+bool IsSubstring(const std::string & str1, const std::string & str2)
+{
+	if( str2.length() > str1.length() )
+		return false;
+
+	for(std::string::size_type i=0 ; i<str2.length() ; ++i)
+		if( str1[i] != str2[i] )
+			return false;
+
+return true;
 }
 
 
@@ -1635,17 +1644,31 @@ return false;
 void ReadMathematicalOperator(Item & result)
 {
 std::string oper;
+typename OperatorsTable::iterator iter_old, iter_new;
 
-	for( ; CanBeMathematicalOperator(*pstring) ; ++pstring )
+	iter_old = operators_table.end();
+
+	for( ; true ; ++pstring )
+	{
 		oper += *pstring;
+		iter_new = operators_table.lower_bound(oper);
+		
+		if( iter_new == operators_table.end() || !IsSubstring(iter_new->first, oper) )
+		{
+			oper.erase( --oper.end() ); // we've got mininum one element
 
-	typename OperatorsTable::iterator iter = operators_table.find(oper);
-
-	if( iter == operators_table.end() )
-		Error( err_unknown_operator );
-
-	result.type = Item::mat_operator;
-	result.moperator.SetType( iter->second );
+			if( iter_old != operators_table.end() && iter_old->first == oper )
+			{
+				result.type = Item::mat_operator;
+				result.moperator.SetType( iter_old->second );
+				break;
+			}
+			
+			Error( err_unknown_operator );
+		}
+	
+		iter_old = iter_new;
+	}
 }
 
 
@@ -1676,10 +1699,7 @@ int ReadOperator(Item & result)
 		++pstring;
 	}
 	else
-	if( CanBeMathematicalOperator(*pstring) )
 		ReadMathematicalOperator(result);
-	else
-		Error( err_unknown_character );
 
 return 0;
 }
