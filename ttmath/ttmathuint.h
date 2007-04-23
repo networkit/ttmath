@@ -1529,6 +1529,34 @@ public:
 	}
 
 
+	/*!
+		this method performs a bitwise operation NOT but only
+		on the range of <0, leading_bit>
+
+		for example:
+			BitNot2(8) = BitNot2( 1000(bin) ) = 111(bin) = 7
+	*/
+	void BitNot2()
+	{
+	uint table_id, index;
+
+		if( FindLeadingBit(table_id, index) )
+		{
+			for(uint x=0 ; x<table_id ; ++x)
+				table[x] = ~table[x];
+
+			uint mask  = TTMATH_UINT_MAX_VALUE;
+			uint shift = TTMATH_BITS_PER_UINT - index - 1;
+
+			if(shift)
+				mask >>= shift;
+
+			table[table_id] ^= mask;
+		}
+		else
+			table[0] = 1;
+	}
+
 
 
 	/*!
