@@ -475,17 +475,14 @@ public:
 	*	convertion methods
 	*
 	*/
+private:
+
 
 	/*!
-		this method convert an UInt<another_size> type to this class
-
-		this operation has mainly sense if the value from p
-		can be held in this type
-
-		it returns a carry if the value 'p' is too big
+		an auxiliary method for converting both from UInt and Int
 	*/
 	template<uint argument_size>
-	uint FromInt(const Int<argument_size> & p)
+	uint FromUIntOrInt(const UInt<argument_size> & p, bool UInt_type)
 	{
 		uint min_size = (value_size < argument_size)? value_size : argument_size;
 		uint i;
@@ -496,15 +493,25 @@ public:
 
 		if( value_size > argument_size )
 		{	
-			// 'this' is longer than 'p'
-			uint fill = (p.table[argument_size-1] & TTMATH_UINT_HIGHEST_BIT)? TTMATH_UINT_MAX_VALUE : 0;
+			uint fill;
 
+			if( UInt_type )
+				fill = 0;
+			else
+				fill = (p.table[argument_size-1] & TTMATH_UINT_HIGHEST_BIT)?
+														TTMATH_UINT_MAX_VALUE : 0;
+
+			// 'this' is longer than 'p'
 			for( ; i<value_size ; ++i)
 				UInt<value_size>::table[i] = fill;
 		}
 		else
 		{
-			uint test = (UInt<value_size>::table[value_size-1] & TTMATH_UINT_HIGHEST_BIT)? TTMATH_UINT_MAX_VALUE : 0;
+			uint test = (UInt<value_size>::table[value_size-1] & TTMATH_UINT_HIGHEST_BIT)?
+																TTMATH_UINT_MAX_VALUE : 0;
+
+			if( UInt_type && test!=0 )
+				return 1;
 
 			for( ; i<argument_size ; ++i)
 				if( p.table[i] != test )
@@ -514,11 +521,27 @@ public:
 	return 0;
 	}
 
+public:
+
+	/*!
+		this method converts an Int<another_size> type into this class
+
+		this operation has mainly sense if the value from p
+		can be held in this type
+
+		it returns a carry if the value 'p' is too big
+	*/
+	template<uint argument_size>
+	uint FromInt(const Int<argument_size> & p)
+	{
+		return FromUIntOrInt(p, false);
+	}
+
 
 	/*!
 		this method converts the sint type into this class
 	*/
-	void FromInt(sint value)
+	uint FromInt(sint value)
 	{
 	uint fill = ( value<0 ) ? TTMATH_UINT_MAX_VALUE : 0;
 
@@ -526,16 +549,46 @@ public:
 			UInt<value_size>::table[i] = fill;
 
 		UInt<value_size>::table[0] = uint(value);
+	
+		// there'll never be a carry here
+	return 0;
 	}
 
 
 	/*!
-		this operator converts an UInt<another_size> type to this class
-
-		it doesn't return a carry
+		this method converts UInt<another_size> into this class
 	*/
 	template<uint argument_size>
-	Int<value_size> & operator=(const Int<argument_size> & p)
+	uint FromUInt(const UInt<argument_size> & p)
+	{
+		return FromUIntOrInt(p, true);
+	}
+
+
+	/*!
+		this method converts the uint type into this class
+	*/
+	uint FromUInt(uint value)
+	{
+		for(uint i=1 ; i<value_size ; ++i)
+			UInt<value_size>::table[i] = 0;
+
+		UInt<value_size>::table[0] = value;
+
+		// there can be a carry here when the size of this value is equal one word
+		// and the 'value' has the highest bit set
+		if( value_size==1 && (value & TTMATH_UINT_HIGHEST_BIT)!=0 )
+			return 1;
+
+	return 0;
+	}
+
+	// converting from Int
+
+	/*!
+		the default assignment operator
+	*/
+	Int<value_size> & operator=(const Int<value_size> & p)
 	{
 		FromInt(p);
 
@@ -544,9 +597,12 @@ public:
 
 
 	/*!
-		the default assignment operator
+		this operator converts an Int<another_size> type to this class
+
+		it doesn't return a carry
 	*/
-	Int<value_size> & operator=(const Int<value_size> & p)
+	template<uint argument_size>
+	Int<value_size> & operator=(const Int<argument_size> & p)
 	{
 		FromInt(p);
 
@@ -575,11 +631,47 @@ public:
 
 
 	/*!
-		this method converts the uint type to this class
+		the copy constructor
+	*/
+	Int(const Int<value_size> & u)
+	{
+		FromInt(u);
+	}
+
+
+	/*!
+		a constructor for copying from another types
+	*/
+	template<uint argument_size>
+	Int(const Int<argument_size> & u)
+	{
+		// look that 'size' we still set as 'value_size' and not as u.value_size
+		FromInt(u);
+	}
+
+
+	// converting from UInt
+
+	/*!
+		this operator converts an UInt<another_size> type to this class
+
+		it doesn't return a carry
+	*/
+	template<uint argument_size>
+	Int<value_size> & operator=(const UInt<argument_size> & p)
+	{
+		FromUInt(p);
+
+	return *this;
+	}
+
+
+	/*!
+		this method converts the Uint type to this class
 	*/
 	Int<value_size> & operator=(uint i)
 	{
-		UInt<value_size>::FromUInt(i);
+		FromUInt(i);
 
 	return *this;
 	}
@@ -590,8 +682,21 @@ public:
 	*/
 	Int(uint i)
 	{
-		UInt<value_size>::FromUInt(i);
+		FromUInt(i);
 	}
+
+
+	/*!
+		a constructor for copying from another types
+	*/
+	template<uint argument_size>
+	Int(const UInt<argument_size> & u)
+	{
+		// look that 'size' we still set as 'value_size' and not as u.value_size
+		FromUInt(u);
+	}
+
+	// 
 
 
 #ifdef TTMATH_PLATFORM64
@@ -630,7 +735,7 @@ public:
 	*/
 	Int<value_size> & operator=(unsigned int i)
 	{
-		UInt<value_size>::FromUInt(uint(i));
+		FromUInt(uint(i));
 
 	return *this;
 	}
@@ -644,7 +749,7 @@ public:
 	*/
 	Int(unsigned int i)
 	{
-		UInt<value_size>::FromUInt(uint(i));
+		FromUInt(uint(i));
 	}
 
 #endif
@@ -675,18 +780,6 @@ public:
 	*/
 	Int()
 	{
-	}
-
-
-	/*!
-		the copy constructor
-	*/
-	template<uint argument_size>
-	Int(const Int<argument_size> & u) : UInt<value_size>::size(value_size)
-	{
-		// look that 'size' we still set as 'value_size' and not as u.value_size
-
-		operator=(u);
 	}
 
 

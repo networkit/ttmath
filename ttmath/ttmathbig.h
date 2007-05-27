@@ -1787,25 +1787,19 @@ public:
 
 #endif
 
-
+private:
 
 	/*!
-		a method for converting from 'Int<int_size>' to this class
+		an auxiliary method for converting from UInt and Int
+
+		we assume that there'll never be a carry here
+		(we have an exponent and the value in Big can be bigger than
+		that one from the UInt)
 	*/
 	template<uint int_size>
-	void FromInt(Int<int_size> value)
+	void FromUIntOrInt(const UInt<int_size> & value, sint compensation)
 	{
-		info = 0;
-		bool is_sign = false;
-
-		if( value.IsSign() )
-		{
-			value.ChangeSign();
-			is_sign = true;
-		}
-
 		uint minimum_size = (int_size < man)? int_size : man;
-		sint compensation = (sint)value.CompensationToLeft();
 		exponent          = (sint(int_size)-sint(man)) * sint(TTMATH_BITS_PER_UINT) - compensation;
 
 		// copying the highest words
@@ -1816,10 +1810,42 @@ public:
 		// setting the rest of mantissa.table into zero (if some has left)
 		for( ; i<=man ; ++i)
 			mantissa.table[man-i] = 0;
+	}
 
-		if( is_sign )
+
+public:
+
+
+	/*!
+		a method for converting from 'UInt<int_size>' to this class
+	*/
+	template<uint int_size>
+	void FromUInt(UInt<int_size> value)
+	{
+		info = 0;
+		sint compensation = (sint)value.CompensationToLeft();
+	
+	return FromUIntOrInt(value, compensation);
+	}
+
+
+	/*!
+		a method for converting from 'Int<int_size>' to this class
+	*/
+	template<uint int_size>
+	void FromInt(Int<int_size> value)
+	{
+		info = 0;
+
+		if( value.IsSign() )
+		{
+			value.ChangeSign();
 			SetSign();
+		}
 
+		sint compensation = (sint)value.CompensationToLeft();
+
+	return FromUIntOrInt(value, compensation);
 	}
 
 
@@ -1846,6 +1872,28 @@ public:
 
 
 	/*!
+		an operator= for converting from 'UInt<int_size>' to this class
+	*/
+	template<uint int_size>
+	Big<exp,man> & operator=(const UInt<int_size> & value)
+	{
+		FromUInt(value);
+
+	return *this;
+	}
+
+
+	/*!
+		a constructor for converting from 'UInt<int_size>' to this class
+	*/
+	template<uint int_size>
+	Big(const UInt<int_size> & value)
+	{
+		FromUInt(value);
+	}
+
+
+	/*!
 		a default constructor
 
 		warning: we don't set any of the members to zero etc.
@@ -1866,7 +1914,6 @@ public:
 	/*!
 		the default assignment operator
 	*/
-	
 	Big<exp,man> & operator=(const Big<exp,man> & value)
 	{
 		info = value.info;
