@@ -2734,7 +2734,7 @@ private:
 
 
 	/*!
-		we're testing whether is there a comma operator
+		we're testing whether there's a comma operator
 	*/
 	bool FromString_TestCommaOperator(const char * & source)
 	{

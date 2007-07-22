@@ -1553,7 +1553,10 @@ int  character;
 	return 2;
 	}
 	else
-	if( character=='#' || character=='&' || CharToDigit(character, base)!=-1 )
+	if( character=='#' || character=='&' ||
+		character==TTMATH_COMMA_CHARACTER_1 ||
+		(character==TTMATH_COMMA_CHARACTER_2 && TTMATH_COMMA_CHARACTER_2 != 0) ||
+		CharToDigit(character, base)!=-1 )
 	{
 		/*
 			warning:
