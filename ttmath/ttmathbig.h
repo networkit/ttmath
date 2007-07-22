@@ -1682,6 +1682,134 @@ public:
 	}
 
 
+
+	/*!
+		this method converts from standard double into this class
+
+		standard double means IEEE-754 floating point value with 64 bits
+		it is as follows (from http://www.psc.edu/general/software/packages/ieee/ieee.html):
+
+		The IEEE double precision floating point standard representation requires
+		a 64 bit word, which may be represented as numbered from 0 to 63, left to
+		right. The first bit is the sign bit, S, the next eleven bits are the
+		exponent bits, 'E', and the final 52 bits are the fraction 'F':
+
+		S EEEEEEEEEEE FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+		0 1        11 12                                                63
+
+		The value V represented by the word may be determined as follows:
+
+		* If E=2047 and F is nonzero, then V=NaN ("Not a number")
+		* If E=2047 and F is zero and S is 1, then V=-Infinity
+		* If E=2047 and F is zero and S is 0, then V=Infinity
+		* If 0<E<2047 then V=(-1)**S * 2 ** (E-1023) * (1.F) where "1.F" is intended
+		  to represent the binary number created by prefixing F with an implicit
+		  leading 1 and a binary point.
+		* If E=0 and F is nonzero, then V=(-1)**S * 2 ** (-1022) * (0.F) These are
+		  "unnormalized" values.
+		* If E=0 and F is zero and S is 1, then V=-0
+		* If E=0 and F is zero and S is 0, then V=0 
+	*/
+
+#ifdef TTMATH_PLATFORM32
+
+	void FromDouble(double value)
+	{
+		// sizeof(double) should be 8 (64 bits), this is actually not a runtime
+		// error but I leave it at the moment as is
+		TTMATH_ASSERT( sizeof(double) == 8 )
+
+		// I am not sure what will be on a plaltform which has 
+		// a different endianness... but we use this library only
+		// on x86 and amd (intel) 64 bits (as there's a lot of assembler code)
+		union 
+		{
+			double d;
+			unsigned int u[2]; // two 32bit words
+		} temp;
+
+		temp.d = value;
+
+		info = 0;
+		if( temp.u[1] & 0x80000000u )
+			SetSign();
+
+		int e  = (temp.u[1] & 0x7FF00000u) >> 20;
+		unsigned int m1 = ((temp.u[1] & 0xFFFFFu) << 11) | (temp.u[0] >> 21);
+		unsigned int m2 = temp.u[0] << 11;
+		
+		if( e == 2047 )
+		{
+			// If E=2047 and F is nonzero, then V=NaN ("Not a number")
+			// If E=2047 and F is zero and S is 1, then V=-Infinity
+			// If E=2047 and F is zero and S is 0, then V=Infinity
+
+			// at the moment we do not support NaN, -Infinity and +Infinity
+
+			SetZero();
+		}
+		else
+		if( e > 0 )
+		{
+			// If 0<E<2047 then
+			// V=(-1)**S * 2 ** (E-1023) * (1.F)
+			// where "1.F" is intended to represent the binary number
+			// created by prefixing F with an implicit leading 1 and a binary point.
+			
+			FromDouble_SetExpAndMan(e - 1023 - man*TTMATH_BITS_PER_UINT + 1, 0x80000000u, m1, m2);
+
+			// we do not have to call Standardizing() here
+			// because the mantissa will have the highest bit set
+		}
+		else
+		{
+			// e == 0
+
+			if( m1 != 0 || m2 != 0 )
+			{
+				// If E=0 and F is nonzero,
+				// then V=(-1)**S * 2 ** (-1022) * (0.F)
+				// These are "unnormalized" values.
+
+				FromDouble_SetExpAndMan(e - 1022 - man*TTMATH_BITS_PER_UINT + 1, 0, m1, m2);
+				Standardizing();
+			}
+			else
+			{
+				// If E=0 and F is zero and S is 1, then V=-0
+				// If E=0 and F is zero and S is 0, then V=0 
+
+				// we do not support -0 or 0, only is one 0
+				SetZero();
+			}
+		}
+	}
+
+	void FromDouble_SetExpAndMan(int e, unsigned int mhighest,
+								unsigned int m1, unsigned int m2)
+	{
+		exponent = e;
+
+		if( man > 1 )
+		{
+			mantissa.table[man-1] = m1 | mhighest;
+			mantissa.table[man-2] = m2;
+
+			for(unsigned int i=0 ; i<man-2 ; ++i)
+				mantissa.table[i] = 0;
+		}
+		else
+		{
+			mantissa.table[0] = m1 | mhighest;
+		}
+	}
+
+#endif
+
+
+
+
+
 	/*!
 		an operator= for converting 'sint' to this class
 	*/
