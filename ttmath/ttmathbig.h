@@ -1785,6 +1785,9 @@ public:
 		}
 	}
 
+
+private:
+
 	void FromDouble_SetExpAndMan(int e, unsigned int mhighest,
 								unsigned int m1, unsigned int m2)
 	{
@@ -1804,11 +1807,98 @@ public:
 		}
 	}
 
+
+#else
+
+public:
+
+	// 64bit platforms
+	void FromDouble(double value)
+	{
+		// sizeof(double) should be 8 (64 bits), this is actually not a runtime
+		// error but I leave it at the moment as is
+		TTMATH_ASSERT( sizeof(double) == 8 )
+
+		// I am not sure what will be on a plaltform which has 
+		// a different endianness... but we use this library only
+		// on x86 and amd (intel) 64 bits (as there's a lot of assembler code)
+		union 
+		{
+			double d;
+			uint u; // one 64bit word
+		} temp;
+
+		temp.d = value;
+
+		info = 0;
+		if( temp.u & 0x8000000000000000ul )
+			SetSign();
+                             
+		int e  = (temp.u & 0x7FF0000000000000ul) >> 52;
+		uint m = (temp.u & 0xFFFFFFFFFFFFFul) << 11;
+		
+		if( e == 2047 )
+		{
+			// If E=2047 and F is nonzero, then V=NaN ("Not a number")
+			// If E=2047 and F is zero and S is 1, then V=-Infinity
+			// If E=2047 and F is zero and S is 0, then V=Infinity
+
+			// at the moment we do not support NaN, -Infinity and +Infinity
+
+			SetZero();
+		}
+		else
+		if( e > 0 )
+		{
+			// If 0<E<2047 then
+			// V=(-1)**S * 2 ** (E-1023) * (1.F)
+			// where "1.F" is intended to represent the binary number
+			// created by prefixing F with an implicit leading 1 and a binary point.
+			
+			FromDouble_SetExpAndMan(e - 1023 - man*TTMATH_BITS_PER_UINT + 1, 0x8000000000000000ul, m);
+
+			// we do not have to call Standardizing() here
+			// because the mantissa will have the highest bit set
+		}
+		else
+		{
+			// e == 0
+
+			if( m != 0 )
+			{
+				// If E=0 and F is nonzero,
+				// then V=(-1)**S * 2 ** (-1022) * (0.F)
+				// These are "unnormalized" values.
+
+				FromDouble_SetExpAndMan(e - 1022 - man*TTMATH_BITS_PER_UINT + 1, 0, m);
+				Standardizing();
+			}
+			else
+			{
+				// If E=0 and F is zero and S is 1, then V=-0
+				// If E=0 and F is zero and S is 0, then V=0 
+
+				// we do not support -0 or 0, only is one 0
+				SetZero();
+			}
+		}
+	}
+
+private:
+
+	void FromDouble_SetExpAndMan(int e, uint mhighest, uint m)
+	{
+		exponent = e;
+		mantissa.table[man-1] = m | mhighest;
+
+		for(unsigned int i=0 ; i<man-1 ; ++i)
+			mantissa.table[i] = 0;
+	}
+
 #endif
 
 
-
-
+public:
 
 	/*!
 		an operator= for converting 'sint' to this class
