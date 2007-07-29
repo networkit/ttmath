@@ -1725,18 +1725,14 @@ public:
 		union 
 		{
 			double d;
-			unsigned int u[2]; // two 32bit words
+			uint u[2]; // two 32bit words
 		} temp;
 
 		temp.d = value;
 
-		info = 0;
-		if( temp.u[1] & 0x80000000u )
-			SetSign();
-
-		int e  = (temp.u[1] & 0x7FF00000u) >> 20;
-		unsigned int m1 = ((temp.u[1] & 0xFFFFFu) << 11) | (temp.u[0] >> 21);
-		unsigned int m2 = temp.u[0] << 11;
+		sint e  = ( temp.u[1] & 0x7FF00000u) >> 20;
+		uint m1 = ((temp.u[1] &    0xFFFFFu) << 11) | (temp.u[0] >> 21);
+		uint m2 = temp.u[0] << 11;
 		
 		if( e == 2047 )
 		{
@@ -1756,7 +1752,9 @@ public:
 			// where "1.F" is intended to represent the binary number
 			// created by prefixing F with an implicit leading 1 and a binary point.
 			
-			FromDouble_SetExpAndMan(e - 1023 - man*TTMATH_BITS_PER_UINT + 1, 0x80000000u, m1, m2);
+			FromDouble_SetExpAndMan(bool(temp.u[1] & 0x80000000u),
+									e - 1023 - man*TTMATH_BITS_PER_UINT + 1, 0x80000000u,
+									m1, m2);
 
 			// we do not have to call Standardizing() here
 			// because the mantissa will have the highest bit set
@@ -1771,8 +1769,14 @@ public:
 				// then V=(-1)**S * 2 ** (-1022) * (0.F)
 				// These are "unnormalized" values.
 
-				FromDouble_SetExpAndMan(e - 1022 - man*TTMATH_BITS_PER_UINT + 1, 0, m1, m2);
-				Standardizing();
+				UInt<2> m;
+				m.table[1] = m1;
+				m.table[0] = m2;
+				uint moved = m.CompensationToLeft();
+
+				FromDouble_SetExpAndMan(bool(temp.u[1] & 0x80000000u),
+										e - 1022 - man*TTMATH_BITS_PER_UINT + 1 - moved, 0,
+										m.table[1], m.table[2]);
 			}
 			else
 			{
@@ -1788,23 +1792,29 @@ public:
 
 private:
 
-	void FromDouble_SetExpAndMan(int e, unsigned int mhighest,
-								unsigned int m1, unsigned int m2)
+	void FromDouble_SetExpAndMan(bool is_sign, int e, uint mhighest, uint m1, uint m2)
 	{
 		exponent = e;
 
 		if( man > 1 )
 		{
 			mantissa.table[man-1] = m1 | mhighest;
-			mantissa.table[man-2] = m2;
+			mantissa.table[sint(man-2)] = m2;
+			// although man>1 we're using casting into sint
+			// to get rid from a warning which generates Microsoft Visual:
+			// warning C4307: '*' : integral constant overflow
 
-			for(unsigned int i=0 ; i<man-2 ; ++i)
+			for(uint i=0 ; i<man-2 ; ++i)
 				mantissa.table[i] = 0;
 		}
 		else
 		{
 			mantissa.table[0] = m1 | mhighest;
 		}
+
+		info = 0;
+		if( is_sign )
+			SetSign();
 	}
 
 
@@ -1829,13 +1839,9 @@ public:
 		} temp;
 
 		temp.d = value;
-
-		info = 0;
-		if( temp.u & 0x8000000000000000ul )
-			SetSign();
-                             
-		int e  = (temp.u & 0x7FF0000000000000ul) >> 52;
-		uint m = (temp.u & 0xFFFFFFFFFFFFFul) << 11;
+                          
+		sint e = (temp.u & 0x7FF0000000000000ul) >> 52;
+		uint m = (temp.u &    0xFFFFFFFFFFFFFul) << 11;
 		
 		if( e == 2047 )
 		{
@@ -1855,7 +1861,9 @@ public:
 			// where "1.F" is intended to represent the binary number
 			// created by prefixing F with an implicit leading 1 and a binary point.
 			
-			FromDouble_SetExpAndMan(e - 1023 - man*TTMATH_BITS_PER_UINT + 1, 0x8000000000000000ul, m);
+			FromDouble_SetExpAndMan(bool(temp.u & 0x8000000000000000ul),
+									e - 1023 - man*TTMATH_BITS_PER_UINT + 1,
+									0x8000000000000000ul, m);
 
 			// we do not have to call Standardizing() here
 			// because the mantissa will have the highest bit set
@@ -1870,7 +1878,8 @@ public:
 				// then V=(-1)**S * 2 ** (-1022) * (0.F)
 				// These are "unnormalized" values.
 
-				FromDouble_SetExpAndMan(e - 1022 - man*TTMATH_BITS_PER_UINT + 1, 0, m);
+				FromDouble_SetExpAndMan(bool(temp.u & 0x8000000000000000ul),
+										e - 1022 - man*TTMATH_BITS_PER_UINT + 1, 0, m);
 				Standardizing();
 			}
 			else
@@ -1886,19 +1895,157 @@ public:
 
 private:
 
-	void FromDouble_SetExpAndMan(int e, uint mhighest, uint m)
+	void FromDouble_SetExpAndMan(bool is_sign, sint e, uint mhighest, uint m)
 	{
 		exponent = e;
 		mantissa.table[man-1] = m | mhighest;
 
-		for(unsigned int i=0 ; i<man-1 ; ++i)
+		for(uint i=0 ; i<man-1 ; ++i)
 			mantissa.table[i] = 0;
+
+		info = 0;
+		if( is_sign )
+			SetSign();
 	}
 
 #endif
 
 
 public:
+
+
+
+	/*!
+		this method converts from this class into the 'double'
+
+		if the value is too big:
+			'result' will be +/-infinity (depending on the sign)
+			and the method returns 1
+		if the value is too small:
+			'result' will be 0
+			and the method returns 1
+	*/
+	uint ToDouble(double & result) const
+	{
+		// sizeof(double) should be 8 (64 bits), this is actually not a runtime
+		// error but I leave it at the moment as is
+		TTMATH_ASSERT( sizeof(double) == 8 )
+
+		if( IsZero() )
+		{
+			result = 0.0;
+			return 0;
+		}
+
+		sint e_correction = sint(man*TTMATH_BITS_PER_UINT) - 1;
+
+		if( exponent >= 1024 - e_correction )
+		{
+			// +/- infinity
+			result = ToDouble_SetDouble( IsSign(), 2047, 0, true);
+
+		return 1;
+		}
+		else
+		if( exponent <= -1023 - 52 - e_correction )
+		{
+			// too small value - we assume that there'll be a zero
+			result = 0;
+
+			// and return a carry
+		return 1;
+		}
+		
+		sint e = exponent.ToInt() + e_correction;
+
+		if( e <= -1023 )
+		{
+			// -1023-52 < e <= -1023  (unnormalized value)
+			result = ToDouble_SetDouble( IsSign(), 0, -(e + 1023));
+		}
+		else
+		{
+			// -1023 < e < 1024
+			result = ToDouble_SetDouble( IsSign(), e + 1023, -1);
+		}
+
+	return 0;
+	}
+
+private:
+
+#ifdef TTMATH_PLATFORM32
+
+	// 32bit platforms
+	double ToDouble_SetDouble(bool is_sign, uint e, sint move, bool infinity = false) const
+	{
+		union 
+		{
+			double d;
+			uint u[2]; // two 32bit words
+		} temp;
+
+		temp.u[0] = temp.u[1] = 0;
+
+		if( is_sign )
+			temp.u[1] |= 0x80000000u;
+
+		temp.u[1] |= (e << 20) & 0x7FF00000u;
+
+		if( infinity )
+			return temp.d;
+
+		UInt<2> m;
+		m.table[1] = mantissa.table[man-1];
+		m.table[0] = ( man > 1 ) ? mantissa.table[sint(man-2)] : 0;
+		// although man>1 we're using casting into sint
+		// to get rid from a warning which generates Microsoft Visual:
+		// warning C4307: '*' : integral constant overflow
+
+		m.Rcr( 12 + move );
+		m.table[1] &= 0xFFFFFu; // cutting the 20 bit (when 'move' was -1)
+
+		temp.u[1] |= m.table[1];
+		temp.u[0] |= m.table[0];
+
+	return temp.d;
+	}
+
+#else
+
+	// 64bit platforms
+	double ToDouble_SetDouble(bool is_sign, uint e, sint move, bool infinity = false) const
+	{
+		union 
+		{
+			double d;
+			uint u; // 64bit word
+		} temp;
+
+		temp.u = 0;
+		
+		if( is_sign )
+			temp.u |= 0x8000000000000000ul;
+		                
+		temp.u |= (e << 52) & 0x7FF0000000000000ul;
+
+		if( infinity )
+			return temp.d;
+
+		uint m = mantissa.table[man-1];
+
+		m >>= ( 12 + move );
+		m &= 0xFFFFFFFFFFFFFul; // cutting the 20 bit (when 'move' was -1)
+		temp.u |= m;
+
+	return temp.d;
+	}
+
+#endif
+
+
+public:
+
 
 	/*!
 		an operator= for converting 'sint' to this class
