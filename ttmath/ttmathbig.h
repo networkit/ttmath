@@ -1501,9 +1501,37 @@ public:
 
 	/*!
 	*
-	*	convertion method
+	*	convertion methods
 	*
 	*/
+
+
+	/*!
+		converting from another type of a Big object
+	*/
+	template<uint another_exp, uint another_man>
+	uint FromBig(const Big<another_exp, another_man> & another)
+	{
+		info = another.info;
+
+		if( exponent.FromInt(another.exponent) )
+			return 1;
+
+		uint man_len_min = (man < another_man)? man : another_man;
+		uint i;
+
+		for( i = 0 ; i<man_len_min ; ++i )
+			mantissa.table[man-1-i] = another.mantissa.table[another_man-1-i];
+	
+		for( ; i<man ; ++i )
+			mantissa.table[man-1-i] = 0;
+		
+		// mantissa is standardized
+		//c += Standardizing();
+
+	return 0;
+	}
+
 
 	/*!
 		this method sets 'result' as the one word of type uint
@@ -2257,6 +2285,27 @@ public:
 		FromUInt(value);
 	}
 
+
+	/*!
+		an operator= for converting from 'Big<another_exp, another_man>' to this class
+	*/
+	template<uint another_exp, uint another_man>
+	Big<exp,man> & operator=(const Big<another_exp, another_man> & value)
+	{
+		FromBig(value);
+
+	return *this;
+	}
+
+
+	/*!
+		a constructor for converting from 'Big<another_exp, another_man>' to this class
+	*/
+	template<uint another_exp, uint another_man>
+	Big(const Big<another_exp, another_man> & value)
+	{
+		FromBig(value);
+	}
 
 	/*!
 		a default constructor

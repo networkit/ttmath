@@ -1158,6 +1158,35 @@ void BitXor(int sindex, int amount_of_args, ValueType & result)
 	}
 }
 
+
+void Sum(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args == 0 )
+		Error( err_improper_amount_of_arguments );
+
+	result = stack[sindex].value;
+
+	for(int i=1 ; i<amount_of_args ; ++i )
+		if( result.Add( stack[ sindex + i*2 ].value ) )
+			Error( err_overflow );
+}	
+
+void Avg(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args == 0 )
+		Error( err_improper_amount_of_arguments );
+
+	result = stack[sindex].value;
+
+	for(int i=1 ; i<amount_of_args ; ++i )
+		if( result.Add( stack[ sindex + i*2 ].value ) )
+			Error( err_overflow );
+
+	if( result.Div( amount_of_args ) )
+		Error( err_overflow );
+}	
+
+
 /*!
 	this method returns the value from a user-defined function
 
@@ -1319,6 +1348,8 @@ void CreateFunctionsTable()
 	InsertFunctionToTable(std::string("band"),		&Parser<ValueType>::BitAnd);
 	InsertFunctionToTable(std::string("bor"),		&Parser<ValueType>::BitOr);
 	InsertFunctionToTable(std::string("bxor"),		&Parser<ValueType>::BitXor);
+	InsertFunctionToTable(std::string("sum"),		&Parser<ValueType>::Sum);
+	InsertFunctionToTable(std::string("avg"),		&Parser<ValueType>::Avg);
 }
 
 
