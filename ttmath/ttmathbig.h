@@ -2229,16 +2229,19 @@ public:
 	void FromInt(Int<int_size> value)
 	{
 		info = 0;
+		bool is_sign = false;
 
 		if( value.IsSign() )
 		{
 			value.ChangeSign();
-			SetSign();
+			is_sign = true;
 		}
-
+		
 		sint compensation = (sint)value.CompensationToLeft();
+		FromUIntOrInt(value, compensation);
 
-	return FromUIntOrInt(value, compensation);
+		if( is_sign )
+			SetSign();
 	}
 
 
