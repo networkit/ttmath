@@ -2392,7 +2392,8 @@ public:
 					uint base                  = 10,
 					bool always_scientific     = false,
 					sint  when_scientific       = 15,
-					sint  max_digit_after_comma = -2 ) const
+					sint  max_digit_after_comma = -2,
+					char decimal_point = TTMATH_COMMA_CHARACTER_1 ) const
 	{
 		static char error_overflow_msg[] = "overflow";
 		result.erase();
@@ -2438,14 +2439,14 @@ public:
 			(this formula means that the number of bits in the base is greater than one)
 		*/
 		if( base!=2 && base!=4 && base!=8 && base!=16 )
-			if( ToString_RoundMantissa(result, base, new_exp) )
+			if( ToString_RoundMantissa(result, base, new_exp, decimal_point) )
 			{
 				result = error_overflow_msg;
 				return 1;
 			}
 
 		if( ToString_SetCommaAndExponent(	result, base, new_exp, always_scientific,
-											when_scientific, max_digit_after_comma ) )
+											when_scientific, max_digit_after_comma, decimal_point ) )
 		{
 			result = error_overflow_msg;
 			return 1;
@@ -2746,7 +2747,7 @@ private:
 		this method roundes the last character from the new mantissa
 		(it's used in systems where the base is different from 2)
 	*/
-	uint ToString_RoundMantissa(std::string & new_man, uint base, Int<exp+1> & new_exp) const
+	uint ToString_RoundMantissa(std::string & new_man, uint base, Int<exp+1> & new_exp, char decimal_point) const
 	{
 		// we must have minimum two characters
 		if( new_man.length() < 2 )
@@ -2762,7 +2763,7 @@ private:
 		// if the last character is greater or equal 'base/2'
 		// we'll add one into the new mantissa
 		if( digit >= base / 2 )
-			ToString_RoundMantissa_AddOneIntoMantissa(new_man, base);
+			ToString_RoundMantissa_AddOneIntoMantissa(new_man, base, decimal_point);
 
 	return carry;
 	}
@@ -2773,7 +2774,7 @@ private:
 
 		this method addes one into the new mantissa
 	*/
-	void ToString_RoundMantissa_AddOneIntoMantissa(std::string & new_man, uint base) const
+	void ToString_RoundMantissa_AddOneIntoMantissa(std::string & new_man, uint base, char decimal_point) const
 	{
 		if( new_man.empty() )
 			return;
@@ -2786,7 +2787,7 @@ private:
 			// we can have the comma as well because
 			// we're using this method later in ToString_CorrectDigitsAfterComma_Round()
 			// (we're only ignoring it)
-			if( new_man[i] == TTMATH_COMMA_CHARACTER_1 )
+			if( new_man[i] == decimal_point )
 				continue;
 
 			// we're adding one
@@ -2814,7 +2815,8 @@ private:
 	uint ToString_SetCommaAndExponent(	std::string & new_man, uint base, Int<exp+1> & new_exp,
 										bool always_scientific,
 										sint  when_scientific,
-										sint  max_digit_after_comma ) const
+										sint  max_digit_after_comma,
+										char decimal_point) const
 	{
 	uint carry = 0;
 
@@ -2841,10 +2843,10 @@ private:
 
 		// 'always_scientific' could be changed
 		if( !always_scientific )
-			ToString_SetCommaAndExponent_Normal(new_man, base, new_exp, max_digit_after_comma);
+			ToString_SetCommaAndExponent_Normal(new_man, base, new_exp, max_digit_after_comma, decimal_point);
 		else
 			// we're passing the 'scientific_exp' instead of 'new_exp' here
-			ToString_SetCommaAndExponent_Scientific(new_man, base, scientific_exp, max_digit_after_comma);
+			ToString_SetCommaAndExponent_Scientific(new_man, base, scientific_exp, max_digit_after_comma, decimal_point);
 
 	return (carry==0)? 0 : 1;
 	}
@@ -2854,13 +2856,14 @@ private:
 		an auxiliary method for converting into the string
 	*/
 	void ToString_SetCommaAndExponent_Normal(std::string & new_man, uint base, 
-										Int<exp+1> & new_exp, sint max_digit_after_comma) const
+										Int<exp+1> & new_exp, sint max_digit_after_comma,
+										char decimal_point) const
 	{
 		//if( new_exp >= 0 )
 		if( !new_exp.IsSign() )
 			return ToString_SetCommaAndExponent_Normal_AddingZero(new_man, new_exp);
 		else
-			return ToString_SetCommaAndExponent_Normal_SetCommaInside(new_man, base, new_exp, max_digit_after_comma);
+			return ToString_SetCommaAndExponent_Normal_SetCommaInside(new_man, base, new_exp, max_digit_after_comma, decimal_point);
 	}
 
 
@@ -2887,7 +2890,8 @@ private:
 		an auxiliary method for converting into the string
 	*/
 	void ToString_SetCommaAndExponent_Normal_SetCommaInside(std::string & new_man,
-							uint base, Int<exp+1> & new_exp, sint max_digit_after_comma) const
+							uint base, Int<exp+1> & new_exp, sint max_digit_after_comma,
+							char decimal_point) const
 	{
 		// new_exp is < 0 
 
@@ -2899,7 +2903,7 @@ private:
 			// we're setting the comma within the mantissa
 			
 			sint index = new_man_len - e;
-			new_man.insert( new_man.begin() + index, TTMATH_COMMA_CHARACTER_1);
+			new_man.insert( new_man.begin() + index, decimal_point);
 		}
 		else
 		{
@@ -2908,11 +2912,11 @@ private:
 			uint how_many = e - new_man_len;
 			std::string man_temp(how_many+1, '0');
 
-			man_temp.insert( man_temp.begin()+1, TTMATH_COMMA_CHARACTER_1);
+			man_temp.insert( man_temp.begin()+1, decimal_point);
 			new_man.insert(0, man_temp);
 		}
 
-		ToString_CorrectDigitsAfterComma(new_man, base, max_digit_after_comma);
+		ToString_CorrectDigitsAfterComma(new_man, base, max_digit_after_comma, decimal_point);
 	}
 
 
@@ -2922,14 +2926,15 @@ private:
 	void ToString_SetCommaAndExponent_Scientific(	std::string & new_man,
 													uint base,
 													Int<exp+1> & scientific_exp,
-													sint max_digit_after_comma ) const
+													sint max_digit_after_comma,
+													char decimal_point) const
 	{
 		if( new_man.empty() )
 			return;
 		
-		new_man.insert( new_man.begin()+1, TTMATH_COMMA_CHARACTER_1 );
+		new_man.insert( new_man.begin()+1, decimal_point );
 
-		ToString_CorrectDigitsAfterComma(new_man, base, max_digit_after_comma);
+		ToString_CorrectDigitsAfterComma(new_man, base, max_digit_after_comma, decimal_point);
 	
 		if( base == 10 )
 		{
@@ -2958,7 +2963,8 @@ private:
 		we can call this method only if we've put the comma operator into the mantissa's string
 	*/
 	void ToString_CorrectDigitsAfterComma(std::string & new_man, uint base,
-															sint max_digit_after_comma) const
+															sint max_digit_after_comma, 
+															char decimal_point) const
 	{
 		switch( max_digit_after_comma )
 		{
@@ -2967,11 +2973,11 @@ private:
 			break;
 		
 		case -2:
-			ToString_CorrectDigitsAfterComma_CutOffZeroCharacters(new_man);
+			ToString_CorrectDigitsAfterComma_CutOffZeroCharacters(new_man, decimal_point);
 			break;
 
 		default:
-			ToString_CorrectDigitsAfterComma_Round(new_man, base, max_digit_after_comma);
+			ToString_CorrectDigitsAfterComma_Round(new_man, base, max_digit_after_comma, decimal_point);
 			break;
 		}
 	}
@@ -2980,7 +2986,7 @@ private:
 	/*!
 		an auxiliary method for converting into the string
 	*/
-	void ToString_CorrectDigitsAfterComma_CutOffZeroCharacters(std::string & new_man) const
+	void ToString_CorrectDigitsAfterComma_CutOffZeroCharacters(std::string & new_man, char decimal_point) const
 	{
 		// minimum two characters
 		if( new_man.length() < 2 )
@@ -2997,7 +3003,7 @@ private:
 
 		// if directly before the first zero is the comma operator
 		// we're cutting it as well
-		if( i>0 && new_man[i]==TTMATH_COMMA_CHARACTER_1 )
+		if( i>0 && new_man[i]==decimal_point )
 			--i;
 
 		new_man.erase(i+1, new_man.length()-i-1);
@@ -3008,10 +3014,11 @@ private:
 		an auxiliary method for converting into the string
 	*/
 	void ToString_CorrectDigitsAfterComma_Round(std::string & new_man, uint base,
-															sint max_digit_after_comma) const
+															sint max_digit_after_comma,
+															char decimal_point) const
 	{
 		// first we're looking for the comma operator
-		std::string::size_type index = new_man.find(TTMATH_COMMA_CHARACTER_1, 0);
+		std::string::size_type index = new_man.find(decimal_point, 0);
 
 		if( index == std::string::npos )
 			// nothing was found (actually there can't be this situation)
@@ -3041,7 +3048,7 @@ private:
 
 		if( last_digit >= base / 2 )
 			// we must round here
-			ToString_RoundMantissa_AddOneIntoMantissa(new_man, base);
+			ToString_RoundMantissa_AddOneIntoMantissa(new_man, base, decimal_point);
 	}
 
 
@@ -3803,18 +3810,26 @@ public:
 		}
 
 		// we're reading only digits (base=10) and only one comma operator
-		while(	s.good() &&
-			(	UInt<man>::CharToDigit(z, 10)>=0 || (!was_comma && z==TTMATH_COMMA_CHARACTER_1) )
-			 )
+		for( ; s.good() ; z=s.get() )
 		{
-			if( z == TTMATH_COMMA_CHARACTER_1 )
+			if( z == TTMATH_COMMA_CHARACTER_1 ||
+			  ( z == TTMATH_COMMA_CHARACTER_2 && TTMATH_COMMA_CHARACTER_2 != 0 ) )
+			{
+				if( was_comma )
+					// second comma operator
+					break;
+
 				was_comma = true;
+			}
+			else
+			if( UInt<man>::CharToDigit(z, 10) < 0 )
+				break;
+
 
 			ss += z;
-			z = s.get();
 		}
 
-		// we're leaving the last readed character
+		// we're leaving the last read character
 		// (it's not belonging to the value)
 		s.unget();
 

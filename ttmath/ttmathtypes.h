@@ -182,7 +182,7 @@ namespace ttmath
 /*!
 	characters which represent the comma operator
 
-	TTMATH_COMMA_CHARACTER_1 is used in reading (parsing) and in writing
+	TTMATH_COMMA_CHARACTER_1 is used in reading (parsing) and in writing (default, can be overwritten in ToString() function)
 	TTMATH_COMMA_CHARACTER_2 can be used in reading as an auxiliary comma character
 	that means you can input values for example 1.2345 and 1,2345 as well
 
@@ -195,6 +195,7 @@ namespace ttmath
 */
 #define TTMATH_COMMA_CHARACTER_1 '.'
 #define TTMATH_COMMA_CHARACTER_2 ','
+
 
 
 /*!
