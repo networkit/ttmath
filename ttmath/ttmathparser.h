@@ -66,7 +66,7 @@ namespace ttmath
 	x = [+|-]Value[operator[+|-]Value][operator[+|-]Value]...
 	where:
 		an operator can be:
-			^ (pow)  (the highest priority)
+			^ (pow)  (almost the heighest priority, look below at 'short mul')
 
 			* (mul) 
 			/ (div)   (* and / have the same priority)
@@ -85,6 +85,12 @@ namespace ttmath
 
 			|| (logical or) (the lowest priority)
 
+		short mul:
+		or if the second Value (Var below) is either a variable or function there cannot be 
+		an operator between them, e.g.
+	        [+|-]ValueVar is treated as [+|-]Value * Var and the multiplication
+	        has the greatest priority:  2^3m equals 2^(3*m)
+	
 
 		and Value can be:
 			constant e.g. 100
@@ -106,6 +112,7 @@ namespace ttmath
 		                 for separating parameters
 	    "1 < 2"  (the result will be: 1)
 	    "4 < 3"  (the result will be: 0)
+		"2+x"  (of course if the variable 'x' is defined)
 		etc.
 
 	we can also use a semicolon for separating any 'x' input strings
@@ -122,13 +129,15 @@ class Parser
 private:
 
 /*!
-	there are 5 mathematical operators as follows:
+	there are 5 mathematical operators as follows (with their standard priorities):
 		add (+)
 		sub (-)
 		mul (*)
 		div (/)
 		pow (^)
-	with their standard priorities
+		and 'shortmul' used when there is no any operators between
+		a first parameter and a variable or function
+		(the 'shortmul' has the greatest priority e.g. '5^3m' equals '5^(3*m)' )
 */
 	class MatOperator
 	{
@@ -136,7 +145,7 @@ private:
 
 		enum Type
 		{
-			none,add,sub,mul,div,pow,lt,gt,let,get,eq,neq,lor,land
+			none,add,sub,mul,div,pow,lt,gt,let,get,eq,neq,lor,land,shortmul
 		};
 
 
@@ -179,6 +188,10 @@ private:
 
 			case pow:
 				priority = 14;
+				break;
+
+			case shortmul:
+				priority = 20;
 				break;
 
 			default:
@@ -1378,8 +1391,6 @@ return c;
 }
 
 
-
-
 /*!
 	this method read the name of a variable or a function
 	
@@ -1396,29 +1407,31 @@ int character;
 
 
 	result.erase();
-	character = ToLowerCase(*pstring);
+	character = *pstring;
 
 	/*
-		the first letter must be from range 'a' - 'z'
+		the first letter must be from range 'a' - 'z' or 'A' - 'Z'
 	*/
-	if( character<'a' || character>'z' )
+	if( ! (( character>='a' && character<='z' ) || ( character>='A' && character<='Z' )) )
 		Error( err_unknown_character );
 
 
 	do
 	{
 		result   += character;
-		character = ToLowerCase( * ++pstring );
+		character = * ++pstring;
 	}
 	while(	(character>='a' && character<='z') ||
-			(character>='0' && character<='9')	);
+			(character>='A' && character<='Z') ||
+			(character>='0' && character<='9') ||
+			character=='_' );
 	
 
 	SkipWhiteCharacters();
 	
 
 	/*
-		if there's character '(' that means this name is a name of a function
+		if there's a character '(' that means this name is a name of a function
 	*/
 	if( *pstring == '(' )
 	{
@@ -1497,7 +1510,6 @@ const char * new_stack_pointer;
 	if( carry )
 		Error( err_overflow );
 }
-
 
 
 /*!
@@ -1592,7 +1604,7 @@ int  character;
 		/*
 			warning:
 			if we're using for example the base equal 16
-			we can find a first character like 'e' that is there is not e=2.71..
+			we can find a first character like 'e' that is not e=2.71..
 			but the value 14, for this case we must use something like var::e for variables
 			(not implemented yet)
 		*/
@@ -1631,6 +1643,7 @@ void InsertOperatorToTable(const std::string & name, typename MatOperator::Type 
 {
 	operators_table.insert( std::make_pair(name, type) );
 }
+
 
 /*!
 	this method creates the table of operators
@@ -1733,6 +1746,14 @@ int ReadOperator(Item & result)
 		++pstring;
 	}
 	else
+	if( (*pstring>='a' && *pstring<='z') || (*pstring>='A' && *pstring<='Z') )
+	{
+		// short mul (without any operators)
+
+		result.type = Item::mat_operator;
+		result.moperator.SetType( MatOperator::shortmul );
+	}
+	else
 		ReadMathematicalOperator(result);
 
 return 0;
@@ -1794,6 +1815,7 @@ int res;
 		break;
 
 	case MatOperator::mul:
+	case MatOperator::shortmul:
 		if( value1.Mul(value2) ) Error( err_overflow );
 		break;
 
@@ -1810,6 +1832,7 @@ int res;
 		if( res == 2 ) Error( err_improper_argument );
 
 		break;
+
 
 	default:
 		/*
@@ -1913,7 +1936,7 @@ return kod;
 
 /*!
 	this method calculate how many parameters there are on the stack
-	and index of the first parameter
+	and the index of the first parameter
 
 	if there aren't any parameters on the stack this method returns
 	'size' equals zero and 'index' pointing after the first bracket

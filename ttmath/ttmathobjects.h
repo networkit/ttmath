@@ -102,7 +102,7 @@ public:
 		if( (c>='a' && c<='z') || (c>='A' && c<='Z') )
 			return true;
 
-		if( can_be_digit && (c>='0' && c<='9') )
+		if( can_be_digit && ((c>='0' && c<='9') || c=='_') )
 			return true;
 
 	return false;

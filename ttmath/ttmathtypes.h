@@ -248,7 +248,8 @@ namespace ttmath
 		err_object_exists,
 		err_unknown_object,
 		err_still_calculating,
-		err_too_big_factorial
+		err_too_big_factorial,
+		err_in_short_form_used_function
 	};
 
 
