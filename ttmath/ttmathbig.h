@@ -2371,25 +2371,20 @@ public:
 	
 
 	/*!
-		a method for converting the value into the string with a base equal 'base'
+		a method for converting the value into a string with a base equal 'base'
 
 		input:
-			base - the base on which the value will be shown
+		*	base - a base (radix) on which the value will be shown
 
-			if 'always_scientific' is true the result will be shown in 'scientific' mode
-
+		*	if 'always_scientific' is true the result will be shown in 'scientific' mode
 			if 'always_scientific' is false the result will be shown
 			either as 'scientific' or 'normal' mode, it depends whether the abs(exponent)
 			is greater than 'when_scientific' or not, if it's greater the value
 			will be printed as 'scientific'
 
+		*   'max_digit_after_comma' - rounding
 			if 'max_digit_after_comma' is equal -1 that all digits in the mantissa
 			will be printed
-			
-			if 'max_digit_after_comma' is equal -2 that not mattered digits
-			in the mantissa will be cut off
-			(zero characters at the end -- after the comma operator)
-
 			if 'max_digit_after_comma' is equal or greater than zero
 			that only 'max_digit_after_comma' after the comma operator will be shown
 			(if 'max_digit_after_comma' is equal zero there'll be shown only 
@@ -2398,9 +2393,14 @@ public:
 					12.345678 and max_digit_after_comma is 4
 				then the result will be 
 					12.3457   (the last digit was rounded)
-
 			if there isn't the comma operator (when the value is too big and we're printing
 			it not as scientific) 'max_digit_after_comma' will be ignored
+
+		*	if 'remove_trailing_zeroes' is true that not mattered digits
+			in the mantissa will be cut off
+			(zero characters at the end -- after the comma operator)
+
+		*	decimal_point - a character which will be used as a decimal point
 
 		output:
 			return value:
