@@ -1536,7 +1536,7 @@ namespace ttmath
 			{
 				if( x.IsZero() )
 				{
-					// there isn't root(0;0)
+					// there isn't root(0;0) - we assume it's not defined
 					if( err )
 						*err = err_improper_argument;
 
@@ -1685,7 +1685,14 @@ namespace ttmath
 		c += x.PowFrac(newindex); // here can only be a carry
 
 		if( change_sign )
+		{
+			// the value of x should be different from zero
+			// (x is actually tested by RootCheckXZero)
+			TTMATH_ASSERT( x.IsZero() == false )
+
 			x.SetSign();
+		}
+
 
 		if( err )
 			*err = c ? err_overflow : err_ok;

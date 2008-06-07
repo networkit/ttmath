@@ -99,7 +99,7 @@ public:
 	/*!
 		this method moves all bits from mantissa into its left side
 		(suitably changes the exponent) or if the mantissa is zero
-		it sets the exponent as zero as well
+		it sets the exponent to zero as well (and clears the sign bit)
 
 		it can return a carry
 		the carry will be when we don't have enough space in the exponent
@@ -124,7 +124,7 @@ public:
 private:
 
 	/*!
-		if mantissa is equal zero this method sets exponent to zero and
+		if the mantissa is equal zero this method sets exponent to zero and
 		info without the sign
 
 		it returns true if there was the correction
@@ -430,7 +430,7 @@ public:
 
 
 	/*!
-		it's testing whether there is a value zero or not
+		testing whether there is a value zero or not
 	*/
 	bool IsZero() const
 	{
@@ -492,13 +492,13 @@ public:
 			e.g.
 			-1 -> -1
 			2  -> -2
+
+		we do not check whether there is a zero or not, if you're using this method
+		you must be sure that the value is different from zero
 	*/
 	void SetSign()
 	{
-		if( IsZero() )
-			return;
-
-		info |=  TTMATH_BIG_SIGN;
+		info |= TTMATH_BIG_SIGN;
 	}
 
 
@@ -806,9 +806,18 @@ public:
 	*/
 	uint MulInt(sint ss2)
 	{
+		if( ss2 == 0 )
+		{
+			SetZero();
+			return 0;
+		}
+
+		if( IsZero() )
+			return 0;
+
 		if( IsSign() == (ss2<0) )
 		{
-			// the signs are the same, the result is positive
+			// the signs are the same (both are either - or +), the result is positive
 			Abs();
 		}
 		else
@@ -818,7 +827,8 @@ public:
 		}
 
 		if( ss2<0 )
-			ss2 = 0 - ss2;
+			ss2 = -ss2;
+
 
 	return MulUInt( uint(ss2) );
 	}
@@ -826,7 +836,7 @@ public:
 
 	/*!
 		multiplication this = this * ss2
-		this method returns carry
+		this method returns a carry
 	*/
 	uint Mul(const Big<exp, man> & ss2)
 	{
@@ -859,6 +869,7 @@ public:
 		else
 		{
 			// the signs are different, the result is negative
+			// if the value is zero it will be corrected later in Standardizing method
 			SetSign();
 		}
 
@@ -913,7 +924,7 @@ public:
 		if( IsSign() == ss2.IsSign() )
 			Abs();
 		else
-			SetSign();
+			SetSign(); // if there is a zero it will be corrected in Standardizing()
 
 		c += Standardizing();
 
@@ -1841,6 +1852,10 @@ private:
 		}
 
 		info = 0;
+	
+		// the value should be different from zero
+		TTMATH_ASSERT( mantissa.IsZero() == false )
+
 		if( is_sign )
 			SetSign();
 	}
@@ -1932,6 +1947,10 @@ private:
 			mantissa.table[i] = 0;
 
 		info = 0;
+
+		// the value should be different from zero
+		TTMATH_ASSERT( mantissa.IsZero() == false )
+
 		if( is_sign )
 			SetSign();
 	}
