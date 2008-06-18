@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2007, Tomasz Sowa
+ * Copyright (c) 2006-2008, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,7 @@
 #define TTMATH_MAJOR_VER		0
 #define TTMATH_MINOR_VER		8
 #define TTMATH_REVISION_VER		2
-#define TTMATH_PRERELEASE_VER	1
+#define TTMATH_PRERELEASE_VER	0
 
 
 /*!

@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2007, Tomasz Sowa
+ * Copyright (c) 2006-2008, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -208,7 +208,7 @@ private:
 public:
 
 	/*!
-		this method adds two value with a sign and returns carry
+		this method adds two value with a sign and returns a carry
 
 		we're using methods from the base class because values are stored with U2
 		we must only make the carry correction
@@ -631,7 +631,7 @@ public:
 
 
 	/*!
-		the copy constructor
+		a copy constructor
 	*/
 	Int(const Int<value_size> & u)
 	{
@@ -789,6 +789,7 @@ public:
 	~Int()
 	{
 	}
+
 
 	/*!
 		this method returns the lowest value from table with a sign

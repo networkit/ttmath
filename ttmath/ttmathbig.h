@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2007, Tomasz Sowa
+ * Copyright (c) 2006-2008, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -85,8 +85,10 @@ unsigned char info;
 
 
 /*!
-	the number of a bit from 'info' which means that a value is with the sign
+	the number of a bit from 'info' which means that a value is with a sign
 	(when the bit is set)
+
+	/at the moment the rest bits from 'info' are not used/
 */
 #define TTMATH_BIG_SIGN 128
 
@@ -149,7 +151,7 @@ public:
 
 
 	/*!
-		it sets value zero
+		this method sets zero
 	*/
 	void SetZero()
 	{
@@ -164,7 +166,7 @@ public:
 
 	
 	/*!
-		it sets value one
+		this method sets one
 	*/
 	void SetOne()
 	{
@@ -173,7 +175,7 @@ public:
 
 
 	/*!
-		it sets value 0.5
+		this method sets value 0.5
 	*/
 	void Set05()
 	{
@@ -186,11 +188,11 @@ public:
 private:
 
 	/*!
-		sets the mantissa of the value pi
+		this method sets the mantissa of the value of pi
 	*/
 	void SetMantissaPi()
 	{
-	// this is a static table which represents the value Pi (mantissa of it)
+	// this is a static table which represents the value of Pi (mantissa of it)
 	// (first is the highest word)
 	// we must define this table as 'unsigned int' because 
 	// both on 32bit and 64bit platforms this table is 32bit
@@ -232,7 +234,7 @@ public:
 
 
 	/*!
-		sets the value of pi
+		this method sets the value of pi
 	*/
 	void SetPi()
 	{
@@ -243,7 +245,7 @@ public:
 
 
 	/*!
-		it sets value 0.5 * pi
+		this method sets the value of 0.5 * pi
 	*/
 	void Set05Pi()
 	{
@@ -254,7 +256,7 @@ public:
 
 
 	/*!
-		it sets value 2 * pi
+		this method sets the value of 2 * pi
 	*/
 	void Set2Pi()
 	{
@@ -265,7 +267,7 @@ public:
 
 
 	/*!
-		it sets value e
+		this method sets the value of e
 		(the base of the natural logarithm)
 	*/
 	void SetE()
@@ -305,8 +307,8 @@ public:
 
 
 	/*!
-		it sets value ln(2)
-		the natural logarithm from value 2
+		this method sets the value of ln(2)
+		the natural logarithm from 2
 	*/
 	void SetLn2()
 	{
@@ -346,8 +348,8 @@ public:
 
 
 	/*!
-		it sets value ln(10)
-		the natural logarithm from value 10
+		this method sets the value of ln(10)
+		the natural logarithm from 10
 
 		I introduced this constant especially to make the conversion ToString()
 		being faster. In fact the method ToString() is keeping values of logarithms
@@ -400,7 +402,7 @@ public:
 
 
 	/*!
-		it sets the maximum value which can be held in this type
+		this method sets the maximum value which can be held in this type
 	*/
 	void SetMax()
 	{
@@ -414,7 +416,7 @@ public:
 
 
 	/*!
-		it sets the minimum value which can be held in this type
+		this method sets the minimum value which can be held in this type
 	*/
 	void SetMin()
 	{
@@ -442,7 +444,7 @@ public:
 
 
 	/*!
-		it returns true when there's the sign set
+		this method returns true when there's the sign set
 	*/
 	bool IsSign() const
 	{
@@ -451,7 +453,7 @@ public:
 
 
 	/*!
-		it clears the sign
+		this method clears the sign
 		(there'll be an absolute value)
 
 			e.g.
@@ -465,7 +467,7 @@ public:
 
 
 	/*!
-		it remains the 'sign' of the value
+		this method remains the 'sign' of the value
 		e.g.  -2 = -1 
 		       0 = 0
 		      10 = 1
@@ -487,14 +489,14 @@ public:
 
 
 	/*!
-		it sets the sign
+		this method sets the sign
 
 			e.g.
 			-1 -> -1
 			2  -> -2
 
 		we do not check whether there is a zero or not, if you're using this method
-		you must be sure that the value is different from zero
+		you must be sure that the value is (or will be afterwards) different from zero
 	*/
 	void SetSign()
 	{
@@ -503,7 +505,7 @@ public:
 
 
 	/*!
-		it changes the sign
+		this method changes the sign
 
 			e.g.
 			-1 -> 1
@@ -933,7 +935,7 @@ public:
 
 
 	/*!
-		the remainder from the division
+		the remainder from a division
 
 		e.g.
 		 12.6 mod  3 =  0.6   because 12.6 = 3*4 + 0.6
@@ -1545,7 +1547,7 @@ public:
 
 
 	/*!
-		this method sets 'result' as the one word of type uint
+		this method converts 'this' into 'result'
 
 		if the value is too big this method returns a carry (1)
 	*/
@@ -1588,7 +1590,7 @@ public:
 
 
 	/*!
-		this method sets 'result' as the one word of type sint
+		this method converts 'this' into 'result'
 
 		if the value is too big this method returns a carry (1)
 	*/
@@ -1618,7 +1620,7 @@ public:
 
 
 	/*!
-		this method sets the value in 'result'
+		this method converts 'this' into 'result'
 
 		if the value is too big this method returns a carry (1)
 	*/
@@ -3096,8 +3098,8 @@ public:
 
 		'source' - pointer to the string for parsing
 
-		if 'after_source' is set that when this method will have finished its job
-		it set the pointer to the new first character after this parsed value
+		if 'after_source' is set that when this method have finished its job
+		it set the pointer to the new first character after parsed value
 	*/
 	uint FromString(const char * source, uint base = 10, const char ** after_source = 0)
 	{

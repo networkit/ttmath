@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2007, Tomasz Sowa
+ * Copyright (c) 2006-2008, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -439,7 +439,7 @@ void SkipWhiteCharacters()
 
 
 /*!
-	a auxiliary method for RecurrenceParsingVariablesOrFunction(...)
+	an auxiliary method for RecurrenceParsingVariablesOrFunction(...)
 */
 void RecurrenceParsingVariablesOrFunction_CheckStopCondition(bool variable, const std::string & name)
 {
@@ -457,7 +457,7 @@ void RecurrenceParsingVariablesOrFunction_CheckStopCondition(bool variable, cons
 
 
 /*!
-	a auxiliary method for RecurrenceParsingVariablesOrFunction(...)
+	an auxiliary method for RecurrenceParsingVariablesOrFunction(...)
 */
 void RecurrenceParsingVariablesOrFunction_AddName(bool variable, const std::string & name)
 {
@@ -468,7 +468,7 @@ void RecurrenceParsingVariablesOrFunction_AddName(bool variable, const std::stri
 }
 
 /*!
-	a auxiliary method for RecurrenceParsingVariablesOrFunction(...)
+	an auxiliary method for RecurrenceParsingVariablesOrFunction(...)
 */
 void RecurrenceParsingVariablesOrFunction_DeleteName(bool variable, const std::string & name)
 {
@@ -1277,7 +1277,7 @@ void CallFunction(const std::string & function_name, int amount_of_args, int sin
 
 
 /*!
-	insert a function to the functions' table
+	inserting a function to the functions' table
 
 	function_name - name of the function
 	pf - pointer to the function (to the wrapper)
@@ -1289,7 +1289,7 @@ void InsertFunctionToTable(const std::string & function_name, pfunction pf)
 
 
 /*!
-	insert a function to the variables' table
+	inserting a function to the variables' table
 	(this function returns value of variable)
 
 	variable_name - name of the function
@@ -1367,7 +1367,7 @@ void CreateFunctionsTable()
 
 
 /*!
-	this method create the table of variables
+	this method creates the table of variables
 */
 void CreateVariablesTable()
 {
@@ -1380,7 +1380,7 @@ void CreateVariablesTable()
 
 
 /*!
-	convert from a big letter to a small one
+	converting from a big letter to a small one
 */
 int ToLowerCase(int c)
 {

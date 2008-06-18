@@ -7,18 +7,20 @@ subtracting, multiplying, dividing etc. With the library also goes
 a mathematical parser which helps you solving input formulas read directly
 from a user.
 
-TTMath is developed under the (new) BSD licence which means that it is free
-for both personal and commercial use but the library has some technical
-limitations: you can use it only on i386 and Amd64, another platforms are
-not supported (Intel 64bit platforms were not tested but should work as
-well), and you can use this library only with the C++ programming language. 
+TTMath is developed under the BSD licence which means that it is free
+for both personal and commercial use.
+
+The library has some technical limitations:
+ * there are only two platforms that are supported: x86 and x86_64,
+ * you can use this library only with the C++ programming language.
 
 The main goal of the library is to allow one to use big values in the same
 way as the standard types like int, float, etc. It does not need to be
 compiled first because the whole library is written as the C++ templates.
 This means only C++ developers can use this library and one thing they have
-to do is to use  'include' directive of the preprocessor. How big the
+to do is to use 'include' directive of the preprocessor. How big the
 values can be is set directly in the source code by the programmer.
 
-Author: Tomasz Sowa <t.sowa AnTispam slimaczek.pl>
-Project page: http://sourceforge.net/projects/ttmath
+Author: Tomasz Sowa <t.sowa@slimaczek.pl>
+Project pages: http://ttmath.slimaczek.pl
+http://sourceforge.net/projects/ttmath

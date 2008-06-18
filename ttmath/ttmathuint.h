@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2007, Tomasz Sowa
+ * Copyright (c) 2006-2008, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -52,6 +52,9 @@
 
 
 
+/*!
+    \brief a namespace for the TTMath library
+*/
 namespace ttmath
 {
 
@@ -69,8 +72,8 @@ class UInt
 public:
 
 	/*!
-		buffer for this integer value
-		the first value (index 0) means the lowest word of this value
+		buffer for the integer value
+		  table[0] - the lowest word of the value
 	*/
 	uint table[value_size];
 
@@ -117,7 +120,7 @@ public:
 
 
 	/*!
-		it returns the size of the table
+		this method returns the size of the table
 	*/
 	uint Size() const
 	{
@@ -126,17 +129,19 @@ public:
 
 
 	/*!
-		this method sets value zero
+		this method sets zero
 	*/
 	void SetZero()
 	{
+		// in the future here can be 'memset'
+
 		for(uint i=0 ; i<value_size ; ++i)
 			table[i] = 0;
 	}
 
 
 	/*!
-		this method sets value one
+		this method sets one
 	*/
 	void SetOne()
 	{
@@ -218,6 +223,8 @@ public:
 	}
 
 
+
+
 	/*!
 	*
 	*	basic mathematic functions
@@ -225,14 +232,12 @@ public:
 	*/
 
 
-
-
 	/*!
-		this method adding ss2 to the this and adding carry if it's defined
+		adding ss2 to the this and adding carry if it's defined
 		(this = this + ss2 + c)
 
 		c must be zero or one (might be a bigger value than 1)
-		function returns carry (1) (if it was)
+		function returns carry (1) (if it has been)
 	*/
 	uint Add(const UInt<value_size> & ss2, uint c=0)
 	{
@@ -339,8 +344,8 @@ public:
 
 
 	/*!
-		this method adds one word (at a specific position)
-		and returns a carry (if it was)
+		adding one word (at a specific position)
+		and returning a carry (if it has been)
 
 		e.g.
 
@@ -355,7 +360,7 @@ public:
 			table[1] = 30 + 2;
 			table[2] = 5;
 
-		of course if there was a carry from table[3] it would be returned
+		of course if there was a carry from table[2] it would be returned
 	*/
 	uint AddInt(uint value, uint index = 0)
 	{
@@ -462,7 +467,7 @@ public:
 
 
 	/*!
-		this method adds only two unsigned words to the existing value
+		adding only two unsigned words to the existing value
 		and these words begin on the 'index' position
 		(it's used in the multiplication algorithm 2)
 
@@ -630,12 +635,12 @@ public:
 
 
 	/*!
-		this method's subtracting ss2 from the 'this' and subtracting
+		subtracting ss2 from the 'this' and subtracting
 		carry if it has been defined
 		(this = this - ss2 - c)
 
 		c must be zero or one (might be a bigger value than 1)
-		function returns carry (1) (if it was)
+		function returns carry (1) (if it has been)
 	*/
 	uint Sub(const UInt<value_size> & ss2, uint c=0)
 	{
@@ -1156,7 +1161,7 @@ private:
 public:
 
 	/*!
-		this method moving all bits into the left side 'bits' times
+		moving all bits into the left side 'bits' times
 		return value <- this <- C
 
 		bits is from a range of <0, man * TTMATH_BITS_PER_UINT>
@@ -1253,7 +1258,7 @@ private:
 public:
 
 	/*!
-		this method moving all bits into the right side 'bits' times
+		moving all bits into the right side 'bits' times
 		c -> this -> return value
 
 		bits is from a range of <0, man * TTMATH_BITS_PER_UINT>
@@ -1473,7 +1478,7 @@ public:
 
 
 	/*!
-		it sets the bit bit_index
+		setting the 'bit_index' bit
 
 		bit_index bigger or equal zero
 	*/
@@ -2659,7 +2664,7 @@ private:
 public:
 
 	/*!
-		this method sets n firt bits to value zero
+		this method sets n first bits to value zero
 
 		For example:
 		let n=2 then if there's a value 111 (bin) there'll be '100' (bin)
@@ -2695,7 +2700,7 @@ public:
 
 
 	/*!
-		it returns true if the highest bit of the value is set
+		this method returns true if the highest bit of the value is set
 	*/
 	bool IsTheHighestBitSet() const
 	{
@@ -2704,7 +2709,7 @@ public:
 
 
 	/*!
-		it returns true if the lowest bit of the value is set
+		this method returns true if the lowest bit of the value is set
 	*/
 	bool IsTheLowestBitSet() const
 	{
@@ -2713,7 +2718,7 @@ public:
 
 
 	/*!
-		it returns true if the value is equal zero
+		this method returns true if the value is equal zero
 	*/
 	bool IsZero() const
 	{
@@ -2746,7 +2751,7 @@ public:
 			A -> 10
 			f -> 15
 
-		this method don't check whether c 'is' correct or not
+		this method don't check whether c is correct or not
 	*/
 	static uint CharToDigit(uint c)
 	{
@@ -3116,6 +3121,8 @@ public:
 	}
 
 
+
+
 	/*!
 	*
 	*	methods for comparing
@@ -3123,6 +3130,14 @@ public:
 	*/
 
 
+	/*!
+		this method returns true if 'this' is smaller than 'l'
+
+		'index' is an index of the first word from will be the comparison performed
+		(note: we start the comparison from back - from the last word, when index is -1 /default/
+		it is automatically set into the last word)
+		I introduced it for some kind of optimization made in the second division algorithm (Div2)
+	*/
 	bool CmpSmaller(const UInt<value_size> & l, sint index = -1) const
 	{
 	sint i;
@@ -3145,6 +3160,15 @@ public:
 
 
 
+	/*!
+		this method returns true if 'this' is bigger than 'l'
+
+		'index' is an index of the first word from will be the comparison performed
+		(note: we start the comparison from back - from the last word, when index is -1 /default/
+		it is automatically set into the last word)
+
+		I introduced it for some kind of optimization made in the second division algorithm (Div2)
+	*/
 	bool CmpBigger(const UInt<value_size> & l, sint index = -1) const
 	{
 	sint i;
@@ -3166,6 +3190,13 @@ public:
 	}
 
 
+	/*!
+		this method returns true if 'this' is equal 'l'
+
+		'index' is an index of the first word from will be the comparison performed
+		(note: we start the comparison from back - from the last word, when index is -1 /default/
+		it is automatically set into the last word)
+	*/
 	bool CmpEqual(const UInt<value_size> & l, sint index = -1) const
 	{
 	sint i;
@@ -3183,6 +3214,15 @@ public:
 	return true;
 	}
 
+
+
+	/*!
+		this method returns true if 'this' is smaller than or equal 'l'
+
+		'index' is an index of the first word from will be the comparison performed
+		(note: we start the comparison from back - from the last word, when index is -1 /default/
+		it is automatically set into the last word)
+	*/
 	bool CmpSmallerEqual(const UInt<value_size> & l, sint index=-1) const
 	{
 	sint i;
@@ -3203,6 +3243,15 @@ public:
 	return true;
 	}
 
+
+
+	/*!
+		this method returns true if 'this' is bigger than or equal 'l'
+
+		'index' is an index of the first word from will be the comparison performed
+		(note: we start the comparison from back - from the last word, when index is -1 /default/
+		it is automatically set into the last word)
+	*/
 	bool CmpBiggerEqual(const UInt<value_size> & l, sint index=-1) const
 	{
 	sint i;
@@ -3224,13 +3273,14 @@ public:
 	}
 
 
-	//
+	/*
+		operators for comparising
+	*/
 
 	bool operator<(const UInt<value_size> & l) const
 	{
 		return CmpSmaller(l);
 	}
-
 
 
 	bool operator>(const UInt<value_size> & l) const
@@ -3243,7 +3293,6 @@ public:
 	{
 		return CmpEqual(l);
 	}
-
 
 
 	bool operator!=(const UInt<value_size> & l) const
@@ -3360,6 +3409,7 @@ public:
 
 	return *this;
 	}
+
 
 	/*!
 		Prefix operator e.g ++variable
