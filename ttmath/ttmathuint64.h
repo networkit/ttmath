@@ -680,29 +680,26 @@ namespace ttmath
 			"push %%rbx			\n"
 			"push %%rcx			\n"
 
+			"lahf				\n"
 		"1:						\n"
+			"sahf				\n"
 			"rclq $1,(%%rbx)	\n"
-			
-			"inc %%rbx			\n"
-			"inc %%rbx			\n"
-			"inc %%rbx			\n"
-			"inc %%rbx			\n"
-			"inc %%rbx			\n"
-			"inc %%rbx			\n"
-			"inc %%rbx			\n"
-			"inc %%rbx			\n"
-			
+			"lahf				\n"
+
+			"addq $8,%%rbx		\n"
+
+		"subq $1,%%rcx			\n"
 		"loop 1b				\n"
 			
 			"pop %%rcx			\n"
 			"pop %%rbx			\n"
 
-			"decq %%rsi			\n"
-
+			"subq $1,%%rsi		\n"
 		"jnz 2b					\n"
 
-			"movq $0, %%rdx		\n"
-			"adcq %%rdx, %%rdx	\n"
+			"xor %%rdx,%%rdx	\n"
+			"sahf				\n"
+			"setc %%dl			\n"
 
 			"pop %%rsi			\n"
 
@@ -765,29 +762,27 @@ namespace ttmath
 			"xorq %%rax, %%rax	\n"
 			"subq %%rdx, %%rax	\n"
 
+			"lahf				\n"
 		"1:						\n"
-			"dec %%rbx			\n"
-			"dec %%rbx			\n"
-			"dec %%rbx			\n"
-			"dec %%rbx			\n"
-			"dec %%rbx			\n"
-			"dec %%rbx			\n"
-			"dec %%rbx			\n"
-			"dec %%rbx			\n"
-			
+			"subq $8, %%rbx		\n"
+
+			"sahf				\n"
 			"rcrq $1,(%%rbx)	\n"
-			
-		"loop 1b				\n"
+			"lahf				\n"
+
+		"subq $1,%%rcx			\n"
+		"jnz 1b					\n"
 
 			"pop %%rcx			\n"
 			"pop %%rbx			\n"
 
-			"decq %%rsi			\n"
+			"subq $1,%%rsi		\n"
 
 		"jnz 2b					\n"
 
-			"movq $0, %%rdx		\n"
-			"adcq %%rdx,%%rdx	\n"
+			"xor %%rdx,%%rdx	\n"
+			"sahf				\n"
+			"setc %%dl			\n"
 
 			"pop %%rsi			\n"
 
@@ -820,11 +815,11 @@ namespace ttmath
 		#ifdef __GNUC__
 			__asm__  __volatile__(
 
-
+			"push %%rdx			\n"
+			"andq $-1,%%rdx		\n"
 			"bsrq %%rbx, %%rax	\n"
-			"jnz 1f				\n"
-			"movq $-1, %%rax	\n"
-		"1:						\n"
+			"cmovz %%rdx,%%rax	\n"
+			"pop %%rdx			\n"
 
 			: "=a" (result)
 			: "b" (x)

@@ -262,29 +262,32 @@ public:
 				mov ebx,[p1]
 				mov edx,[p2]
 
-				mov eax,0
+				xor eax,eax
 				sub eax,[c]
 
+				lahf
 			p:
+				sahf
 				mov eax,[ebx]
 				adc eax,[edx]
 				mov [ebx],eax
+				lahf
+				
+				add ebx,4
+				add edx,4
 
-				inc ebx
-				inc ebx
-				inc ebx
-				inc ebx
+			sub ecx,1
+			jnz p
 
-				inc edx
-				inc edx
-				inc edx
-				inc edx
-
-			loop p
-
-				mov eax,0
-				adc eax,eax
-				mov [c],eax
+				test ah,1
+				setnz al
+		
+				// 
+				// movzx dword ptr [c],al
+				//
+				movzx edx, al
+				mov [c], edx
+				//
 
 				pop edx
 				pop ecx
@@ -304,29 +307,26 @@ public:
 				"push %%ecx				\n"
 				"push %%edx				\n"
 			
-				"movl $0, %%eax			\n"
+				"xorl %%eax, %%eax		\n"
 				"subl %%esi, %%eax		\n"
 
+				"lahf					\n"
 			"1:							\n"
+				"sahf					\n"
 				"movl (%%ebx),%%eax		\n"
 				"adcl (%%edx),%%eax		\n"
 				"movl %%eax,(%%ebx)		\n"
+				"lahf					\n"
 				
-				"inc %%ebx				\n"
-				"inc %%ebx				\n"
-				"inc %%ebx				\n"
-				"inc %%ebx				\n"
-				
-				"inc %%edx				\n"
-				"inc %%edx				\n"
-				"inc %%edx				\n"
-				"inc %%edx				\n"
-				
-			"loop 1b					\n"
+				"add $4,%%ebx			\n"
+				"add $4,%%edx			\n"
 
-				"movl $0, %%eax			\n"
-				"adcl %%eax,%%eax		\n"
-				"movl %%eax, %%esi		\n" 
+			"subl $1,%%ecx				\n"
+			"jnz 1b						\n"
+
+				"test $1,%%ah			\n"
+				"setnz %%al				\n"
+				"movzx %%al,%%esi		\n"
 
 				"pop %%edx				\n"
 				"pop %%ecx				\n"
@@ -375,6 +375,7 @@ public:
 				push ebx
 				push ecx
 				push edx
+				push edi
 
 				mov ecx, [b]
 				sub ecx, [index]				
@@ -385,28 +386,37 @@ public:
 				lea ebx, [eax+4*edx]
 				mov edx, [value]
 
+				mov edi,1
+
 				clc
+				lahf
 			p:
+				sahf	; restore flags
 				mov eax, [ebx]
 				adc eax, edx
 				mov [ebx], eax
-			
-			jnc end
-				mov edx, 0
+				lahf	; save flags
 
-				inc ebx
-				inc ebx
-				inc ebx
-				inc ebx
+			cmovnc ecx,edi
+				xor edx,edx
+				add ebx,4
 
-			loop p
+			sub ecx,1
+			jnz p
 
-			end:
+//			end:
 
-				mov eax,0
-				adc eax,eax
-				mov [c],eax
+				test ah,1
+				setnz al
 
+				//
+				// movzx dword ptr [c],al
+				//
+				movzx edx, al
+				mov [c], edx
+				// 
+
+				pop edi
 				pop edx
 				pop ecx
 				pop ebx
@@ -421,35 +431,38 @@ public:
 				"push %%ebx						\n"
 				"push %%ecx						\n"
 				"push %%edx						\n"
+				"push %%edi						\n"
 
 				"subl %%edx, %%ecx 				\n"
 
 				"leal (%%ebx,%%edx,4), %%ebx 	\n"
 
 				"movl %%esi, %%edx				\n"
+				"movl $1, %%edi					\n"
 				"clc							\n"
+				"lahf							\n"
 			"1:									\n"
-
+				"sahf							\n"
 				"movl (%%ebx), %%eax			\n"
 				"adcl %%edx, %%eax				\n"
 				"movl %%eax, (%%ebx)			\n"
+				"lahf							\n"
 
-			"jnc 2f								\n"
+			"cmovnc %%edi,%%ecx					\n"
 
-				"movl $0, %%edx					\n"
+				"xorl %%edx, %%edx				\n"
 
-				"inc %%ebx						\n"
-				"inc %%ebx						\n"
-				"inc %%ebx						\n"
-				"inc %%ebx						\n"
+				"addl $4,%%ebx					\n"
 
-			"loop 1b							\n"
+			"subl $1,%%ecx						\n"
+			"jnz 1b								\n"
 
-			"2:									\n"
 
-				"movl $0, %%eax					\n"
-				"adcl %%eax,%%eax				\n"
+				"test $1,%%ah					\n"
+				"setnz %%al						\n"
+				"movzx %%al,%%eax				\n"
 
+				"pop %%edi						\n"
 				"pop %%edx						\n"
 				"pop %%ecx						\n"
 				"pop %%ebx						\n"
@@ -518,19 +531,18 @@ public:
 			
 				lea ebx, [eax+4*edx]
 
-				mov edx, 0
+				xor edx,edx
 
 				mov eax, [ebx]
 				add eax, [x1]
 				mov [ebx], eax
 
-				inc ebx
-				inc ebx
-				inc ebx
-				inc ebx
+				setc al
+				movzx eax,al
+				add ebx,4
 
-				mov eax, [ebx]
-				adc eax, [x2]
+				add eax, [ebx]
+				add eax, [x2]
 				mov [ebx], eax
 			jnc end
 
@@ -554,9 +566,14 @@ public:
 
 			end:
 
-				mov eax,0
-				adc eax,eax
-				mov [c],eax
+				setc al
+
+				//
+				// movzx dword ptr [c],al
+				//
+				movzx edx, al
+				mov [c], edx
+				//
 
 				pop edx
 				pop ecx
@@ -577,7 +594,7 @@ public:
 				
 				"leal (%%ebx,%%edx,4), %%ebx 	\n"
 
-				"movl $0, %%edx					\n"
+				"xorl %%edx, %%edx				\n"
 
 				"movl (%%ebx), %%eax			\n"
 				"addl %%esi, %%eax					\n"
@@ -613,8 +630,8 @@ public:
 
 			"2:									\n"
 
-				"movl $0, %%eax					\n"
-				"adcl %%eax,%%eax				\n"
+				"setc %%al						\n"
+				"movzx %%al,%%eax				\n"
 
 				"pop %%edx						\n"
 				"pop %%ecx						\n"
@@ -929,23 +946,29 @@ private:
 				mov ecx, [b]
 				mov ebx, [p1]
 
+				lahf
 			p:
+				sahf
 				rcl dword ptr[ebx],1
+				lahf
 
-				inc ebx
-				inc ebx
-				inc ebx
-				inc ebx
+				add ebx,4
 
-			loop p
+			sub ecx,1
+			jnz p
 
-				dec edx
-
+			sub edx,1
 			jnz a
 
-				mov eax,0
-				adc eax,eax
-				mov [c],eax
+				sahf
+				setc al
+
+				//
+				// movzx dword ptr [c],al
+				//
+				movzx edx, al
+				mov [c], edx
+				//
 
 				pop edx
 				pop ecx
@@ -968,25 +991,26 @@ private:
 			"push %%ebx			\n"
 			"push %%ecx			\n"
 
+			"lahf				\n"
 		"1:						\n"
+			"sahf				\n"
 			"rcll $1,(%%ebx)	\n"
-			
-			"inc %%ebx			\n"
-			"inc %%ebx			\n"
-			"inc %%ebx			\n"
-			"inc %%ebx			\n"
-			
-		"loop 1b				\n"
+			"lahf				\n"
+
+			"addl $4,%%ebx		\n"
+
+		"subl $1,%%ecx			\n"
+		"jnz 1b					\n"
 			
 			"pop %%ecx			\n"
 			"pop %%ebx			\n"
 
-			"decl %%esi			\n"
-
+			"subl $1,%%esi		\n"
 		"jnz 2b					\n"
 
-			"movl $0, %%edx		\n"
-			"adcl %%edx, %%edx	\n"
+			"sahf				\n"
+			"setc %%dl			\n"
+			"movzx %%dl, %%edx	\n"
 
 			"pop %%esi			\n"
 
@@ -1043,23 +1067,29 @@ private:
 				mov ecx,[b]
 				lea ebx,[ebx+4*ecx]
 
+				lahf
 			p:
-				dec ebx
-				dec ebx
-				dec ebx
-				dec ebx
+				sub ebx,4
 
+				sahf
 				rcr dword ptr [ebx],1
+				lahf
 
-			loop p
+			sub ecx,1
+			jnz p
 				
-				dec edx
-
+			sub edx,1
 			jnz a
 
-				mov eax,0
-				adc eax,eax
-				mov [c],eax
+				sahf
+				setc al
+
+				//
+				// movzx dword ptr [c],al
+				//
+				movzx edx, al
+				mov [c], edx
+				// 
 
 				pop edx
 				pop ecx
@@ -1085,25 +1115,27 @@ private:
 			"xorl %%eax, %%eax	\n"
 			"subl %%edx, %%eax	\n"
 
+			"lahf				\n"
 		"1:						\n"
-			"dec %%ebx			\n"
-			"dec %%ebx			\n"
-			"dec %%ebx			\n"
-			"dec %%ebx			\n"
-			
+			"subl $4,%%ebx		\n"
+
+			"sahf				\n"
 			"rcrl $1,(%%ebx)	\n"
-			
-		"loop 1b				\n"
+			"lahf				\n"
+
+		"subl $1,%%ecx			\n"
+		"jnz 1b					\n"
 
 			"pop %%ecx			\n"
 			"pop %%ebx			\n"
 
-			"decl %%esi			\n"
+			"subl $1,%%esi		\n"
 
 		"jnz 2b					\n"
 
-			"movl $0, %%edx		\n"
-			"adcl %%edx, %%edx	\n"
+			"sahf				\n"
+			"setc %%dl			\n"
+			"movzx %%dl, %%edx	\n"
 
 			"pop %%esi			\n"
 
@@ -1365,12 +1397,16 @@ public:
 			__asm
 			{
 				push eax
+				push edx
 
+				and edx,-1
 				bsr eax, x 
-				jnz found 
-				mov eax, -1
-		found:
+				cmovz eax,edx
 				mov result, eax
+
+				//
+				pop edx
+				//
 
 				pop eax
 			}
@@ -1380,10 +1416,11 @@ public:
 		#ifdef __GNUC__
 			__asm__  __volatile__(
 
+			"push %%edx			\n"
+			"andl $-1,%%edx		\n"
 			"bsrl %1, %0		\n"
-			"jnz 1f				\n"
-			"movl $-1, %0		\n"
-		"1:						\n"
+			"cmovz %%edx,%0		\n"
+			"pop %%edx			\n"
 
 			: "=R" (result)
 			: "R" (x)
@@ -1594,7 +1631,7 @@ public:
 		that value pointed with result1 and result2 has changed
 
 		this has no effect in visual studio but it's usefull when
-		using gcc and options like -O
+		using gcc and options like -Ox
 	*/
 	register uint result1_;
 	register uint result2_;
@@ -2736,7 +2773,7 @@ public:
 
 	/*!
 	*
-	*	convertion method
+	*	conversion method
 	*
 	*/
 
