@@ -265,9 +265,9 @@ public:
 				xor eax,eax
 				sub eax,[c]
 
-				lahf
+				lahf   //  flags -> AH   (flags: SF ZF AF CF) PF?
 			p:
-				sahf
+				sahf   //  AH -> flags   (flags: SF ZF AF CF) PF?
 				mov eax,[ebx]
 				adc eax,[edx]
 				mov [ebx],eax
@@ -279,15 +279,12 @@ public:
 			sub ecx,1
 			jnz p
 
+				// checking carry from the last word
+				// CF = bit 0
 				test ah,1
 				setnz al
-		
-				// 
-				// movzx dword ptr [c],al
-				//
 				movzx edx, al
 				mov [c], edx
-				//
 
 				pop edx
 				pop ecx
@@ -3095,7 +3092,7 @@ public:
 
 		existing first white characters will be ommited
 	*/
-	uint FromString(const char * s, uint b = 10)
+	uint FromString(const char * s, uint b = 10, const char ** after_source = 0)
 	{
 	UInt<value_size> base( b );
 	UInt<value_size> temp;
@@ -3105,6 +3102,9 @@ public:
 		temp.SetZero();
 		SkipWhiteCharacters(s);
 
+		if( after_source )
+			*after_source = s;
+
 		if( b<2 || b>16 )
 			return 1;
 
@@ -3112,12 +3112,17 @@ public:
 		{
 			temp.table[0] = z;
 
-			if( Mul(base) )
-				return 1;
+			if( Mul(base) || Add(temp) ) // first is called Mul() and next Add()
+			{
+				if( after_source )
+					*after_source = s;
 
-			if( Add(temp) )
 				return 1;
+			}
 		}		
+
+		if( after_source )
+			*after_source = s;
 
 	return 0;
 	}
