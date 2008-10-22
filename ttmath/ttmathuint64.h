@@ -225,37 +225,36 @@ namespace ttmath
 				"push %%rcx				\n"
 				"push %%rdx				\n"
 			
-				"movq $0, %%rax			\n"
+				"xorq %%rax, %%rax		\n"
 				"subq %%rsi, %%rax		\n"
 
+				//"lahf					\n"
+				// in order to use this instruction one need to use -msahf option of the GCC
+				// but in my compiler (gcc version 4.2.1) there is no such option
+				// at the moment I'm using the opcode of this instruction
+				// In the future this can be simply change into 'lahf'
+				".byte 0x9f				\n"
+
 			"1:							\n"
+				//"sahf					\n"
+				".byte 0x9e				\n"
+			
 				"movq (%%rbx),%%rax		\n"
 				"adcq (%%rdx),%%rax		\n"
 				"movq %%rax,(%%rbx)		\n"
-				
-				"inc %%rbx				\n"
-				"inc %%rbx				\n"
-				"inc %%rbx				\n"
-				"inc %%rbx				\n"
-				"inc %%rbx				\n"
-				"inc %%rbx				\n"
-				"inc %%rbx				\n"
-				"inc %%rbx				\n"
-				
-				"inc %%rdx				\n"
-				"inc %%rdx				\n"
-				"inc %%rdx				\n"
-				"inc %%rdx				\n"
-				"inc %%rdx				\n"
-				"inc %%rdx				\n"
-				"inc %%rdx				\n"
-				"inc %%rdx				\n"
-				
-			"loop 1b					\n"
 
-				"movq $0, %%rax			\n"
-				"adcq %%rax,%%rax		\n"
-				"movq %%rax, %%rsi		\n" 
+				//"lahf					\n"
+				".byte 0x9f				\n"
+
+				"addq $8, %%rbx			\n"
+				"addq $8, %%rdx			\n"
+				
+				"decq %%rcx				\n"
+			"jnz 1b					\n"
+
+				"test $1, %%ah			\n"
+				"setnz %%al				\n"
+				"movzx %%al, %%rsi		\n"
 
 				"pop %%rdx				\n"
 				"pop %%rcx				\n"
@@ -680,11 +679,14 @@ namespace ttmath
 			"push %%rbx			\n"
 			"push %%rcx			\n"
 
-			"lahf				\n"
+			//"lahf				\n"
+			".byte 0x9f			\n"
 		"1:						\n"
-			"sahf				\n"
+			//"sahf				\n"
+			".byte 0x9e			\n"
 			"rclq $1,(%%rbx)	\n"
-			"lahf				\n"
+			//"lahf				\n"
+			".byte 0x9f			\n"
 
 			"addq $8,%%rbx		\n"
 
@@ -698,7 +700,8 @@ namespace ttmath
 		"jnz 2b					\n"
 
 			"xor %%rdx,%%rdx	\n"
-			"sahf				\n"
+			//"sahf				\n"
+			".byte 0x9e			\n"
 			"setc %%dl			\n"
 
 			"pop %%rsi			\n"
@@ -762,13 +765,17 @@ namespace ttmath
 			"xorq %%rax, %%rax	\n"
 			"subq %%rdx, %%rax	\n"
 
-			"lahf				\n"
+			//"lahf				\n"
+			".byte 0x9f			\n"
 		"1:						\n"
 			"subq $8, %%rbx		\n"
 
-			"sahf				\n"
+			//"sahf				\n"
+			".byte 0x9e			\n"
+
 			"rcrq $1,(%%rbx)	\n"
-			"lahf				\n"
+			//"lahf				\n"
+			".byte 0x9f			\n"
 
 		"subq $1,%%rcx			\n"
 		"jnz 1b					\n"
@@ -781,7 +788,8 @@ namespace ttmath
 		"jnz 2b					\n"
 
 			"xor %%rdx,%%rdx	\n"
-			"sahf				\n"
+			//"sahf				\n"
+			".byte 0x9e			\n"
 			"setc %%dl			\n"
 
 			"pop %%rsi			\n"

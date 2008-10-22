@@ -57,8 +57,6 @@ void test_uint()
 int main()
 {
 using namespace ttmath;
-
-
 	
 	test_uint();
 

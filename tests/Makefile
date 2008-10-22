@@ -1,7 +1,7 @@
 CC     = g++
 o      = main.o uinttest.o
 CFLAGS = -Wall -pedantic
-ttmath = /d/roboczy/prog/ttmath
+ttmath = ..
 name   = tests
 
 

@@ -265,9 +265,9 @@ public:
 				xor eax,eax
 				sub eax,[c]
 
-				lahf   //  flags -> AH   (flags: SF ZF AF CF) PF?
+				lahf   //  flags -> AH   (flags: SF ZF AF PF CF)
 			p:
-				sahf   //  AH -> flags   (flags: SF ZF AF CF) PF?
+				sahf   //  AH -> flags   (flags: SF ZF AF PF CF)
 				mov eax,[ebx]
 				adc eax,[edx]
 				mov [ebx],eax
@@ -276,7 +276,7 @@ public:
 				add ebx,4
 				add edx,4
 
-			sub ecx,1
+				dec ecx
 			jnz p
 
 				// checking carry from the last word
@@ -318,7 +318,7 @@ public:
 				"add $4,%%ebx			\n"
 				"add $4,%%edx			\n"
 
-			"subl $1,%%ecx				\n"
+				"decl %%ecx				\n"
 			"jnz 1b						\n"
 
 				"test $1,%%ah			\n"
