@@ -44,6 +44,58 @@
 const char uint_tests_file[] = "tests.uint32";
 
 
+
+bool test_lahf()
+{
+#ifdef TTMATH_PLATFORM64
+
+
+	#ifndef __GNUC__
+			#error "another compiler than GCC is currently not supported in 64bit mode"
+	#endif
+
+
+	std::cout << "Processor 64bit: checking LAHF and SAHF instructions....";
+
+	unsigned long int is_lahf;
+
+
+	__asm__ __volatile__ (
+		
+		"push %%rax               \n"
+		"push %%rcx               \n"
+		"push %%rdx               \n"
+
+		"mov $0x80000001, %%rax   \n"
+		"CPUID                    \n"
+		"test $1, %%rcx           \n"
+		"setnz %%al               \n"
+		"movzx %%al, %%rbx        \n"
+
+		"pop %%rdx                \n"
+		"pop %%rcx                \n"
+		"pop %%rax                \n"
+
+		: "=b" (is_lahf)
+		:
+	    : "cc"
+		);
+
+	if( is_lahf )
+	{
+		std::cout << "ok" << std::endl;
+		return true;
+	}
+
+	std::cout << "fail" << std::endl;
+
+
+#endif
+
+return false;
+}
+
+
 void test_uint()
 {
 	UIntTest test;
@@ -58,6 +110,9 @@ int main()
 {
 using namespace ttmath;
 	
+	if( !test_lahf() )
+		return 1;
+
 	test_uint();
 
 
