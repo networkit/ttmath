@@ -221,47 +221,28 @@ namespace ttmath
 			*/
 			__asm__ __volatile__(
 			
-				"push %%rbx				\n"
-				"push %%rcx				\n"
-				"push %%rdx				\n"
+				"push %%rcx						\n"
 			
-				"xorq %%rax, %%rax		\n"
-				"subq %%rsi, %%rax		\n"
+				"xorq %%rax, %%rax				\n"
+				"movq %%rax, %%rdx				\n"
+				"subq %%rdi, %%rax				\n"
 
-				//"lahf					\n"
-				// in order to use this instruction one need to use -msahf option of the GCC
-				// but in my compiler (gcc version 4.2.1) there is no such option
-				// at the moment I'm using the opcode of this instruction
-				// In the future this can be simply change into 'lahf'
-				".byte 0x9f				\n"
 
-			"1:							\n"
-				//"sahf					\n"
-				".byte 0x9e				\n"
+			"1:									\n"
+				"movq (%%rsi,%%rdx,8),%%rax		\n"
+				"adcq %%rax, (%%rbx,%%rdx,8)	\n"
 			
-				"movq (%%rbx),%%rax		\n"
-				"adcq (%%rdx),%%rax		\n"
-				"movq %%rax,(%%rbx)		\n"
+				"incq %%rdx						\n"
+				"decq %%rcx						\n"
+			"jnz 1b								\n"
 
-				//"lahf					\n"
-				".byte 0x9f				\n"
+				"setc %%al						\n"
+				"movzx %%al,%%rdx				\n"
 
-				"addq $8, %%rbx			\n"
-				"addq $8, %%rdx			\n"
-				
-				"decq %%rcx				\n"
-			"jnz 1b					\n"
+				"pop %%rcx						\n"
 
-				"test $1, %%ah			\n"
-				"setnz %%al				\n"
-				"movzx %%al, %%rsi		\n"
-
-				"pop %%rdx				\n"
-				"pop %%rcx				\n"
-				"pop %%rbx				\n"
-
-				: "=S" (c)
-				: "0" (c), "c" (b), "b" (p1), "d" (p2)
+				: "=d" (c)
+				: "D" (c), "c" (b), "b" (p1), "S" (p2)
 				: "%rax", "cc", "memory" );
 
 		#endif
@@ -305,49 +286,32 @@ namespace ttmath
 		#endif
 
 		#ifdef __GNUC__
+
 			__asm__ __volatile__(
-				"push %%rbx						\n"
+
+				"push %%rax						\n"
 				"push %%rcx						\n"
-				"push %%rdx						\n"
 
 				"subq %%rdx, %%rcx 				\n"
 
-				"leaq (%%rbx,%%rdx,8), %%rbx 	\n"
-
-				"movq %%rsi, %%rdx				\n"
-				"clc							\n"
 			"1:									\n"
-
-				"movq (%%rbx), %%rax			\n"
-				"adcq %%rdx, %%rax				\n"
-				"movq %%rax, (%%rbx)			\n"
-
+				"addq %%rax, (%%rbx,%%rdx,8)	\n"
 			"jnc 2f								\n"
-
-				"movq $0, %%rdx					\n"
-
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-
-			"loop 1b							\n"
+				
+				"movq $1, %%rax					\n"
+				"incq %%rdx						\n"
+				"decq %%rcx						\n"
+			"jnz 1b								\n"
 
 			"2:									\n"
+				"setc %%al						\n"
+				"movzx %%al, %%rdx				\n"
 
-				"movq $0, %%rax					\n"
-				"adcq %%rax,%%rax				\n"
-
-				"pop %%rdx						\n"
 				"pop %%rcx						\n"
-				"pop %%rbx						\n"
+				"pop %%rax						\n"
 
-				: "=a" (c)
-				: "c" (b), "d" (index), "b" (p1), "S" (value)
+				: "=d" (c)
+				: "a" (value), "c" (b), "0" (index), "b" (p1)
 				: "cc", "memory" );
 
 		#endif
@@ -404,67 +368,33 @@ namespace ttmath
 		#ifdef __GNUC__
 			__asm__ __volatile__(
 			
-				"push %%rbx						\n"
 				"push %%rcx						\n"
 				"push %%rdx						\n"
 
 				"subq %%rdx, %%rcx 				\n"
 				
-				"leaq (%%rbx,%%rdx,8), %%rbx 	\n"
-
-				"movq $0, %%rdx					\n"
-
-				"movq (%%rbx), %%rax			\n"
-				"addq %%rsi, %%rax				\n"
-				"movq %%rax, (%%rbx)			\n"
-
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-
-				"movq (%%rbx), %%rax			\n"
-				"adcq %%rdi, %%rax				\n"
-				"movq %%rax, (%%rbx)			\n"
-			"jnc 2f								\n"
-
-				"dec %%rcx						\n"
-				"dec %%rcx						\n"
-			"jz 2f								\n"
+				"addq %%rsi, (%%rbx,%%rdx,8) 	\n"
+				"incq %%rdx						\n"
+				"decq %%rcx						\n"
 
 			"1:									\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-
-				"movq (%%rbx), %%rax			\n"
-				"adcq %%rdx, %%rax				\n"
-				"movq %%rax, (%%rbx)			\n"
-
+				"adcq %%rax, (%%rbx,%%rdx,8)	\n"
 			"jnc 2f								\n"
 
-			"loop 1b							\n"
+				"mov $0, %%rax					\n"
+				"incq %%rdx						\n"
+				"decq %%rcx						\n"
+			"jnz 1b								\n"
 
 			"2:									\n"
-
-				"movq $0, %%rax					\n"
-				"adcq %%rax,%%rax				\n"
+				"setc %%al						\n"
+				"movzx %%al, %%rax				\n"
 
 				"pop %%rdx						\n"
 				"pop %%rcx						\n"
-				"pop %%rbx						\n"
 
 				: "=a" (c)
-				: "c" (b), "d" (index), "b" (p1), "S" (x1), "D" (x2)
+				: "c" (b), "d" (index), "b" (p1), "S" (x1), "0" (x2)
 				: "cc", "memory" );
 
 		#endif

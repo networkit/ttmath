@@ -249,48 +249,46 @@ public:
 		#ifndef __GNUC__
 			
 			//	this part might be compiled with for example visual c
-			
+
 			__asm
 			{
 				push eax
 				push ebx
 				push ecx
 				push edx
+				push esi
 
 				mov ecx,[b]
 				
 				mov ebx,[p1]
-				mov edx,[p2]
+				mov esi,[p2]
 
-				xor eax,eax
-				sub eax,[c]
+				xor eax,eax  // eax=0
+				mov edx,eax  // edx=0
 
-				lahf   //  flags -> AH   (flags: SF ZF AF PF CF)
+				sub eax,[c]  // CF=c
+
 			p:
-				sahf   //  AH -> flags   (flags: SF ZF AF PF CF)
-				mov eax,[ebx]
-				adc eax,[edx]
-				mov [ebx],eax
-				lahf
-				
-				add ebx,4
-				add edx,4
+				mov eax,[esi+edx*4]
+				adc [ebx+edx*4],eax
 
+				inc edx
 				dec ecx
 			jnz p
 
-				// checking carry from the last word
-				// CF = bit 0
-				test ah,1
-				setnz al
+				setc al
 				movzx edx, al
 				mov [c], edx
 
+				pop esi
 				pop edx
 				pop ecx
 				pop ebx
 				pop eax
 			}
+
+
+
 		#endif		
 			
 
@@ -300,37 +298,28 @@ public:
 			
 			__asm__ __volatile__(
 			
-				"push %%ebx				\n"
-				"push %%ecx				\n"
-				"push %%edx				\n"
+				"push %%ecx						\n"
 			
-				"xorl %%eax, %%eax		\n"
-				"subl %%esi, %%eax		\n"
+				"xorl %%eax, %%eax				\n"
+				"movl %%eax, %%edx				\n"
+				"subl %%edi, %%eax				\n"
 
-				"lahf					\n"
-			"1:							\n"
-				"sahf					\n"
-				"movl (%%ebx),%%eax		\n"
-				"adcl (%%edx),%%eax		\n"
-				"movl %%eax,(%%ebx)		\n"
-				"lahf					\n"
-				
-				"add $4,%%ebx			\n"
-				"add $4,%%edx			\n"
 
-				"decl %%ecx				\n"
-			"jnz 1b						\n"
+			"1:									\n"
+				"movl (%%esi,%%edx,4),%%eax		\n"
+				"adcl %%eax, (%%ebx,%%edx,4)	\n"
+			
+				"incl %%edx						\n"
+				"decl %%ecx						\n"
+			"jnz 1b								\n"
 
-				"test $1,%%ah			\n"
-				"setnz %%al				\n"
-				"movzx %%al,%%esi		\n"
+				"setc %%al						\n"
+				"movzx %%al,%%edx				\n"
 
-				"pop %%edx				\n"
-				"pop %%ecx				\n"
-				"pop %%ebx				\n"
+				"pop %%ecx						\n"
 
-				: "=S" (c)
-				: "0" (c), "c" (b), "b" (p1), "d" (p2)
+				: "=d" (c)
+				: "D" (c), "c" (b), "b" (p1), "S" (p2)
 				: "%eax", "cc", "memory" );
 
 		#endif
@@ -366,106 +355,71 @@ public:
 	register uint c;
 
 		#ifndef __GNUC__
+
 			__asm
 			{
 				push eax
 				push ebx
 				push ecx
 				push edx
-				push edi
 
 				mov ecx, [b]
 				sub ecx, [index]				
 
 				mov edx, [index]
-				mov eax, [p1]
-			
-				lea ebx, [eax+4*edx]
-				mov edx, [value]
+				mov ebx, [p1]
 
-				mov edi,1
+				mov eax, [value]
 
-				clc
-				lahf
 			p:
-				sahf	; restore flags
-				mov eax, [ebx]
-				adc eax, edx
-				mov [ebx], eax
-				lahf	; save flags
+				add [ebx+edx*4], eax
+			jnc end
 
-			cmovnc ecx,edi
-				xor edx,edx
-				add ebx,4
-
-			sub ecx,1
+				mov eax, 1
+				inc edx
+				dec ecx
 			jnz p
 
-//			end:
-
-				test ah,1
-				setnz al
-
-				//
-				// movzx dword ptr [c],al
-				//
+			end:
+				setc al
 				movzx edx, al
 				mov [c], edx
-				// 
 
-				pop edi
 				pop edx
 				pop ecx
 				pop ebx
 				pop eax
 			}
+
 		#endif		
 			
 
 		#ifdef __GNUC__
 			__asm__ __volatile__(
 			
-				"push %%ebx						\n"
+				"push %%eax						\n"
 				"push %%ecx						\n"
-				"push %%edx						\n"
-				"push %%edi						\n"
 
 				"subl %%edx, %%ecx 				\n"
 
-				"leal (%%ebx,%%edx,4), %%ebx 	\n"
-
-				"movl %%esi, %%edx				\n"
-				"movl $1, %%edi					\n"
-				"clc							\n"
-				"lahf							\n"
 			"1:									\n"
-				"sahf							\n"
-				"movl (%%ebx), %%eax			\n"
-				"adcl %%edx, %%eax				\n"
-				"movl %%eax, (%%ebx)			\n"
-				"lahf							\n"
-
-			"cmovnc %%edi,%%ecx					\n"
-
-				"xorl %%edx, %%edx				\n"
-
-				"addl $4,%%ebx					\n"
-
-			"subl $1,%%ecx						\n"
+				"addl %%eax, (%%ebx,%%edx,4)	\n"
+			"jnc 2f								\n"
+				
+				"movl $1, %%eax					\n"
+				"incl %%edx						\n"
+				"decl %%ecx						\n"
 			"jnz 1b								\n"
 
+			"2:									\n"
+				"setc %%al						\n"
+				"movzx %%al, %%edx				\n"
 
-				"test $1,%%ah					\n"
-				"setnz %%al						\n"
-				"movzx %%al,%%eax				\n"
-
-				"pop %%edi						\n"
-				"pop %%edx						\n"
 				"pop %%ecx						\n"
-				"pop %%ebx						\n"
+				"pop %%eax						\n"
 
-				: "=a" (c)
-				: "c" (b), "d" (index), "b" (p1), "S" (value)
+				: "=d" (c)
+				: "a" (value), "c" (b), "0" (index), "b" (p1)
 				: "cc", "memory" );
 
 		#endif
@@ -523,59 +477,35 @@ public:
 				mov ecx, [b]
 				sub ecx, [index]				
 
+				mov ebx, [p1]
 				mov edx, [index]
-				mov eax, [p1]
+
+				mov eax, [x1]
+				add [ebx+edx*4], eax
+				inc edx
+				dec ecx
+
+				mov eax, [x2]
 			
-				lea ebx, [eax+4*edx]
-
-				xor edx,edx
-
-				mov eax, [ebx]
-				add eax, [x1]
-				mov [ebx], eax
-
-				setc al
-				movzx eax,al
-				add ebx,4
-
-				add eax, [ebx]
-				add eax, [x2]
-				mov [ebx], eax
-			jnc end
-
-				dec ecx
-				dec ecx
-			jz end
-
 			p:
-				inc ebx
-				inc ebx
-				inc ebx
-				inc ebx
-
-				mov eax,[ebx]
-				adc eax, edx
-				mov [ebx], eax
-
+				adc [ebx+edx*4], eax
 			jnc end
 
-			loop p
+				mov eax, 0
+				inc edx
+				dec ecx
+			jnz p
 
 			end:
-
 				setc al
-
-				//
-				// movzx dword ptr [c],al
-				//
 				movzx edx, al
 				mov [c], edx
-				//
-
+				
 				pop edx
 				pop ecx
 				pop ebx
 				pop eax
+
 			}
 		#endif		
 			
@@ -583,59 +513,33 @@ public:
 		#ifdef __GNUC__
 			__asm__ __volatile__(
 			
-				"push %%ebx						\n"
 				"push %%ecx						\n"
 				"push %%edx						\n"
 
 				"subl %%edx, %%ecx 				\n"
 				
-				"leal (%%ebx,%%edx,4), %%ebx 	\n"
-
-				"xorl %%edx, %%edx				\n"
-
-				"movl (%%ebx), %%eax			\n"
-				"addl %%esi, %%eax					\n"
-				"movl %%eax, (%%ebx)			\n"
-
-				"inc %%ebx						\n"
-				"inc %%ebx						\n"
-				"inc %%ebx						\n"
-				"inc %%ebx						\n"
-
-				"movl (%%ebx), %%eax			\n"
-				"adcl %%edi, %%eax					\n"
-				"movl %%eax, (%%ebx)			\n"
-			"jnc 2f								\n"
-
-				"dec %%ecx						\n"
-				"dec %%ecx						\n"
-			"jz 2f								\n"
+				"addl %%esi, (%%ebx,%%edx,4) 	\n"
+				"incl %%edx						\n"
+				"decl %%ecx						\n"
 
 			"1:									\n"
-				"inc %%ebx						\n"
-				"inc %%ebx						\n"
-				"inc %%ebx						\n"
-				"inc %%ebx						\n"
-
-				"movl (%%ebx), %%eax			\n"
-				"adcl %%edx, %%eax				\n"
-				"movl %%eax, (%%ebx)			\n"
-
+				"adcl %%eax, (%%ebx,%%edx,4)	\n"
 			"jnc 2f								\n"
 
-			"loop 1b							\n"
+				"mov $0, %%eax					\n"
+				"incl %%edx						\n"
+				"decl %%ecx						\n"
+			"jnz 1b								\n"
 
 			"2:									\n"
-
 				"setc %%al						\n"
-				"movzx %%al,%%eax				\n"
+				"movzx %%al, %%eax				\n"
 
 				"pop %%edx						\n"
 				"pop %%ecx						\n"
-				"pop %%ebx						\n"
 
 				: "=a" (c)
-				: "c" (b), "d" (index), "b" (p1), "S" (x1), "D" (x2)
+				: "c" (b), "d" (index), "b" (p1), "S" (x1), "0" (x2)
 				: "cc", "memory" );
 
 		#endif

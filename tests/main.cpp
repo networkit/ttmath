@@ -40,6 +40,7 @@
 #include <ttmath/ttmath.h>
 #include "uinttest.h"
 
+//#include <windows.h>
 
 const char uint_tests_file[] = "tests.uint32";
 
@@ -90,9 +91,13 @@ bool test_lahf()
 	std::cout << "fail" << std::endl;
 
 
+	return false;
+
 #endif
 
-return false;
+
+	// 32bit platform
+return true;
 }
 
 
@@ -114,8 +119,6 @@ using namespace ttmath;
 		return 1;
 
 	test_uint();
-
-
 
 
 

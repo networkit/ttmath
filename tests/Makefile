@@ -1,6 +1,6 @@
 CC     = g++
 o      = main.o uinttest.o
-CFLAGS = -Wall -pedantic
+CFLAGS = -Wall
 ttmath = ..
 name   = tests
 

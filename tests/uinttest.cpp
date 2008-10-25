@@ -46,9 +46,9 @@ void UIntTest::set_file_name(const std::string & f)
 }
 
 
-int UIntTest::read_int()
+uuint UIntTest::read_uint()
 {
-int result = 0;
+uuint result = 0;
 	
 	skip_white_characters();
 
@@ -60,39 +60,55 @@ return result;
 
 
 
-template<unsigned int type_size>
-void UIntTest::test_add()
+bool UIntTest::check_minmax_bits(int type_size)
 {
-using namespace ttmath;
-
-	UInt<type_size> a,b,result, new_result;
-
-	int min_bits = read_int();
-	int max_bits = read_int();
+	int min_bits = read_uint();
+	int max_bits = read_uint();
 
 	if( min_bits != 0 && type_size * TTMATH_BITS_PER_UINT < (unsigned int)min_bits )
-		return;
+		return false;
 
 	if( max_bits != 0 && type_size * TTMATH_BITS_PER_UINT > (unsigned int)max_bits )
-		return;
+		return false;
 
-	a.FromString(pline, 10, &pline);
-	b.FromString(pline, 10, &pline);
-	result.FromString(pline, 10, &pline);
-	int carry = read_int();
+return true;
+}
 
-	std::cerr << '[' << row << "] Add<" << type_size << ">: ";
 
+bool UIntTest::check_minmax_bits_bitperint(int type_size)
+{
+	if( !check_minmax_bits(type_size) )
+		return false;
+
+	int bits = read_uint();
+
+	if( TTMATH_BITS_PER_UINT != bits )
+		return false;
+
+return true;
+}
+
+
+
+bool UIntTest::check_end()
+{
 	skip_white_characters();
+
 	if( *pline!='#' && *pline!= 0 )
 	{
 		std::cerr << "syntax error" << std::endl;
-		return;
+		return false;
 	}
 
-	new_result = a;
-	int new_carry = new_result.Add(b);
-	bool ok = true;
+return true;
+}
+
+
+template<uuint type_size>
+bool UIntTest::check_result_carry(const ttmath::UInt<type_size> & result, const ttmath::UInt<type_size> & new_result,
+						int carry, int new_carry)
+{
+bool ok = true;
 
 	if( new_carry != carry )
 	{
@@ -106,13 +122,65 @@ using namespace ttmath;
 		ok = false;
 	}
 
-	if( ok )
-	{
-		std::cerr << "ok" << std::endl;
-	}
+return ok;
 }
 
 
+
+
+
+
+template<uuint type_size>
+void UIntTest::test_add()
+{
+	UInt<type_size> a,b,result, new_result;
+
+	if( !check_minmax_bits(type_size) )
+		return;
+
+	a.FromString(pline, 10, &pline);
+	b.FromString(pline, 10, &pline);
+	result.FromString(pline, 10, &pline);
+	int carry = read_uint();
+
+	std::cerr << '[' << row << "] Add<" << type_size << ">: ";
+
+	if( !check_end() )
+		return;
+
+	new_result = a;
+	int new_carry = new_result.Add(b);
+
+	if( check_result_carry(result, new_result, carry, new_carry) )
+		std::cerr << "ok" << std::endl;
+}
+
+
+template<uuint type_size>
+void UIntTest::test_addint()
+{
+	UInt<type_size> a, result, new_result;
+
+	if( !check_minmax_bits_bitperint(type_size) )
+		return;
+
+	a.FromString(pline, 10, &pline);
+	uuint b = read_uint();
+	uuint index = read_uint();
+	result.FromString(pline, 10, &pline);
+	int carry = read_uint();
+
+	std::cerr << '[' << row << "] AddInt<" << type_size << ">: ";
+
+	if( !check_end() )
+		return;
+
+	new_result = a;
+	int new_carry = new_result.AddInt(b, index);
+
+	if( check_result_carry(result, new_result, carry, new_carry) )
+		std::cerr << "ok" << std::endl;
+}
 
 
 int UIntTest::upper_char(int c)
@@ -189,6 +257,19 @@ const char * p = pline;
 		pline = p; test_add<7>();
 		pline = p; test_add<8>();
 		pline = p; test_add<9>();
+	}
+	else
+	if( method == "ADDINT" )
+	{
+		pline = p; test_addint<1>();
+		pline = p; test_addint<2>();
+		pline = p; test_addint<3>();
+		pline = p; test_addint<4>();
+		pline = p; test_addint<5>();
+		pline = p; test_addint<6>();
+		pline = p; test_addint<7>();
+		pline = p; test_addint<8>();
+		pline = p; test_addint<9>();
 	}
 	else
 	{
