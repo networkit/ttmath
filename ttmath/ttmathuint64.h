@@ -431,49 +431,30 @@ namespace ttmath
 		#ifdef __GNUC__
 			__asm__  __volatile__(
 			
-				"push %%rbx				\n"
-				"push %%rcx				\n"
-				"push %%rdx				\n"
+				"push %%rcx						\n"
+			
+				"xorq %%rax, %%rax				\n"
+				"movq %%rax, %%rdx				\n"
+				"subq %%rdi, %%rax				\n"
 
-				"movq $0, %%rax			\n"
-				"subq %%rsi, %%rax		\n"
 
-			"1:							\n"
-				"movq (%%rbx),%%rax		\n"
-				"sbbq (%%rdx),%%rax		\n"
-				"movq %%rax,(%%rbx)		\n"
-				
-				"inc %%rbx				\n"
-				"inc %%rbx				\n"
-				"inc %%rbx				\n"
-				"inc %%rbx				\n"
-				"inc %%rbx				\n"
-				"inc %%rbx				\n"
-				"inc %%rbx				\n"
-				"inc %%rbx				\n"
-				
-				"inc %%rdx				\n"
-				"inc %%rdx				\n"
-				"inc %%rdx				\n"
-				"inc %%rdx				\n"
-				"inc %%rdx				\n"
-				"inc %%rdx				\n"
-				"inc %%rdx				\n"
-				"inc %%rdx				\n"
-				
-			"loop 1b					\n"
+			"1:									\n"
+				"movq (%%rsi,%%rdx,8),%%rax		\n"
+				"sbbq %%rax, (%%rbx,%%rdx,8)	\n"
+			
+				"incq %%rdx						\n"
+				"decq %%rcx						\n"
+			"jnz 1b								\n"
 
-				"movq $0, %%rax			\n"
-				"adcq %%rax,%%rax		\n"
-				"movq %%rax, %%rsi		\n" 
+				"setc %%al						\n"
+				"movzx %%al,%%rdx				\n"
 
-				"pop %%rdx				\n"
-				"pop %%rcx				\n"
-				"pop %%rbx				\n"
+				"pop %%rcx						\n"
 
-				: "=S" (c)
-				: "0" (c), "c" (b), "b" (p1), "d" (p2)
+				: "=d" (c)
+				: "D" (c), "c" (b), "b" (p1), "S" (p2)
 				: "%rax", "cc", "memory" );
+
 
 		#endif
 
@@ -515,48 +496,29 @@ namespace ttmath
 		#ifdef __GNUC__
 			__asm__ __volatile__(
 			
-				"push %%rbx						\n"
+				"push %%rax						\n"
 				"push %%rcx						\n"
-				"push %%rdx						\n"
 
 				"subq %%rdx, %%rcx 				\n"
 
-				"leaq (%%rbx,%%rdx,8), %%rbx 	\n"
-
-				"movq %%rsi, %%rdx					\n"
-				"clc							\n"
 			"1:									\n"
-
-				"movq (%%rbx), %%rax			\n"
-				"sbbq %%rdx, %%rax				\n"
-				"movq %%rax, (%%rbx)			\n"
-
+				"subq %%rax, (%%rbx,%%rdx,8)	\n"
 			"jnc 2f								\n"
-
-				"movq $0, %%rdx					\n"
-
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-				"inc %%rbx						\n"
-
-			"loop 1b							\n"
+				
+				"movq $1, %%rax					\n"
+				"incq %%rdx						\n"
+				"decq %%rcx						\n"
+			"jnz 1b								\n"
 
 			"2:									\n"
+				"setc %%al						\n"
+				"movzx %%al, %%rdx				\n"
 
-				"movq $0, %%rax					\n"
-				"adcq %%rax,%%rax				\n"
-
-				"pop %%rdx						\n"
 				"pop %%rcx						\n"
-				"pop %%rbx						\n"
+				"pop %%rax						\n"
 
-				: "=a" (c)
-				: "c" (b), "d" (index), "b" (p1), "S" (value)
+				: "=d" (c)
+				: "a" (value), "c" (b), "0" (index), "b" (p1)
 				: "cc", "memory" );
 
 		#endif
@@ -590,6 +552,7 @@ namespace ttmath
 
 	register sint b = value_size;
 	register uint * p1 = table;
+	register uint mask;
 
 		#ifndef __GNUC__
 			#error "another compiler than GCC is currently not supported in 64bit mode"
@@ -598,47 +561,46 @@ namespace ttmath
 		#ifdef __GNUC__
 		__asm__  __volatile__(
 		
-			"push %%rsi			\n"
+			"push %%rdx						\n"
+			"push %%rsi						\n"
+			"push %%rdi						\n"
 			
-		
-		"2:						\n"
+			"movq %%rcx, %%rsi				\n"
+			"movq $64, %%rcx				\n"
+			"subq %%rsi, %%rcx				\n"
+			"movq $-1, %%rdx				\n"
+			"shrq %%cl, %%rdx				\n"
+			"movq %%rdx, %[amask] 			\n"
+			"movq %%rsi, %%rcx				\n"
 
-			"xorq %%rax,%%rax	\n"
-			"subq %%rdx,%%rax	\n"
+			"xorq %%rdx, %%rdx				\n"
+			"movq %%rdx, %%rsi				\n"
 
-			"push %%rbx			\n"
-			"push %%rcx			\n"
+			"orq %%rax, %%rax				\n"
+			"cmovnz %[amask], %%rsi			\n"
 
-			//"lahf				\n"
-			".byte 0x9f			\n"
-		"1:						\n"
-			//"sahf				\n"
-			".byte 0x9e			\n"
-			"rclq $1,(%%rbx)	\n"
-			//"lahf				\n"
-			".byte 0x9f			\n"
+		"1:									\n"
+			"rolq %%cl, (%%rbx,%%rdx,8)		\n"
 
-			"addq $8,%%rbx		\n"
-
-		"subq $1,%%rcx			\n"
-		"loop 1b				\n"
+			"movq (%%rbx,%%rdx,8), %%rax	\n"
+			"andq %[amask], %%rax			\n"
+			"xorq %%rax, (%%rbx,%%rdx,8)	\n"
+			"orq  %%rsi, (%%rbx,%%rdx,8)	\n"
+			"movq %%rax, %%rsi				\n"
 			
-			"pop %%rcx			\n"
-			"pop %%rbx			\n"
+			"incq %%rdx						\n"
+			"decq %%rdi						\n"
+		"jnz 1b								\n"
+			
+			"and $1, %%rax					\n"
 
-			"subq $1,%%rsi		\n"
-		"jnz 2b					\n"
+			"pop %%rdi						\n"
+			"pop %%rsi						\n"
+			"pop %%rdx						\n"
 
-			"xor %%rdx,%%rdx	\n"
-			//"sahf				\n"
-			".byte 0x9e			\n"
-			"setc %%dl			\n"
-
-			"pop %%rsi			\n"
-
-			: "=d" (c)
-			: "0" (c), "c" (b), "b" (p1), "S" (bits)
-			: "%rax", "cc", "memory" );
+			: "=a" (c)
+			: "0" (c), "D" (b), "b" (p1), "c" (bits), [amask] "m" (mask)
+			: "cc", "memory" );
 
 		#endif
 
@@ -671,7 +633,7 @@ namespace ttmath
 
 	register sint b = value_size;
 	register uint * p1 = table;
-
+	register uint mask;
 
 		#ifndef __GNUC__
 			#error "another compiler than GCC is currently not supported in 64bit mode"
@@ -681,52 +643,49 @@ namespace ttmath
 		#ifdef __GNUC__
 			__asm__  __volatile__(
 
-			"push %%rsi			\n"
+			"push %%rdx						\n"
+			"push %%rsi						\n"
+			"push %%rdi						\n"
+			
+			"movq %%rcx, %%rsi				\n"
+			"movq $64, %%rcx				\n"
+			"subq %%rsi, %%rcx				\n"
+			"movq $-1, %%rdx				\n"
+			"shlq %%cl, %%rdx				\n"
+			"movq %%rdx, %[amask]			\n"
+			"movq %%rsi, %%rcx				\n"
 
+			"xorq %%rdx, %%rdx				\n"
+			"movq %%rdx, %%rsi				\n"
+			"addq %%rdi, %%rdx				\n"
+			"decq %%rdx						\n"
 
-		"2:						\n"
+			"orq %%rax, %%rax				\n"
+			"cmovnz %[amask], %%rsi			\n"
 
+		"1:									\n"
+			"rorq %%cl, (%%rbx,%%rdx,8)		\n"
 
-			"push %%rbx			\n"
-			"push %%rcx			\n"
+			"movq (%%rbx,%%rdx,8), %%rax	\n"
+			"andq %[amask], %%rax			\n"
+			"xorq %%rax, (%%rbx,%%rdx,8)	\n"
+			"orq  %%rsi, (%%rbx,%%rdx,8)	\n"
+			"movq %%rax, %%rsi				\n"
+			
+			"decq %%rdx						\n"
+			"decq %%rdi						\n"
+		"jnz 1b								\n"
+			
+			"rolq $1, %%rax					\n"
+			"andq $1, %%rax					\n"
 
-			"leaq (%%rbx,%%rcx,8),%%rbx  \n"
+			"pop %%rdi						\n"
+			"pop %%rsi						\n"
+			"pop %%rdx						\n"
 
-			"xorq %%rax, %%rax	\n"
-			"subq %%rdx, %%rax	\n"
-
-			//"lahf				\n"
-			".byte 0x9f			\n"
-		"1:						\n"
-			"subq $8, %%rbx		\n"
-
-			//"sahf				\n"
-			".byte 0x9e			\n"
-
-			"rcrq $1,(%%rbx)	\n"
-			//"lahf				\n"
-			".byte 0x9f			\n"
-
-		"subq $1,%%rcx			\n"
-		"jnz 1b					\n"
-
-			"pop %%rcx			\n"
-			"pop %%rbx			\n"
-
-			"subq $1,%%rsi		\n"
-
-		"jnz 2b					\n"
-
-			"xor %%rdx,%%rdx	\n"
-			//"sahf				\n"
-			".byte 0x9e			\n"
-			"setc %%dl			\n"
-
-			"pop %%rsi			\n"
-
-			: "=d" (c)
-			: "0" (c), "c" (b), "b" (p1), "S" (bits)
-			: "%rax", "cc", "memory" );
+			: "=a" (c)
+			: "0" (c), "D" (b), "b" (p1), "c" (bits), [amask] "m" (mask)
+			: "cc", "memory" );
 
 		#endif
 
