@@ -771,6 +771,165 @@ private:
 		this method moves all bits into the left hand side
 		return value <- this <- c
 
+		the lowest *bit* will be held the 'c' and
+		the state of one additional bit (on the left hand side)
+		will be returned
+
+		for example:
+		let this is 001010000
+		after Rcl2_one(1) there'll be 010100001 and Rcl2_one returns 0
+	*/
+	uint Rcl2_one(uint c)
+	{
+	register sint b = value_size;
+	register uint * p1 = table;
+
+		#ifndef __GNUC__
+			__asm
+			{
+				push ebx
+				push ecx
+				push edx
+
+				mov ebx, [p1]
+
+				xor edx, edx
+				mov ecx, edx
+				sub ecx, [c]
+
+				mov ecx, [b]
+
+			p:
+				rcl dword ptr [ebx+edx*4], 1
+				
+				inc edx
+				dec ecx
+			jnz p
+
+				setc dl
+				movzx edx, dl
+				mov [c], edx
+
+				
+				pop edx
+				pop ecx
+				pop ebx
+			}
+		#endif
+
+
+		#ifdef __GNUC__
+		__asm__  __volatile__(
+
+			"push %%edx					\n"
+			"push %%ecx					\n"
+
+			"xorl %%edx, %%edx			\n"   // edx=0
+			"neg %%eax					\n"   // CF=1 if eax!=0 , CF=0 if eax==0
+
+		"1:								\n"
+			"rcll $1, (%%ebx, %%edx, 4)	\n"
+
+			"incl %%edx					\n"
+			"decl %%ecx					\n"
+		"jnz 1b							\n"
+
+			"setc %%al					\n"
+			"movzx %%al, %%eax			\n"
+
+			"pop %%ecx					\n"
+			"pop %%edx					\n"
+
+			: "=a" (c)
+			: "0" (c), "c" (b), "b" (p1)
+			: "cc", "memory" );
+
+		#endif
+
+
+	return c;
+	}
+
+
+	/*!
+		this method moves all bits into the right hand side
+		c -> this -> return value
+
+		the highest *bit* will be held the 'c' and
+		the state of one additional bit (on the right hand side)
+		will be returned
+
+		for example:
+		let this is 000000010
+		after Rcr2_one(1) there'll be 100000001 and Rcr2_one returns 0
+	*/
+	uint Rcr2_one(uint c)
+	{
+	register sint b = value_size;
+	register uint * p1 = table;
+
+		#ifndef __GNUC__
+			__asm
+			{
+				push ebx
+				push ecx
+
+				mov ebx, [p1]
+
+				xor ecx, ecx
+				sub ecx, [c]
+
+				mov ecx, [b]
+
+			p:
+				rcr dword ptr [ebx+ecx*4-4], 1
+				
+				dec ecx
+			jnz p
+
+				setc dl
+				movzx edx, dl
+				mov [c], edx
+
+				pop ecx
+				pop ebx
+			}
+		#endif
+
+
+		#ifdef __GNUC__
+		__asm__  __volatile__(
+
+			"push %%ecx						\n"
+
+			"neg %%eax						\n"   // CF=1 if eax!=0 , CF=0 if eax==0
+
+		"1:									\n"
+			"rcrl $1, -4(%%ebx, %%ecx, 4)	\n"
+
+			"decl %%ecx						\n"
+		"jnz 1b								\n"
+
+			"setc %%al						\n"
+			"movzx %%al, %%eax				\n"
+
+			"pop %%ecx						\n"
+
+			: "=a" (c)
+			: "0" (c), "c" (b), "b" (p1)
+			: "cc", "memory" );
+
+		#endif
+
+
+	return c;
+	}
+
+
+	/*!
+		this method moves all bits into the left hand side
+		return value <- this <- c
+
 		the lowest *bits* will be held the 'c' and
 		the state of one additional bit (on the left hand side)
 		will be returned
@@ -1087,40 +1246,31 @@ public:
 	sint all_words = 0;
 	uint rest_bits = bits;
 
+		if( bits == 0 )
+			return 0;
+
 		if( bits >= TTMATH_BITS_PER_UINT )
 			RclMoveAllWords(all_words, rest_bits, last_c, bits, c);
 
+		if( rest_bits == 0 )
+			return last_c;
 
-		// rest_bits is from 0 to TTMATH_BITS_PER_UINT-1 now
-		if( rest_bits > 0 )
+		// rest_bits is from 1 to TTMATH_BITS_PER_UINT-1 now
+		if( rest_bits == 1 )
 		{
-			// if rest_bits is greater than a half of TTMATH_BITS_PER_UINT
-			// we're moving bits into the right hand side
-			// (TTMATH_BITS_PER_UINT-rest_bits) times
-			// and then we're moving one word into left
-			if( rest_bits > TTMATH_BITS_PER_UINT/2 + 1 )
-			{
-				uint temp = table[0];
-				Rcr2(TTMATH_BITS_PER_UINT-rest_bits,0);
-				last_c = table[value_size-1] & 1;
-				
-				for(uint i=value_size-1 ; i>0 ; --i)
-					table[i] = table[i-1];
-
-				table[0] = temp << rest_bits;
-
-				if( c )
-				{
-					uint mask = TTMATH_UINT_MAX_VALUE << rest_bits;
-					table[0] |= ~mask;
-				}
-			}
-			else
-			{
-				last_c = Rcl2(rest_bits, c);
-			}
-
+			last_c = Rcl2_one(c);
 		}
+		else if( rest_bits == 2 )
+		{
+			// performance tests showed that for rest_bits==2 it's better to use Rcl2_one twice instead of Rcl2(2,c)
+			Rcl2_one(c);
+			last_c = Rcl2_one(c);
+		}
+		else
+		{
+			last_c = Rcl2(rest_bits, c);
+		}
+
 
 	return last_c;
 	}
@@ -1184,34 +1334,29 @@ public:
 	sint all_words = 0;
 	uint rest_bits = bits;
 	
+		if( bits == 0 )
+			return 0;
+
 		if( bits >= TTMATH_BITS_PER_UINT )
 			RcrMoveAllWords(all_words, rest_bits, last_c, bits, c);
 
-		// rest_bits is from 0 to TTMATH_BITS_PER_UINT-1 now
-		if( rest_bits > 0 )
+		if( rest_bits == 0 )
+			return last_c;
+
+		// rest_bits is from 1 to TTMATH_BITS_PER_UINT-1 now
+		if( rest_bits == 1 )
 		{
-			if( rest_bits > TTMATH_BITS_PER_UINT/2 + 1 )
-			{
-				uint temp = table[value_size-1];
-				Rcl2(TTMATH_BITS_PER_UINT-rest_bits,0);
-				last_c = (table[0] & TTMATH_UINT_HIGHEST_BIT) ? 1 : 0;
-				
-				for(uint i=0 ; i<value_size-1 ; ++i)
-					table[i] = table[i+1];
-
-				table[value_size-1] = temp >> rest_bits;
-
-				if( c )
-				{
-					uint mask = TTMATH_UINT_MAX_VALUE >> rest_bits;
-					table[value_size-1] |= ~mask;
-				}
-			}
-			else
-			{
-				last_c = Rcr2(rest_bits, c);
-			}
-
+			last_c = Rcr2_one(c);
+		}
+		else if( rest_bits == 2 )
+		{
+			// performance tests showed that for rest_bits==2 it's better to use Rcr2_one twice instead of Rcr2(2,c)
+			Rcr2_one(c);
+			last_c = Rcr2_one(c);
+		}
+		else
+		{
+			last_c = Rcr2(rest_bits, c);
 		}
 
 	return last_c;
@@ -3430,6 +3575,8 @@ public:
 
 private:
 public:
+	uint Rcl2_one(uint c);
+	uint Rcr2_one(uint c);
 	uint Rcl2(uint bits, uint c);
 	uint Rcr2(uint bits, uint c);
 

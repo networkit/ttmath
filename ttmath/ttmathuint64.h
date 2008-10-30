@@ -532,6 +532,119 @@ namespace ttmath
 		this method moves all bits into the left hand side
 		return value <- this <- c
 
+		the lowest *bit* will be held the 'c' and
+		the state of one additional bit (on the left hand side)
+		will be returned
+
+		for example:
+		let this is 001010000
+		after Rcl2_one(1) there'll be 010100001 and Rcl2_one returns 0
+	
+		***this method is created only on a 64bit platform***
+	*/
+	template<uint value_size>
+	uint UInt<value_size>::Rcl2_one(uint c)
+	{
+	register sint b = value_size;
+	register uint * p1 = table;
+
+
+		#ifndef __GNUC__
+			#error "another compiler than GCC is currently not supported in 64bit mode"
+		#endif
+
+		#ifdef __GNUC__
+		__asm__  __volatile__(
+		
+			"push %%rdx					\n"
+			"push %%rcx					\n"
+
+			"xorq %%rdx, %%rdx			\n"   // edx=0
+			"neg %%rax					\n"   // CF=1 if eax!=0 , CF=0 if eax==0
+
+		"1:								\n"
+			"rclq $1, (%%rbx, %%rdx, 8)	\n"
+
+			"incq %%rdx					\n"
+			"decq %%rcx					\n"
+		"jnz 1b							\n"
+
+			"setc %%al					\n"
+			"movzx %%al, %%rax			\n"
+
+			"pop %%rcx					\n"
+			"pop %%rdx					\n"
+
+			: "=a" (c)
+			: "0" (c), "c" (b), "b" (p1)
+			: "cc", "memory" );
+	
+		#endif
+
+
+	return c;
+	}
+
+
+	/*!
+		this method moves all bits into the right hand side
+		c -> this -> return value
+
+		the highest *bit* will be held the 'c' and
+		the state of one additional bit (on the right hand side)
+		will be returned
+
+		for example:
+		let this is 000000010
+		after Rcr2_one(1) there'll be 100000001 and Rcr2_one returns 0
+
+		***this method is created only on a 64bit platform***
+	*/
+	template<uint value_size>
+	uint UInt<value_size>::Rcr2_one(uint c)
+	{
+	register sint b = value_size;
+	register uint * p1 = table;
+
+
+		#ifndef __GNUC__
+			#error "another compiler than GCC is currently not supported in 64bit mode"
+		#endif
+
+		#ifdef __GNUC__
+		__asm__  __volatile__(
+
+			"push %%rcx						\n"
+
+			"neg %%rax						\n"   // CF=1 if eax!=0 , CF=0 if eax==0
+
+		"1:									\n"
+			"rcrq $1, -8(%%rbx, %%rcx, 8)	\n"
+
+			"decq %%rcx						\n"
+		"jnz 1b								\n"
+
+			"setc %%al						\n"
+			"movzx %%al, %%rax				\n"
+
+			"pop %%rcx						\n"
+
+			: "=a" (c)
+			: "0" (c), "c" (b), "b" (p1)
+			: "cc", "memory" );
+
+		#endif
+
+
+	return c;
+	}
+
+
+
+	/*!
+		this method moves all bits into the left hand side
+		return value <- this <- c
+
 		the lowest *bits* will be held the 'c' and
 		the state of one additional bit (on the left hand side)
 		will be returned
