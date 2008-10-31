@@ -762,7 +762,6 @@ public:
 
 private:
 
-	public: ///// !!!!!!
 
 #ifdef TTMATH_PLATFORM32
 
@@ -1195,34 +1194,37 @@ private:
 
 		this method moves only words
 	*/
-	void RclMoveAllWords(	sint & all_words, uint & rest_bits, uint & last_c,
-							uint bits, uint c)
-	{	
-		rest_bits = sint(bits % TTMATH_BITS_PER_UINT);
-		all_words = sint(bits / TTMATH_BITS_PER_UINT);
+	void RclMoveAllWords(uint & rest_bits, uint & last_c, uint bits, uint c)
+	{
+		rest_bits      = sint(bits % TTMATH_BITS_PER_UINT);
+		sint all_words = sint(bits / TTMATH_BITS_PER_UINT);
+		uint mask      = ( c ) ? TTMATH_UINT_MAX_VALUE : 0;
+
 
 		if( all_words >= sint(value_size) )
 		{
-			if( all_words==value_size && rest_bits==0 )
+			if( all_words == value_size && rest_bits == 0 )
 				last_c = table[0] & 1;
 
-			all_words = value_size; // not value_size - 1
+			// clearing
+			for(uint i = 0 ; i<value_size ; ++i)
+				table[i] = mask;
+
 			rest_bits = 0;
 		}
-
-		if( all_words > 0 )
+		else
+		if( all_words > 0 )  
 		{
-			sint first;
-			sint second;
-
+			// 0 < all_words < value_size
+	
+			sint first, second;
 			last_c = table[value_size - all_words] & 1; // all_words is greater than 0
 
 			// copying the first part of the value
 			for(first = value_size-1, second=first-all_words ; second>=0 ; --first, --second)
 				table[first] = table[second];
 
-			// sets the rest bits of value into 'c'
-			uint mask = c ? TTMATH_UINT_MAX_VALUE : 0;
+			// setting the rest to 'c'
 			for( ; first>=0 ; --first )
 				table[first] = mask;
 		}
@@ -1242,15 +1244,14 @@ public:
 	*/
 	uint Rcl(uint bits, uint c=0)
 	{
-	uint last_c = 0;
-	sint all_words = 0;
+	uint last_c    = 0;
 	uint rest_bits = bits;
 
 		if( bits == 0 )
 			return 0;
 
 		if( bits >= TTMATH_BITS_PER_UINT )
-			RclMoveAllWords(all_words, rest_bits, last_c, bits, c);
+			RclMoveAllWords(rest_bits, last_c, bits, c);
 
 		if( rest_bits == 0 )
 			return last_c;
@@ -1282,35 +1283,36 @@ private:
 
 		this method moves only words
 	*/
-	void RcrMoveAllWords(	sint & all_words, uint & rest_bits, uint & last_c,
-							uint bits, uint c)
+	void RcrMoveAllWords(uint & rest_bits, uint & last_c, uint bits, uint c)
 	{
-		rest_bits = sint(bits % TTMATH_BITS_PER_UINT);
-		all_words = sint(bits / TTMATH_BITS_PER_UINT);
+		rest_bits      = sint(bits % TTMATH_BITS_PER_UINT);
+		sint all_words = sint(bits / TTMATH_BITS_PER_UINT);
+		uint mask      = c ? TTMATH_UINT_MAX_VALUE : 0;
+
 
 		if( all_words >= sint(value_size) )
 		{
-			if( all_words==value_size && rest_bits==0 )
+			if( all_words == value_size && rest_bits == 0 )
 				last_c = (table[value_size-1] & TTMATH_UINT_HIGHEST_BIT) ? 1 : 0;
 
-			all_words = value_size; // not value_size - 1
+			// clearing
+			for(uint i = 0 ; i<value_size ; ++i)
+				table[i] = mask;
+
 			rest_bits = 0;
 		}
-
-
-		if( all_words > 0 )
+		else if( all_words > 0 )
 		{
-			uint first;
-			uint second;
+			// 0 < all_words < value_size
 
+			uint first, second;
 			last_c = (table[all_words - 1] & TTMATH_UINT_HIGHEST_BIT) ? 1 : 0; // all_words is > 0
 
 			// copying the first part of the value
 			for(first=0, second=all_words ; second<value_size ; ++first, ++second)
 				table[first] = table[second];
 
-			// sets the rest bits of value into 'c'
-			uint mask = c ? TTMATH_UINT_MAX_VALUE : 0;
+			// setting the rest to 'c'
 			for( ; first<value_size ; ++first )
 				table[first] = mask;
 		}
@@ -1331,14 +1333,13 @@ public:
 	uint Rcr(uint bits, uint c=0)
 	{
 	uint last_c    = 0;
-	sint all_words = 0;
 	uint rest_bits = bits;
 	
 		if( bits == 0 )
 			return 0;
 
 		if( bits >= TTMATH_BITS_PER_UINT )
-			RcrMoveAllWords(all_words, rest_bits, last_c, bits, c);
+			RcrMoveAllWords(rest_bits, last_c, bits, c);
 
 		if( rest_bits == 0 )
 			return last_c;
@@ -3574,7 +3575,6 @@ public:
 #ifdef TTMATH_PLATFORM64
 
 private:
-public:
 	uint Rcl2_one(uint c);
 	uint Rcr2_one(uint c);
 	uint Rcl2(uint bits, uint c);
