@@ -46,24 +46,47 @@ void UIntTest::set_file_name(const std::string & f)
 }
 
 
-uuint UIntTest::read_uint()
+bool UIntTest::read_uint(uuint & result)
 {
-uuint result = 0;
-	
-	skip_white_characters();
+UInt<1> temp;
 
-	for( ; *pline>='0' && *pline<='9' ; ++pline )
-		result = result * 10 + (*pline - '0');
+	int c = temp.FromString(pline, 10, &pline);
 
-return result;
+	result = temp.ToUInt();
+
+	if( c )
+	{
+		std::cerr << " carry from reading uint" << std::endl;
+		return false;
+	}
+
+return true;
 }
 
 
 
+template<uuint type_size>
+bool UIntTest::read_uint(UInt<type_size> & result)
+{
+	int c = result.FromString(pline, 10, &pline);
+
+	if( c )
+	{
+		std::cerr << " carry from UInt<>::FromString()" << std::endl;
+		return false;
+	}
+
+return true;
+}
+
+
 bool UIntTest::check_minmax_bits(int type_size)
 {
-	int min_bits = read_uint();
-	int max_bits = read_uint();
+	uuint min_bits;
+	uuint max_bits;
+
+	read_uint(min_bits);
+	read_uint(max_bits);
 
 	if( min_bits != 0 && type_size * TTMATH_BITS_PER_UINT < (unsigned int)min_bits )
 		return false;
@@ -80,7 +103,9 @@ bool UIntTest::check_minmax_bits_bitperint(int type_size)
 	if( !check_minmax_bits(type_size) )
 		return false;
 
-	int bits = read_uint();
+	uuint bits;
+	
+	read_uint(bits);
 
 	if( TTMATH_BITS_PER_UINT != bits )
 		return false;
@@ -126,7 +151,27 @@ return ok;
 }
 
 
+template<uuint type_size>
+bool UIntTest::check_result_or_carry(const ttmath::UInt<type_size> & result, const ttmath::UInt<type_size> & new_result,
+						int carry, int new_carry)
+{
+	if( new_carry != carry )
+	{
+		std::cerr << "Incorrect carry: " << new_carry << " (expected: " << carry << ")" << std::endl;
+		return false;
+	}
 
+	if( new_carry == 1 )
+		return true;
+
+	if( new_result != result )
+	{
+		std::cerr << "Incorrect result: " << new_result << " (expected: " << result << ")" << std::endl;
+		return false;
+	}
+
+return true;
+}
 
 
 
@@ -138,10 +183,12 @@ void UIntTest::test_add()
 	if( !check_minmax_bits(type_size) )
 		return;
 
-	a.FromString(pline, 10, &pline);
-	b.FromString(pline, 10, &pline);
-	result.FromString(pline, 10, &pline);
-	int carry = read_uint();
+	read_uint(a);
+	read_uint(b);
+	read_uint(result);
+	
+	uuint carry;
+	read_uint(carry);
 
 	std::cerr << '[' << row << "] Add<" << type_size << ">: ";
 
@@ -164,11 +211,14 @@ void UIntTest::test_addint()
 	if( !check_minmax_bits_bitperint(type_size) )
 		return;
 
-	a.FromString(pline, 10, &pline);
-	uuint b = read_uint();
-	uuint index = read_uint();
-	result.FromString(pline, 10, &pline);
-	int carry = read_uint();
+	uuint b, index, carry;
+
+	read_uint(a);
+	read_uint(b);
+	read_uint(index);
+	read_uint(result);
+
+	read_uint(carry);
 
 	std::cerr << '[' << row << "] AddInt<" << type_size << ">: ";
 
@@ -179,6 +229,44 @@ void UIntTest::test_addint()
 	int new_carry = new_result.AddInt(b, index);
 
 	if( check_result_carry(result, new_result, carry, new_carry) )
+		std::cerr << "ok" << std::endl;
+}
+
+template<uuint type_size>
+void UIntTest::test_addtwoints()
+{
+	UInt<type_size> a, result, new_result;
+
+	if( !check_minmax_bits_bitperint(type_size) )
+		return;
+
+	std::cerr << '[' << row << "] AddTwoInts<" << type_size << ">: ";
+
+	uuint b, c, index, carry;
+
+	read_uint(a);
+	read_uint(b);
+	read_uint(c);
+	read_uint(index);
+	read_uint(result);
+
+	read_uint(carry);
+
+
+	if( !check_end() )
+		return;
+
+	if( index >= type_size - 1 )
+	{
+		std::cerr << "index too large" << std::endl;
+		return;
+	}
+
+
+	new_result = a;
+	int new_carry = new_result.AddTwoInts(b, c, index);
+
+	if( check_result_or_carry(result, new_result, carry, new_carry) )
 		std::cerr << "ok" << std::endl;
 }
 
@@ -242,6 +330,7 @@ return true;
 }
 
 
+
 void UIntTest::test_method()
 {
 const char * p = pline;
@@ -270,6 +359,19 @@ const char * p = pline;
 		pline = p; test_addint<7>();
 		pline = p; test_addint<8>();
 		pline = p; test_addint<9>();
+	}
+	else
+	if( method == "ADDTWOINTS" )
+	{
+		pline = p; test_addtwoints<1>();
+		pline = p; test_addtwoints<2>();
+		pline = p; test_addtwoints<3>();
+		pline = p; test_addtwoints<4>();
+		pline = p; test_addtwoints<5>();
+		pline = p; test_addtwoints<6>();
+		pline = p; test_addtwoints<7>();
+		pline = p; test_addtwoints<8>();
+		pline = p; test_addtwoints<9>();
 	}
 	else
 	{

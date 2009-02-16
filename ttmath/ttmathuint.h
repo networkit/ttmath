@@ -3119,12 +3119,15 @@ public:
 			"12foo" will be translated to 12 too
 
 		existing first white characters will be ommited
+
+		if the value from s is too large the rest digits will be skipped
 	*/
 	uint FromString(const char * s, uint b = 10, const char ** after_source = 0)
 	{
 	UInt<value_size> base( b );
 	UInt<value_size> temp;
 	sint z;
+	uint c = 0;
 
 		SetZero();
 		temp.SetZero();
@@ -3136,23 +3139,23 @@ public:
 		if( b<2 || b>16 )
 			return 1;
 
+
 		for( ; (z=CharToDigit(*s, b)) != -1 ; ++s)
 		{
-			temp.table[0] = z;
-
-			if( Mul(base) || Add(temp) ) // first is called Mul() and next Add()
+			if( c == 0 )
 			{
-				if( after_source )
-					*after_source = s;
+				temp.table[0] = z;
 
-				return 1;
+				c += Mul(base);
+				c += Add(temp);
 			}
 		}		
 
 		if( after_source )
 			*after_source = s;
 
-	return 0;
+
+	return (c==0)? 0 : 1;
 	}
 
 

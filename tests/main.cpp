@@ -46,6 +46,7 @@ const char uint_tests_file[] = "tests.uint32";
 
 
 
+
 bool test_lahf()
 {
 #ifdef TTMATH_PLATFORM64

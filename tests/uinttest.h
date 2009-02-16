@@ -71,12 +71,21 @@ public:
 
 	void go();
 
+bool read_uint(uuint & result);
+
+template<uuint type_size>
+bool read_uint(UInt<type_size> & result);
+
+
 	template<uuint type_size> void test_add();
 	template<uuint type_size> void test_addint();
+	template<uuint type_size> void test_addtwoints();
 
 	template<uuint type_size> bool check_result_carry(const ttmath::UInt<type_size> & result, const ttmath::UInt<type_size> & new_result,
 						int carry, int new_carry);
 
+	template<uuint type_size> bool check_result_or_carry(const ttmath::UInt<type_size> & result, const ttmath::UInt<type_size> & new_result,
+						int carry, int new_carry);
 
 int upper_char(int c);
 bool is_white(int c);
@@ -84,7 +93,7 @@ void skip_white_characters();
 bool read_method();
 void test_method();
 bool check_line();
-uuint read_uint();
+
 bool check_minmax_bits(int type_size);
 bool check_minmax_bits_bitperint(int type_size);
 bool check_end();
