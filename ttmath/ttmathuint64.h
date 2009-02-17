@@ -825,14 +825,13 @@ namespace ttmath
 		#ifdef __GNUC__
 			__asm__  __volatile__(
 
-			"push %%rdx			\n"
-			"andq $-1,%%rdx		\n"
-			"bsrq %%rbx, %%rax	\n"
-			"cmovz %%rdx,%%rax	\n"
-			"pop %%rdx			\n"
+			"bsrq %1, %0		\n"
+			"jnz 1f				\n"
+			"movq $-1, %0		\n"
+			"1:					\n"
 
-			: "=a" (result)
-			: "b" (x)
+			: "=R" (result)
+			: "R" (x)
 			: "cc" );
 
 		#endif

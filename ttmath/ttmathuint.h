@@ -245,6 +245,8 @@ public:
 	register uint * p1 = table;
 	register uint * p2 = const_cast<uint*>(ss2.table);
 
+		// we don't have to use TTMATH_REFERENCE_ASSERT here
+		// this algorithm doesn't require it
 
 		#ifndef __GNUC__
 			
@@ -353,6 +355,8 @@ public:
 	register uint b = value_size;
 	register uint * p1 = table;
 	register uint c;
+
+		TTMATH_ASSERT( index < value_size )
 
 		#ifndef __GNUC__
 
@@ -466,6 +470,8 @@ public:
 	register uint * p1 = table;
 	register uint c;
 
+		TTMATH_ASSERT( index < value_size - 1 )
+
 		#ifndef __GNUC__
 			__asm
 			{
@@ -565,6 +571,9 @@ public:
 	register uint b = value_size;
 	register uint * p1 = table;
 	register uint * p2 = const_cast<uint*>(ss2.table);
+
+		// we don't have to use TTMATH_REFERENCE_ASSERT here
+		// this algorithm doesn't require it
 
 		#ifndef __GNUC__
 
@@ -666,6 +675,8 @@ public:
 	register uint b = value_size;
 	register uint * p1 = table;
 	register uint c;
+
+		TTMATH_ASSERT( index < value_size )
 
 		#ifndef __GNUC__
 			__asm
@@ -1424,15 +1435,12 @@ public:
 				push eax
 				push edx
 
-				and edx,-1
-				bsr eax, x 
+				mov edx,-1
+				bsr eax,x 
 				cmovz eax,edx
 				mov result, eax
 
-				//
 				pop edx
-				//
-
 				pop eax
 			}
 		#endif
@@ -1441,11 +1449,10 @@ public:
 		#ifdef __GNUC__
 			__asm__  __volatile__(
 
-			"push %%edx			\n"
-			"andl $-1,%%edx		\n"
 			"bsrl %1, %0		\n"
-			"cmovz %%edx,%0		\n"
-			"pop %%edx			\n"
+			"jnz 1f				\n"
+			"movl $-1, %0		\n"
+			"1:					\n"
 
 			: "=R" (result)
 			: "R" (x)
@@ -1507,6 +1514,8 @@ public:
 	*/
 	static uint SetBitInWord(uint value, uint bit)
 	{
+		TTMATH_ASSERT( bit < TTMATH_BITS_PER_UINT )
+
 		#ifndef __GNUC__
 			__asm
 			{
