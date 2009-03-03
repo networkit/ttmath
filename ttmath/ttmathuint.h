@@ -2627,23 +2627,25 @@ private:
 	*/
 	uint Div3_Normalize(UInt<value_size> & v, uint n, uint & d)
 	{
-	uint c = 0;
+		// v.table[n-1] is != 0
 
-	// !!!!!!!!! change
-		for( d = 0 ; (v.table[n-1] & TTMATH_UINT_HIGHEST_BIT) == 0 ; ++d )
+		uint bit  = (uint)FindLeadingBitInWord(v.table[n-1]);
+		uint move = (TTMATH_BITS_PER_UINT - bit - 1);
+		uint res  = table[value_size-1];
+		d         = move;
+
+		if( move > 0 )
 		{
-			// we can move the bits only to the 'n-1' index but at the moment
-			// we don't have such method
-			// maybe it's time to write it now?
-			v.Rcl(1, 0);
-
-			c <<= 1;
-			
-			if( Rcl(1, 0) )
-				c += 1;
+			v.Rcl(move, 0);
+			Rcl(move, 0);
+			res = res >> (bit + 1);
+		}
+		else
+		{
+			res = 0;
 		}
 
-	return c;
+	return res;
 	}
 
 
