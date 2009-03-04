@@ -897,9 +897,9 @@ private:
 				dec ecx
 			jnz p
 
-				setc dl
-				movzx edx, dl
-				mov [c], edx
+				setc cl
+				movzx ecx, cl
+				mov [c], ecx
 
 				pop ecx
 				pop ebx
