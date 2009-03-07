@@ -1207,15 +1207,16 @@ private:
 	*/
 	void RclMoveAllWords(uint & rest_bits, uint & last_c, uint bits, uint c)
 	{
-		rest_bits      = sint(bits % TTMATH_BITS_PER_UINT);
-		sint all_words = sint(bits / TTMATH_BITS_PER_UINT);
+		rest_bits      = bits % TTMATH_BITS_PER_UINT;
+		uint all_words = bits / TTMATH_BITS_PER_UINT;
 		uint mask      = ( c ) ? TTMATH_UINT_MAX_VALUE : 0;
 
 
-		if( all_words >= sint(value_size) )
+		if( all_words >= value_size )
 		{
 			if( all_words == value_size && rest_bits == 0 )
 				last_c = table[0] & 1;
+			// else: last_c is default set to 0
 
 			// clearing
 			for(uint i = 0 ; i<value_size ; ++i)
@@ -1296,15 +1297,16 @@ private:
 	*/
 	void RcrMoveAllWords(uint & rest_bits, uint & last_c, uint bits, uint c)
 	{
-		rest_bits      = sint(bits % TTMATH_BITS_PER_UINT);
-		sint all_words = sint(bits / TTMATH_BITS_PER_UINT);
-		uint mask      = c ? TTMATH_UINT_MAX_VALUE : 0;
+		rest_bits      = bits % TTMATH_BITS_PER_UINT;
+		uint all_words = bits / TTMATH_BITS_PER_UINT;
+		uint mask      = ( c ) ? TTMATH_UINT_MAX_VALUE : 0;
 
 
-		if( all_words >= sint(value_size) )
+		if( all_words >= value_size )
 		{
 			if( all_words == value_size && rest_bits == 0 )
 				last_c = (table[value_size-1] & TTMATH_UINT_HIGHEST_BIT) ? 1 : 0;
+			// else: last_c is default set to 0
 
 			// clearing
 			for(uint i = 0 ; i<value_size ; ++i)
@@ -1436,9 +1438,9 @@ public:
 				push edx
 
 				mov edx,-1
-				bsr eax,x 
+				bsr eax,[x]
 				cmovz eax,edx
-				mov result, eax
+				mov [result], eax
 
 				pop edx
 				pop eax
@@ -1521,10 +1523,10 @@ public:
 			{
 			push ebx
 			push eax
-			mov eax, value
-			mov ebx, bit
+			mov eax, [value]
+			mov ebx, [bit]
 			bts eax, ebx
-			mov value, eax
+			mov [value], eax
 			pop eax
 			pop ebx
 			}
@@ -1534,10 +1536,10 @@ public:
 		#ifdef __GNUC__
 			__asm__  __volatile__(
 
-			"btsl %%ebx,%%eax	\n"
+			"btsl %2,%0		\n"
 
-			: "=a" (value)
-			: "0" (value), "b" (bit)
+			: "=R" (value)
+			: "0" (value), "R" (bit)
 			: "cc" );
 
 		#endif
@@ -1656,7 +1658,7 @@ public:
 	
 		this method never returns a carry
 
-		it is an auxiliary method for version two of the multiplication algorithm
+		it is an auxiliary method for second version of the multiplication algorithm
 	*/
 	static void MulTwoWords(uint a, uint b, uint * result2, uint * result1)
 	{
@@ -1664,7 +1666,7 @@ public:
 		we must use these temporary variables in order to inform the compilator
 		that value pointed with result1 and result2 has changed
 
-		this has no effect in visual studio but it's usefull when
+		this has no effect in visual studio but it's useful when
 		using gcc and options like -Ox
 	*/
 	register uint result1_;
@@ -2044,12 +2046,10 @@ public:
 	{
 		if( divisor == 1 )
 		{
-			SetZero();
-
 			if( remainder )
 				*remainder = 0;
 
-		return 1;
+		return 0;
 		}
 
 		UInt<value_size> dividend(*this);
