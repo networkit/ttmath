@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2008, Tomasz Sowa
+ * Copyright (c) 2006-2009, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -468,6 +468,70 @@ public:
 	}
 
 
+
+private:
+
+
+	/*!
+		power this = this ^ pow
+		this can be negative
+		pow is >= 0
+	*/
+	uint Pow2(const Int<value_size> & pow)
+	{
+		bool was_sign = IsSign();
+		uint c = 0;
+
+		if( was_sign )
+			c += Abs();
+
+		uint c_temp = UInt<value_size>::Pow(pow);
+		if( c_temp > 0 )
+			return c_temp; // c_temp can be: 0, 1 or 2
+		
+		if( was_sign && (pow.table[0] & 1) == 1 )
+			// negative value to the power of odd number is negative
+			c += ChangeSign();
+
+	return (c==0)? 0 : 1;
+	}
+
+
+public:
+
+
+	/*!
+		power this = this ^ pow
+
+		return values:
+		0 - ok
+		1 - carry
+		2 - incorrect arguments 0^0 or 0^(-something)
+	*/
+	uint Pow(Int<value_size> pow)
+	{
+		if( !pow.IsSign() )
+			return Pow2(pow);
+
+		if( UInt<value_size>::IsZero() )
+			// if 'p' is negative then
+			// 'this' must be different from zero
+			return 2;
+
+		if( pow.ChangeSign() )
+			return 1;
+
+		Int<value_size> t(*this);
+		uint c_temp = t.Pow2(pow);
+		if( c_temp > 0 )
+			return c_temp;
+
+		UInt<value_size>::SetOne();
+		if( Div(t) )
+			return 1;
+
+	return 0;
+	}
 
 
 	/*!

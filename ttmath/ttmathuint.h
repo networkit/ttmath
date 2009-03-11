@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2008, Tomasz Sowa
+ * Copyright (c) 2006-2009, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -950,9 +950,6 @@ private:
 	*/
 	uint Rcl2(uint bits, uint c)
 	{
-		if( bits == 0 )
-			return 0;
-
 	TTMATH_ASSERT( bits>0 && bits<TTMATH_BITS_PER_UINT )
 		
 	register sint b = value_size;
@@ -1078,9 +1075,6 @@ private:
 	*/
 	uint Rcr2(uint bits, uint c)
 	{
-		if( bits == 0 )
-			return 0;
-
 	TTMATH_ASSERT( bits>0 && bits<TTMATH_BITS_PER_UINT )
 
 	register sint b = value_size;
@@ -1503,30 +1497,40 @@ public:
 
 #ifdef TTMATH_PLATFORM32
 
+
+
 	/*!
 		this method sets a special bit in the 'value'
-		and returns the result
+		and returns the last state of the bit (zero or one)
 
 		bit is from <0,31>
-
 		e.g.
-		SetBitInWord(0,0) = 1
-		SetBitInWord(0,2) = 4
-		SetBitInWord(10, 8) = 266
+		 uint x = 100;
+		 uint bit = SetBitInWord(x, 3);
+		 now: x = 108 and bit = 0
 	*/
-	static uint SetBitInWord(uint value, uint bit)
+	static uint SetBitInWord(uint & value, uint bit)
 	{
 		TTMATH_ASSERT( bit < TTMATH_BITS_PER_UINT )
+
+		uint old_bit;
+		uint v = value;
 
 		#ifndef __GNUC__
 			__asm
 			{
 			push ebx
 			push eax
-			mov eax, [value]
+
+			mov eax, [v]
 			mov ebx, [bit]
 			bts eax, ebx
-			mov [value], eax
+			mov [v], eax
+
+			setc bl
+			movzx ebx, bl
+			mov [old_bit], ebx
+
 			pop eax
 			pop ebx
 			}
@@ -1536,15 +1540,20 @@ public:
 		#ifdef __GNUC__
 			__asm__  __volatile__(
 
-			"btsl %2,%0		\n"
+			"btsl %%ebx, %%eax		\n"
 
-			: "=R" (value)
-			: "0" (value), "R" (bit)
+			"setc %%bl				\n"
+			"movzx %%bl, %%ebx		\n"
+			
+			: "=a" (v), "=b" (old_bit)
+			: "0" (v), "1" (bit)
 			: "cc" );
 
 		#endif
 
-	return value;
+		value = v;
+
+	return old_bit;
 	}
 
 #endif
@@ -1555,15 +1564,33 @@ public:
 
 		bit_index bigger or equal zero
 	*/
-	void SetBit(uint bit_index)
+	uint GetBit(uint bit_index) const
 	{
+		TTMATH_ASSERT( bit_index < value_size * TTMATH_BITS_PER_UINT )
+
 		uint index = bit_index / TTMATH_BITS_PER_UINT;
-		if( index >= value_size )
-			return;
+		uint bit   = bit_index % TTMATH_BITS_PER_UINT;
 
-		bit_index %= TTMATH_BITS_PER_UINT;
+		uint temp = table[index];
+	
+	return SetBitInWord(temp, bit);
+	}
 
-		table[index] = SetBitInWord(table[index], bit_index);
+
+	/*!
+		setting the 'bit_index' bit
+		and returning the last state of the bit
+
+		bit_index bigger or equal zero
+	*/
+	uint SetBit(uint bit_index)
+	{
+		TTMATH_ASSERT( bit_index < value_size * TTMATH_BITS_PER_UINT )
+
+		uint index = bit_index / TTMATH_BITS_PER_UINT;
+		uint bit   = bit_index % TTMATH_BITS_PER_UINT;
+
+	return SetBitInWord(table[index], bit);
 	}
 
 
@@ -2736,6 +2763,47 @@ private:
 
 public:
 
+
+	/*!
+		power this = this ^ pow
+		binary algorithm (r-to-l)
+
+		return values:
+		0 - ok
+		1 - carry or
+		2 - incorrect argument (0^0)
+	*/
+	uint Pow(UInt<value_size> pow)
+	{
+		if(pow.IsZero() && IsZero())
+			// we don't define zero^zero
+			return 2;
+
+		UInt<value_size> start(*this), start_temp;
+		UInt<value_size> result;
+		result.SetOne();
+
+		while( !pow.IsZero() )
+		{
+			if( pow.table[0] & 1 )
+				if( result.Mul(start) )
+					return 1;
+
+			start_temp = start;
+			// in the second Mul algorithm we can use start.Mul(start) directly (there is no TTMATH_ASSERT_REFERENCE there)
+			if( start.Mul(start_temp) )
+				return 1;
+
+			pow.Rcr2_one(0);
+		}
+
+		*this = result;
+
+	return 0;
+	}
+
+
+
 	/*!
 		this method sets n first bits to value zero
 
@@ -3607,7 +3675,7 @@ public:
 	uint Sub(const UInt<value_size> & ss2, uint c=0);
 	uint SubInt(uint value, uint index = 0);
 	static sint FindLeadingBitInWord(uint x);
-	static uint SetBitInWord(uint value, uint bit);
+	static uint SetBitInWord(uint & value, uint bit);
 	static void MulTwoWords(uint a, uint b, uint * result2, uint * result1);
 	static void DivTwoWords(uint a,uint b, uint c, uint * r, uint * rest);
 

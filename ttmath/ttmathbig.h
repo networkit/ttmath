@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2008, Tomasz Sowa
+ * Copyright (c) 2006-2009, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -561,9 +561,9 @@ public:
 		}
 	
 
-		if( exp_offset > mantissa_size_in_bits )
+		if( exp_offset >= mantissa_size_in_bits )
 		{
-			// the second value is too short for taking into consideration in the sum
+			// the second value is too small for taking into consideration in the sum
 			return 0;
 		}
 		else
@@ -571,13 +571,6 @@ public:
 		{
 			// (2) moving 'exp_offset' times
 			ss2.mantissa.Rcr( exp_offset.ToInt(), 0 );
-		}
-		else
-		{
-			// (3) 
-			// exp_offset == mantissa_size_in_bits
-			// we're rounding 'this' about one (up or down depending on a ss2 sign)
-			ss2.mantissa.SetOne();
 		}
 
 
@@ -594,8 +587,8 @@ public:
 		{
 			// values have different signs
 			// there shouldn't be a carry here because
-			// (1) (2) and (3) guarantee that the mantissa of this
-			// is greater than the mantissa of the ss2
+			// (1) (2) guarantee that the mantissa of this
+			// is greater than or equal to the mantissa of the ss2
 			uint c_temp = mantissa.Sub(ss2.mantissa);
 
 			TTMATH_ASSERT( c_temp == 0 )
@@ -653,7 +646,7 @@ public:
 
 		if( exp_offset >= mantissa_size_in_bits )
 		{
-			// the second value is too short
+			// the second value is too small
 			SetZero();
 			return 0;
 		}
@@ -700,7 +693,7 @@ public:
 		}
 
 		if( exp_offset >= mantissa_size_in_bits )
-			// the second value is too short
+			// the second value is too small
 			return 0;
 
 		// exp_offset < mantissa_size_in_bits, moving 'exp_offset' times
@@ -745,7 +738,7 @@ public:
 		}
 
 		if( exp_offset >= mantissa_size_in_bits )
-			// the second value is too short
+			// the second value is too small
 			return 0;
 
 		// exp_offset < mantissa_size_in_bits, moving 'exp_offset' times
@@ -966,18 +959,23 @@ public:
 
 	/*!
 		power this = this ^ pow
-		pow without a sign
+		(pow without a sign)
 
 		binary algorithm (r-to-l)
+
+		return values:
+		0 - ok
+		1 - carry
+		2 - incorrect arguments (0^0)
 	*/
 	template<uint pow_size>
-	uint PowUInt(UInt<pow_size> pow)
+	uint Pow(UInt<pow_size> pow)
 	{
 		if(pow.IsZero() && IsZero())
 			// we don't define zero^zero
-			return 1;
+			return 2;
 
-		Big<exp, man> start(*this);
+		Big<exp, man> start(*this), start_temp;
 		Big<exp, man> result;
 		result.SetOne();
 
@@ -987,7 +985,8 @@ public:
 				if( result.Mul(start) )
 					return 1;
 
-			if( start.Mul(start) )
+			start_temp = start;
+			if( start.Mul(start_temp) )
 				return 1;
 
 			pow.Rcr(1);
@@ -1001,27 +1000,31 @@ public:
 
 	/*!
 		power this = this ^ pow
-		p can be with a sign
 		p can be negative
+
+		return values:
+		0 - ok
+		1 - carry
+		2 - incorrect arguments 0^0 or 0^(-something)
 	*/
 	template<uint pow_size>
-	uint PowInt(Int<pow_size> pow)
+	uint Pow(Int<pow_size> pow)
 	{
 		if( !pow.IsSign() )
-			return PowUInt(pow);
-
+			return Pow( UInt<pow_size>(pow) );
 
 		if( IsZero() )
 			// if 'p' is negative then
 			// 'this' must be different from zero
-			return 1;
+			return 2;
 
 		if( pow.ChangeSign() )
 			return 1;
 
 		Big<exp, man> t(*this);
-		if( t.PowUInt(pow) )
-			return 1;
+		uint c_temp = t.Pow( UInt<pow_size>(pow) );
+		if( c_temp > 0 )
+			return c_temp;
 
 		SetOne();
 		if( Div(t) )
@@ -1032,33 +1035,40 @@ public:
 
 
 	/*!
-		this method returns true if 'this' mod 2 is equal one
+		this method returns: 'this' mod 2
+		(either zero or one)
+
+		this method is much faster than using Mod( object_with_value_two )
 	*/
-	bool Mod2() const
+	uint Mod2() const
 	{
 		if( exponent>sint(0) || exponent<=-sint(man*TTMATH_BITS_PER_UINT) )
-			return false;
+			return 0;
 
 		sint exp_int = exponent.ToInt();
-		// 'exp_int' is negative (or zero), we set its as positive
+		// 'exp_int' is negative (or zero), we set it as positive
 		exp_int = -exp_int;
 
-		// !!! here we'll use a new method (method for testing a bit)
-		uint value = mantissa.table[ exp_int / TTMATH_BITS_PER_UINT ];
-		value >>= (uint(exp_int) % TTMATH_BITS_PER_UINT);
-
-	return bool(value & 1);
+	return mantissa.GetBit(exp_int);
 	}
+
 
 
 	/*!
 		power this = this ^ abs([pow])
-		pow without a sign and without a fraction
+		pow is treated as a value without a sign and without a fraction
+		 if pow has a sign then the method pow.Abs() is used
+		 if pow has a fraction the fraction is skipped (not used in calculation)
+
+		return values:
+		0 - ok
+		1 - carry
+		2 - incorrect arguments (0^0)
 	*/
-	uint PowBUInt(Big<exp, man> pow)
+	uint PowUInt(Big<exp, man> pow)
 	{
 		if( pow.IsZero() && IsZero() )
-			return 1;
+			return 2;
 
 		if( pow.IsSign() )
 			pow.Abs();
@@ -1070,7 +1080,7 @@ public:
 
 		e_one.SetOne();
 		one.SetOne();
-		result.SetOne();
+		result = one;
 
 		while( pow >= one )
 		{
@@ -1093,24 +1103,30 @@ public:
 
 	/*!
 		power this = this ^ [pow]
-		pow without a fraction
+		pow is treated as a value without a fraction
 		pow can be negative
+
+		return values:
+		0 - ok
+		1 - carry
+		2 - incorrect arguments 0^0 or 0^(-something)
 	*/
-	uint PowBInt(const Big<exp, man> & pow)
+	uint PowInt(const Big<exp, man> & pow)
 	{
 		TTMATH_REFERENCE_ASSERT( pow )
 	
 		if( !pow.IsSign() )
-			return PowBUInt(pow);
+			return PowUInt(pow);
 
 		if( IsZero() )
 			// if 'pow' is negative then
 			// 'this' must be different from zero
-			return 1;
+			return 2;
 
 		Big<exp, man> temp(*this);
-		if( temp.PowBUInt(pow) )
-			return 1;
+		uint c_temp = temp.PowUInt(pow);
+		if( c_temp > 0 )
+			return c_temp;
 
 		SetOne();
 		if( Div(temp) )
@@ -1122,13 +1138,13 @@ public:
 
 	/*!
 		power this = this ^ pow
-		this *must* be greater than zero (this > 0)
+		this must be greater than zero (this > 0)
 		pow can be negative and with fraction
 
 		return values:
 		0 - ok
 		1 - carry
-		2 - incorrect argument ('this')
+		2 - incorrect argument ('this' <= 0)
 	*/
 	uint PowFrac(const Big<exp, man> & pow)
 	{
@@ -1145,6 +1161,7 @@ public:
 
 	return (c==0)? 0 : 1;
 	}
+
 
 
 	/*!
@@ -1175,7 +1192,7 @@ public:
 		pow_frac.RemainFraction();
 
 		if( pow_frac.IsZero() )
-			return PowBInt( pow );
+			return PowInt( pow );
 
 		// pow is with fraction (not integer)
 		// result = e^(pow * ln(this) ) where 'this' must be greater than 0
@@ -1318,7 +1335,7 @@ public:
 		else
 		{
 			ExpSurrounding0(m);
-			c += PowBUInt(e_);
+			c += PowUInt(e_);
 		}
 	
 	return (c==0)? 0 : 1;
@@ -1793,7 +1810,7 @@ public:
 			// where "1.F" is intended to represent the binary number
 			// created by prefixing F with an implicit leading 1 and a binary point.
 			
-			FromDouble_SetExpAndMan(bool(temp.u[1] & 0x80000000u),
+			FromDouble_SetExpAndMan((temp.u[1] & 0x80000000u) != 0,
 									e - 1023 - man*TTMATH_BITS_PER_UINT + 1, 0x80000000u,
 									m1, m2);
 
@@ -1815,7 +1832,7 @@ public:
 				m.table[0] = m2;
 				uint moved = m.CompensationToLeft();
 
-				FromDouble_SetExpAndMan(bool(temp.u[1] & 0x80000000u),
+				FromDouble_SetExpAndMan((temp.u[1] & 0x80000000u) != 0,
 										e - 1022 - man*TTMATH_BITS_PER_UINT + 1 - moved, 0,
 										m.table[1], m.table[2]);
 			}
@@ -1906,7 +1923,7 @@ public:
 			// where "1.F" is intended to represent the binary number
 			// created by prefixing F with an implicit leading 1 and a binary point.
 			
-			FromDouble_SetExpAndMan(bool(temp.u & 0x8000000000000000ul),
+			FromDouble_SetExpAndMan((temp.u & 0x8000000000000000ul) != 0,
 									e - 1023 - man*TTMATH_BITS_PER_UINT + 1,
 									0x8000000000000000ul, m);
 
@@ -2119,6 +2136,17 @@ public:
 
 
 	/*!
+		an operator= for converting 'double' to this class
+	*/
+	Big<exp, man> & operator=(double value)
+	{
+		FromDouble(value);
+
+	return *this;
+	}
+
+
+	/*!
 		a constructor for converting 'sint' to this class
 	*/
 	Big(sint value)
@@ -2134,6 +2162,15 @@ public:
 		FromUInt(value);
 	}
 	
+
+	/*!
+		a constructor for converting 'double' to this class
+	*/
+	Big(double value)
+	{
+		FromDouble(value);
+	}
+
 
 #ifdef TTMATH_PLATFORM64
 
@@ -3324,7 +3361,7 @@ private:
 			new_exponent.ChangeSign();
 
 		temp = 10;
-		c += temp.PowBInt( new_exponent );
+		c += temp.PowInt( new_exponent );
 		c += Mul(temp);
 
 	return (c==0)? 0 : 1;

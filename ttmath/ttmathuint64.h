@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2008, Tomasz Sowa
+ * Copyright (c) 2006-2009, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -210,10 +210,12 @@ namespace ttmath
 	register uint * p2 = const_cast<uint*>(ss2.table);
 
 
+		// we don't have to use TTMATH_REFERENCE_ASSERT here
+		// this algorithm doesn't require it
+
 		#ifndef __GNUC__
 			#error "another compiler than GCC is currently not supported in 64bit mode"
 		#endif
-			
 
 		#ifdef __GNUC__
 			/*
@@ -280,6 +282,8 @@ namespace ttmath
 	register uint b = value_size;
 	register uint * p1 = table;
 	register uint c;
+
+		TTMATH_ASSERT( index < value_size )
 
 		#ifndef __GNUC__
 			#error "another compiler than GCC is currently not supported in 64bit mode"
@@ -361,6 +365,8 @@ namespace ttmath
 	register uint * p1 = table;
 	register uint c;
 
+		TTMATH_ASSERT( index < value_size - 1 )
+
 		#ifndef __GNUC__
 			#error "another compiler than GCC is currently not supported in 64bit mode"
 		#endif
@@ -423,6 +429,9 @@ namespace ttmath
 	register uint b = value_size;
 	register uint * p1 = table;
 	register uint * p2 = const_cast<uint*>(ss2.table);
+
+		// we don't have to use TTMATH_REFERENCE_ASSERT here
+		// this algorithm doesn't require it
 
 		#ifndef __GNUC__
 			#error "another compiler than GCC is currently not supported in 64bit mode"
@@ -488,6 +497,8 @@ namespace ttmath
 	register uint b = value_size;
 	register uint * p1 = table;
 	register uint c;
+
+		TTMATH_ASSERT( index < value_size )
 
 		#ifndef __GNUC__
 			#error "another compiler than GCC is currently not supported in 64bit mode"
@@ -559,8 +570,8 @@ namespace ttmath
 			"push %%rdx					\n"
 			"push %%rcx					\n"
 
-			"xorq %%rdx, %%rdx			\n"   // edx=0
-			"neg %%rax					\n"   // CF=1 if eax!=0 , CF=0 if eax==0
+			"xorq %%rdx, %%rdx			\n"   // rdx=0
+			"neg %%rax					\n"   // CF=1 if rax!=0 , CF=0 if rax==0
 
 		"1:								\n"
 			"rclq $1, (%%rbx, %%rdx, 8)	\n"
@@ -616,7 +627,7 @@ namespace ttmath
 
 			"push %%rcx						\n"
 
-			"neg %%rax						\n"   // CF=1 if eax!=0 , CF=0 if eax==0
+			"neg %%rax						\n"   // CF=1 if rax!=0 , CF=0 if rax==0
 
 		"1:									\n"
 			"rcrq $1, -8(%%rbx, %%rcx, 8)	\n"
@@ -658,9 +669,6 @@ namespace ttmath
 	template<uint value_size>
 	uint UInt<value_size>::Rcl2(uint bits, uint c)
 	{
-		if( bits == 0 )
-			return 0;
-
 	TTMATH_ASSERT( bits>0 && bits<TTMATH_BITS_PER_UINT )
 
 	register sint b = value_size;
@@ -739,9 +747,6 @@ namespace ttmath
 	template<uint value_size>
 	uint UInt<value_size>::Rcr2(uint bits, uint c)
 	{
-		if( bits == 0 )
-			return 0;
-
 	TTMATH_ASSERT( bits>0 && bits<TTMATH_BITS_PER_UINT )
 
 	register sint b = value_size;
@@ -843,20 +848,26 @@ namespace ttmath
 
 	/*!
 		this method sets a special bit in the 'value'
-		and returns the result
+		and returns the last state of the bit (zero or one)
 
 		***this method is created only on a 64bit platform***
 
-		bit is from <0,31>
+		bit is from <0,63>
 
 		e.g.
-		SetBitInWord(0,0) = 1
-		SetBitInWord(0,2) = 4
-		SetBitInWord(10, 8) = 266
+		 uint x = 100;
+		 uint bit = SetBitInWord(x, 3);
+		 now: x = 108 and bit = 0
 	*/
 	template<uint value_size>
-	uint UInt<value_size>::SetBitInWord(uint value, uint bit)
+	uint UInt<value_size>::SetBitInWord(uint & value, uint bit)
 	{
+		TTMATH_ASSERT( bit < TTMATH_BITS_PER_UINT )
+		
+		uint old_bit;
+		uint v = value;
+
+
 		#ifndef __GNUC__
 			#error "another compiler than GCC is currently not supported in 64bit mode"
 		#endif
@@ -864,15 +875,20 @@ namespace ttmath
 		#ifdef __GNUC__
 			__asm__  __volatile__(
 
-			"btsq %%rbx,%%rax	\n"
+			"btsq %%rbx, %%rax		\n"
 
-			: "=a" (value)
-			: "0" (value), "b" (bit)
+			"setc %%bl				\n"
+			"movzx %%bl, %%rbx		\n"
+			
+			: "=a" (v), "=b" (old_bit)
+			: "0" (v), "1" (bit)
 			: "cc" );
 
 		#endif
 
-	return value;
+		value = v;
+
+	return old_bit;
 	}
 
 
