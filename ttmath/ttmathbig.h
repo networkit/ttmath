@@ -1,5 +1,5 @@
 /*
- * This file is a part of TTMath Mathematical Library
+ * This file is a part of TTMath Bignum Library
  * and is distributed under the (new) BSD licence.
  * Author: Tomasz Sowa <t.sowa@slimaczek.pl>
  */
@@ -212,20 +212,35 @@ private:
 		0x99c32718, 0x6af4e23c, 0x1a946834, 0xb6150bda, 0x2583e9ca, 0x2ad44ce8, 0xdbbbc2db, 0x04de8ef9, 
 		0x2e8efc14, 0x1fbecaa6, 0x287c5947, 0x4e6bc05d, 0x99b2964f, 0xa090c3a2, 0x233ba186, 0x515be7ed, 
 		0x1f612970, 0xcee2d7af, 0xb81bdd76, 0x2170481c, 0xd0069127, 0xd5b05aa9, 0x93b4ea98, 0x8d8fddc1, 
-		0x86ffb7dc, 0x90a6c08f, 0x4df435c9, 0x34028492, 0x36c3fab4, 0xd27c7026, 0xc1d4dcb2, 0x602646df // (last one was: 0x602646de) 
-		// 0xc9751e76, ...
-		// (the last word was rounded up because the next one is 0xc9751e76 -- first bit is one 0xc..)
-		// 128 32bit words for the mantissa -- about 1232 valid digits (decimal)
+		0x86ffb7dc, 0x90a6c08f, 0x4df435c9, 0x34028492, 0x36c3fab4, 0xd27c7026, 0xc1d4dcb2, 0x602646de, 
+		0xc9751e76, 0x3dba37bd, 0xf8ff9406, 0xad9e530e, 0xe5db382f, 0x413001ae, 0xb06a53ed, 0x9027d831, 
+		0x179727b0, 0x865a8918, 0xda3edbeb, 0xcf9b14ed, 0x44ce6cba, 0xced4bb1b, 0xdb7f1447, 0xe6cc254b, 
+		0x33205151, 0x2bd7af42, 0x6fb8f401, 0x378cd2bf, 0x5983ca01, 0xc64b92ec, 0xf032ea15, 0xd1721d03, 
+		0xf482d7ce, 0x6e74fef6, 0xd55e702f, 0x46980c82, 0xb5a84031, 0x900b1c9e, 0x59e7c97f, 0xbec7e8f3, 
+		0x23a97a7e, 0x36cc88be, 0x0f1d45b7, 0xff585ac5, 0x4bd407b2, 0x2b4154aa, 0xcc8f6d7e, 0xbf48e1d8, 
+		0x14cc5ed2, 0x0f8037e0, 0xa79715ee, 0xf29be328, 0x06a1d58b, 0xb7c5da76, 0xf550aa3d, 0x8a1fbff0, 
+		0xeb19ccb1, 0xa313d55c, 0xda56c9ec, 0x2ef29632, 0x387fe8d7, 0x6e3c0468, 0x043e8f66, 0x3f4860ee, 
+		0x12bf2d5b, 0x0b7474d6, 0xe694f91e, 0x6dbe1159, 0x74a3926f, 0x12fee5e4, 0x38777cb6, 0xa932df8c, 
+		0xd8bec4d0, 0x73b931ba, 0x3bc832b6, 0x8d9dd300, 0x741fa7bf, 0x8afc47ed, 0x2576f693, 0x6ba42466, 
+		0x3aab639c, 0x5ae4f568, 0x3423b474, 0x2bf1c978, 0x238f16cb, 0xe39d652d, 0xe3fdb8be, 0xfc848ad9, 
+		0x22222e04, 0xa4037c07, 0x13eb57a8, 0x1a23f0c7, 0x3473fc64, 0x6cea306b, 0x4bcbc886, 0x2f8385dd, 
+		0xfa9d4b7f, 0xa2c087e8, 0x79683303, 0xed5bdd3a, 0x062b3cf5, 0xb3a278a6, 0x6d2a13f8, 0x3f44f82d, 
+		0xdf310ee0, 0x74ab6a36, 0x4597e899, 0xa0255dc1, 0x64f31cc5, 0x0846851d, 0xf9ab4819, 0x5ded7ea1, 
+		0xb1d510bd, 0x7ee74d73, 0xfaf36bc3, 0x1ecfa268, 0x359046f4, 0xeb879f92, 0x4009438b, 0x481c6cd7, 
+		0x889a002e, 0xd5ee382b, 0xc9190da6, 0xfc026e47, 0x9558e447, 0x5677e9aa, 0x9e3050e2, 0x765694df, 
+		0xc81f56e8, 0x80b96e71, 0x60c980dd, 0x98a573ea, 0x4472065a, 0x139cd290, 0x6cd1cb72, 0x9ec52a53 // last one was: 0x9ec52a52
+		//0x86d44014, ...
+		// (the last word 0x9ec52a52 was rounded up because the next one is 0x86d44014 -- first bit is one 0x8..)
+		// 256 32bit words for the mantissa -- about 2464 valid decimal digits
 		};
-
-		// the value of PI is comming from the website "Paul's 8192 Digits of Pi"
-		// http://www.escape.com/~paulg53/math/pi/8192.html
-		// 2999 digits were taken from this website
-		// (later they were compared with http://zenwerx.com/pi.php)
-		// and they were set into Big<1,300> type (using operator=(const char*) on 32bit platform)
-		// and then the first 128 words were taken into this table
-		// (TTMATH_BUILTIN_VARIABLES_SIZE on 32bit platform should have the value 128,
-		// and on 64bit platform value 64 (128/2=64))
+		// the value of PI is comming from the website http://zenwerx.com/pi.php
+		// 3101 digits were taken from this website
+		//  (later the digits were compared with:
+		//   http://www.eveandersson.com/pi/digits/1000000 and http://www.geom.uiuc.edu/~huberty/math5337/groupe/digits.html )
+		// and they were set into Big<1,400> type (using operator=(const char*) on a 32bit platform)
+		// and then the first 256 words were taken into this table
+		// (TTMATH_BUILTIN_VARIABLES_SIZE on 32bit platform should have the value 256,
+		// and on 64bit platform value 128 (256/2=128))
 	
 		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(int));
 	}
@@ -288,17 +303,34 @@ public:
 		0xac7d5f42, 0xd69f6d18, 0x7763cf1d, 0x55034004, 0x87f55ba5, 0x7e31cc7a, 0x7135c886, 0xefb4318a, 
 		0xed6a1e01, 0x2d9e6832, 0xa907600a, 0x918130c4, 0x6dc778f9, 0x71ad0038, 0x092999a3, 0x33cb8b7a, 
 		0x1a1db93d, 0x7140003c, 0x2a4ecea9, 0xf98d0acc, 0x0a8291cd, 0xcec97dcf, 0x8ec9b55a, 0x7f88a46b, 
-		0x4db5a851, 0xf44182e1, 0xc68a007e, 0x5e0dd902, 0x0bfd64b6, 0x45036c7a, 0x4e677d2c, 0x38532a3a
-		//0x23ba4442,...
-		// 128 32bit words for the mantissa -- about 1232 valid digits (decimal)
+		0x4db5a851, 0xf44182e1, 0xc68a007e, 0x5e0dd902, 0x0bfd64b6, 0x45036c7a, 0x4e677d2c, 0x38532a3a, 
+		0x23ba4442, 0xcaf53ea6, 0x3bb45432, 0x9b7624c8, 0x917bdd64, 0xb1c0fd4c, 0xb38e8c33, 0x4c701c3a, 
+		0xcdad0657, 0xfccfec71, 0x9b1f5c3e, 0x4e46041f, 0x388147fb, 0x4cfdb477, 0xa52471f7, 0xa9a96910, 
+		0xb855322e, 0xdb6340d8, 0xa00ef092, 0x350511e3, 0x0abec1ff, 0xf9e3a26e, 0x7fb29f8c, 0x183023c3, 
+		0x587e38da, 0x0077d9b4, 0x763e4e4b, 0x94b2bbc1, 0x94c6651e, 0x77caf992, 0xeeaac023, 0x2a281bf6, 
+		0xb3a739c1, 0x22611682, 0x0ae8db58, 0x47a67cbe, 0xf9c9091b, 0x462d538c, 0xd72b0374, 0x6ae77f5e, 
+		0x62292c31, 0x1562a846, 0x505dc82d, 0xb854338a, 0xe49f5235, 0xc95b9117, 0x8ccf2dd5, 0xcacef403, 
+		0xec9d1810, 0xc6272b04, 0x5b3b71f9, 0xdc6b80d6, 0x3fdd4a8e, 0x9adb1e69, 0x62a69526, 0xd43161c1, 
+		0xa41d570d, 0x7938dad4, 0xa40e329c, 0xcff46aaa, 0x36ad004c, 0xf600c838, 0x1e425a31, 0xd951ae64, 
+		0xfdb23fce, 0xc9509d43, 0x687feb69, 0xedd1cc5e, 0x0b8cc3bd, 0xf64b10ef, 0x86b63142, 0xa3ab8829, 
+		0x555b2f74, 0x7c932665, 0xcb2c0f1c, 0xc01bd702, 0x29388839, 0xd2af05e4, 0x54504ac7, 0x8b758282, 
+		0x2846c0ba, 0x35c35f5c, 0x59160cc0, 0x46fd8251, 0x541fc68c, 0x9c86b022, 0xbb709987, 0x6a460e74, 
+		0x51a8a931, 0x09703fee, 0x1c217e6c, 0x3826e52c, 0x51aa691e, 0x0e423cfc, 0x99e9e316, 0x50c1217b, 
+		0x624816cd, 0xad9a95f9, 0xd5b80194, 0x88d9c0a0, 0xa1fe3075, 0xa577e231, 0x83f81d4a, 0x3f2fa457, 
+		0x1efc8ce0, 0xba8a4fe8, 0xb6855dfe, 0x72b0a66e, 0xded2fbab, 0xfbe58a30, 0xfafabe1c, 0x5d71a87e, 
+		0x2f741ef8, 0xc1fe86fe, 0xa6bbfde5, 0x30677f0d, 0x97d11d49, 0xf7a8443d, 0x0822e506, 0xa9f4614e, 
+		0x011e2a94, 0x838ff88c, 0xd68c8bb7, 0xc51eef6d, 0x49ea8ab4, 0xf2c3df5b, 0xb4e0735a, 0xb0d68749
+		// 0x2fe26dd4, ...
+		// 256 32bit words for the mantissa -- about 2464 valid decimal digits
 		};
 
-		// above value was calculated using Big<1,300> on 32bit platform
-		// and then the first 128 words were taken,
+		// above value was calculated using Big<1,400> type on a 32bit platform
+		// and then the first 256 words were taken,
 		// the calculating was made by using ExpSurrounding0(1) method
-		// which took 1110 iterations
-		// (TTMATH_BUILTIN_VARIABLES_SIZE on 32bit platform should have the value 128,
-		// and on 64bit platform value 64 (128/2=64))
+		// which took 1420 iterations
+		// (the result was compared with e taken from http://antwrp.gsfc.nasa.gov/htmltest/gifcity/e.2mil)
+		// (TTMATH_BUILTIN_VARIABLES_SIZE on 32bit platform should have the value 256,
+		// and on 64bit platform value 128 (256/2=128))
 
 		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(int));
 		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT) + 2;
@@ -328,18 +360,35 @@ public:
 		0x57339ba2, 0xbeba7d05, 0x2ac5b61c, 0xc4e9207c, 0xef2f0ce2, 0xd7373958, 0xd7622658, 0x901e646a, 
 		0x95184460, 0xdc4e7487, 0x156e0c29, 0x2413d5e3, 0x61c1696d, 0xd24aaebd, 0x473826fd, 0xa0c238b9, 
 		0x0ab111bb, 0xbd67c724, 0x972cd18b, 0xfbbd9d42, 0x6c472096, 0xe76115c0, 0x5f6f7ceb, 0xac9f45ae, 
-		0xcecb72f1, 0x9c38339d, 0x8f682625, 0x0dea891e, 0xf07afff3, 0xa892374e, 0x175eb4af, 0xc8daadd9 // (last one was: 0xc8daadd8)
-		// 0x85db6ab0, ... 
-		// (the last word was rounded up because the next one is 0x85db6ab0 -- first bit is one 0x8..)
-		// 128 32bit words for the mantissa -- about 1232 valid digits (decimal)
+		0xcecb72f1, 0x9c38339d, 0x8f682625, 0x0dea891e, 0xf07afff3, 0xa892374e, 0x175eb4af, 0xc8daadd8, 
+		0x85db6ab0, 0x3a49bd0d, 0xc0b1b31d, 0x8a0e23fa, 0xc5e5767d, 0xf95884e0, 0x6425a415, 0x26fac51c, 
+		0x3ea8449f, 0xe8f70edd, 0x062b1a63, 0xa6c4c60c, 0x52ab3316, 0x1e238438, 0x897a39ce, 0x78b63c9f, 
+		0x364f5b8a, 0xef22ec2f, 0xee6e0850, 0xeca42d06, 0xfb0c75df, 0x5497e00c, 0x554b03d7, 0xd2874a00, 
+		0x0ca8f58d, 0x94f0341c, 0xbe2ec921, 0x56c9f949, 0xdb4a9316, 0xf281501e, 0x53daec3f, 0x64f1b783, 
+		0x154c6032, 0x0e2ff793, 0x33ce3573, 0xfacc5fdc, 0xf1178590, 0x3155bbd9, 0x0f023b22, 0x0224fcd8, 
+		0x471bf4f4, 0x45f0a88a, 0x14f0cd97, 0x6ea354bb, 0x20cdb5cc, 0xb3db2392, 0x88d58655, 0x4e2a0e8a, 
+		0x6fe51a8c, 0xfaa72ef2, 0xad8a43dc, 0x4212b210, 0xb779dfe4, 0x9d7307cc, 0x846532e4, 0xb9694eda, 
+		0xd162af05, 0x3b1751f3, 0xa3d091f6, 0x56658154, 0x12b5e8c2, 0x02461069, 0xac14b958, 0x784934b8, 
+		0xd6cce1da, 0xa5053701, 0x1aa4fb42, 0xb9a3def4, 0x1bda1f85, 0xef6fdbf2, 0xf2d89d2a, 0x4b183527, 
+		0x8fd94057, 0x89f45681, 0x2b552879, 0xa6168695, 0xc12963b0, 0xff01eaab, 0x73e5b5c1, 0x585318e7, 
+		0x624f14a5, 0x1a4a026b, 0x68082920, 0x57fd99b6, 0x6dc085a9, 0x8ac8d8ca, 0xf9eeeea9, 0x8a2400ca, 
+		0xc95f260f, 0xd10036f9, 0xf91096ac, 0x3195220a, 0x1a356b2a, 0x73b7eaad, 0xaf6d6058, 0x71ef7afb, 
+		0x80bc4234, 0x33562e94, 0xb12dfab4, 0x14451579, 0xdf59eae0, 0x51707062, 0x4012a829, 0x62c59cab, 
+		0x347f8304, 0xd889659e, 0x5a9139db, 0x14efcc30, 0x852be3e8, 0xfc99f14d, 0x1d822dd6, 0xe2f76797, 
+		0xe30219c8, 0xaa9ce884, 0x8a886eb3, 0xc87b7295, 0x988012e8, 0x314186ed, 0xbaf86856, 0xccd3c3b6, 
+		0xee94e62f, 0x110a6783, 0xd2aae89c, 0xcc3b76fc, 0x435a0ce1, 0x34c2838f, 0xd571ec6c, 0x1366a993 // last one was: 0x1366a992
+		//0xcbb9ac40, ...
+		// (the last word 0x1366a992 was rounded up because the next one is 0xcbb9ac40 -- first bit is one 0xc..)
+		// 256 32bit words for the mantissa -- about 2464 valid decimal digits
 		};	
 
-		// above value was calculated using Big<1,300> on 32bit platform
-		// and then the first 128 words were taken,
+		// above value was calculated using Big<1,400> type on a 32bit platform
+		// and then the first 256 words were taken,
 		// the calculating was made by using LnSurrounding1(2) method
-		// which took 3030 iterations
-		// (TTMATH_BUILTIN_VARIABLES_SIZE on 32bit platform should have the value 128,
-		// and on 64bit platform value 64 (128/2=64))
+		// which took 4035 iterations
+		// (the result was compared with ln(2) taken from http://ja0hxv.calico.jp/pai/estart.html)
+		// (TTMATH_BUILTIN_VARIABLES_SIZE on 32bit platform should have the value 256,
+		// and on 64bit platform value 128 (256/2=128))
 
 		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(int));
 		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT);
@@ -379,21 +428,38 @@ public:
 		0xed69b13d, 0xc1a03730, 0xb6524dc1, 0x8c167e86, 0x99d6d20e, 0xa2defd2b, 0xd006f8b4, 0xbe145a2a, 
 		0xdf3ccbb3, 0x189da49d, 0xbc1261c8, 0xb3e4daad, 0x6a36cecc, 0xb2d5ae5b, 0x89bf752f, 0xb5dfb353, 
 		0xff3065c4, 0x0cfceec8, 0x1be5a9a9, 0x67fddc57, 0xc4b83301, 0x006bf062, 0x4b40ed7a, 0x56c6cdcd, 
-		0xa2d6fe91, 0x388e9e3e, 0x48a93f5f, 0x5e3b6eb4, 0xb81c4a5b, 0x53d49ea6, 0x8e668aea, 0xba83c7f9 // (last one was: 0xba83c7f8)
-		///0xfb5f06c3, ...
-		//(the last word was rounded up because the next one is 0xfb5f06c3 -- first bit is one 0xf..)
-		// 128 32bit words for the mantissa -- about 1232 valid digits (decimal)
+		0xa2d6fe91, 0x388e9e3e, 0x48a93f5f, 0x5e3b6eb4, 0xb81c4a5b, 0x53d49ea6, 0x8e668aea, 0xba83c7f8, 
+		0xfb5f06c3, 0x58ac8f70, 0xfa9d8c59, 0x8c574502, 0xbaf54c96, 0xc84911f0, 0x0482d095, 0x1a0af022, 
+		0xabbab080, 0xec97efd3, 0x671e4e0e, 0x52f166b6, 0xcd5cd226, 0x0dc67795, 0x2e1e34a3, 0xf799677f, 
+		0x2c1d48f1, 0x2944b6c5, 0x2ba1307e, 0x704d67f9, 0x1c1035e4, 0x4e927c63, 0x03cf12bf, 0xe2cd2e31, 
+		0xf8ee4843, 0x344d51b0, 0xf37da42b, 0x9f0b0fd9, 0x134fb2d9, 0xf815e490, 0xd966283f, 0x23962766, 
+		0xeceab1e4, 0xf3b5fc86, 0x468127e2, 0xb606d10d, 0x3a45f4b6, 0xb776102d, 0x2fdbb420, 0x80c8fa84, 
+		0xd0ff9f45, 0xc58aef38, 0xdb2410fd, 0x1f1cebad, 0x733b2281, 0x52ca5f36, 0xddf29daa, 0x544334b8, 
+		0xdeeaf659, 0x4e462713, 0x1ed485b4, 0x6a0822e1, 0x28db471c, 0xa53938a8, 0x44c3bef7, 0xf35215c8, 
+		0xb382bc4e, 0x3e4c6f15, 0x6285f54c, 0x17ab408e, 0xccbf7f5e, 0xd16ab3f6, 0xced2846d, 0xf457e14f, 
+		0xbb45d9c5, 0x646ad497, 0xac697494, 0x145de32e, 0x93907128, 0xd263d521, 0x79efb424, 0xd64651d6, 
+		0xebc0c9f0, 0xbb583a44, 0xc6412c84, 0x85bb29a6, 0x4d31a2cd, 0x92954469, 0xa32b1abd, 0xf7f5202c, 
+		0xa4aa6c93, 0x2e9b53cf, 0x385ab136, 0x2741f356, 0x5de9c065, 0x6009901c, 0x88abbdd8, 0x74efcf73, 
+		0x3f761ad4, 0x35f3c083, 0xfd6b8ee0, 0x0bef11c7, 0xc552a89d, 0x58ce4a21, 0xd71e54f2, 0x4157f6c7, 
+		0xd4622316, 0xe98956d7, 0x450027de, 0xcbd398d8, 0x4b98b36a, 0x0724c25c, 0xdb237760, 0xe9324b68, 
+		0x7523e506, 0x8edad933, 0x92197f00, 0xb853a326, 0xb330c444, 0x65129296, 0x34bc0670, 0xe177806d, 
+		0xe338dac4, 0x5537492a, 0xe19add83, 0xcf45000f, 0x5b423bce, 0x6497d209, 0xe30e18a1, 0x3cbf0687, 
+		0x67973103, 0xd9485366, 0x81506bba, 0x2e93a9a4, 0x7dd59d3f, 0xf17cd746, 0x8c2075be, 0x552a4348 // last one was: 0x552a4347
+		// 0xb4a638ef, ...
+		//(the last word 0x552a4347 was rounded up because the next one is 0xb4a638ef -- first bit is one 0xb..)
+		// 256 32bit words for the mantissa -- about 2464 valid digits (decimal)
 		};	
 
-		// above value was calculated using Big<1,300> on 32bit platform
-		// and then the first 128 32bit words were taken,
+		// above value was calculated using Big<1,400> type on a 32bit platform
+		// and then the first 256 32bit words were taken,
 		// the calculating was made by using LnSurrounding1(10) method
-		// which took 16555 iterations
+		// which took 22080 iterations
+		// (the result was compared with ln(10) taken from http://ja0hxv.calico.jp/pai/estart.html)
 		// (the formula used in LnSurrounding1(x) converges badly when
 	    // the x is greater than one but in fact we can use it, only the
 		// number of iterations will be greater)
-		// (TTMATH_BUILTIN_VARIABLES_SIZE on 32bit platform should have the value 128,
-		// and on 64bit platform value 64 (128/2=64))
+		// (TTMATH_BUILTIN_VARIABLES_SIZE on 32bit platform should have the value 256,
+		// and on 64bit platform value 128 (256/2=128))
 
 		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(int));
 		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT) + 2;
@@ -1203,12 +1269,16 @@ public:
 
 private:
 
+#ifdef CONSTANTSGENERATOR
+public:
+#endif
+
 	/*!
 		Exponent this = exp(x) = e^x where x is in (-1,1)
 
 		we're using the formula exp(x) = 1 + (x)/(1!) + (x^2)/(2!) + (x^3)/(3!) + ...
 	*/
-	void ExpSurrounding0(const Big<exp,man> & x)
+	void ExpSurrounding0(const Big<exp,man> & x, uint * steps = 0)
 	{
 		TTMATH_REFERENCE_ASSERT( x )
 
@@ -1221,21 +1291,19 @@ private:
 		denominator.SetOne();
 		denominator_i.SetOne();
 
-		// this is only to avoid getting a warning about an uninitialized object
-		// gcc 4.1.2 reports: 'old_value.info' may be used uninitialized in this function
-		// (in fact we will initialize it later when the condition 'testing' is fulfilled)
-		old_value.info = 0;
-	
 		// every 'step_test' times we make a test
 		const uint step_test = 5;
+		uint i;
+		old_value = *this;
 
-		// we begin from 1 in order to not testing at the start
-		for(uint i=1 ; i<=TTMATH_ARITHMETIC_MAX_LOOP ; ++i)
+		// we begin from 1 in order to not testing at the beginning
+	#ifdef CONSTANTSGENERATOR
+		for(i=1 ; true ; ++i)
+	#else
+		for(i=1 ; i<=TTMATH_ARITHMETIC_MAX_LOOP ; ++i)
+	#endif
 		{
 			bool testing = ((i % step_test) == 0);
-
-			if( testing )
-				old_value = *this;
 
 			next_part = numerator;
 
@@ -1249,9 +1317,12 @@ private:
 			Add( next_part );
 
 			if( testing && old_value==*this )
-				// we've added a next part of the formula but the result
+				// we've added next few parts of the formula but the result
 				// is still the same then we break the loop
 				break;
+			else
+				old_value = *this;
+
 
 			// we set the denominator and the numerator for a next part of the formula
 			if( denominator_i.Add(one) )
@@ -1264,9 +1335,10 @@ private:
 			if( numerator.Mul(x) )
 				break;
 		}
+
+		if( steps )
+			*steps = i;
 	}
-
-
 
 public:
 
@@ -1346,13 +1418,17 @@ public:
 
 private:
 
+#ifdef CONSTANTSGENERATOR
+public:
+#endif
+
 	/*!
 		Natural logarithm this = ln(x) where x in range <1,2)
 
 		we're using the formula:
 		ln x = 2 * [ (x-1)/(x+1) + (1/3)((x-1)/(x+1))^3 + (1/5)((x-1)/(x+1))^5 + ... ]
 	*/
-	void LnSurrounding1(const Big<exp,man> & x)
+	void LnSurrounding1(const Big<exp,man> & x, uint * steps = 0)
 	{
 		Big<exp,man> old_value, next_part, denominator, one, two, x1(x), x2(x);
 
@@ -1377,16 +1453,19 @@ private:
 		denominator.SetOne();
 		SetZero();
 
-		// this is only to avoid getting a warning about an uninitialized object
-		// gcc 4.1.2 reports: 'old_value.info' may be used uninitialized in this function
-		// (in fact we will initialize it later when the condition 'testing' is fulfilled)
-		old_value.info = 0;
-
+		old_value = *this;
+		
 		// every 'step_test' times we make a test
 		const uint step_test = 5;
+		uint i;
 
+
+	#ifdef CONSTANTSGENERATOR
+		for(i=1 ; true ; ++i)
+	#else
 		// we begin from 1 in order to not testing at the beginning
-		for(uint i=1 ; i<=TTMATH_ARITHMETIC_MAX_LOOP ; ++i)
+		for(i=1 ; i<=TTMATH_ARITHMETIC_MAX_LOOP ; ++i)
+	#endif
 		{
 			bool testing = ((i % step_test) == 0);
 
@@ -1398,9 +1477,6 @@ private:
 				// it means there are too many parts of the formula
 				break;
 
-			if( testing )
-				old_value = *this;
-
 			// there shouldn't be a carry here
 			Add(next_part);
 
@@ -1408,6 +1484,8 @@ private:
 				// we've added next (step_test) parts of the formula but the result
 				// is still the same then we break the loop
 				break;
+			else
+				old_value = *this;
 
 			if( x1.Mul(x2) )
 				// if there is a carry here the result we return as good
@@ -1419,7 +1497,10 @@ private:
 
 		// this = this * 2
 		// ( there can't be a carry here because we calculate the logarithm between <1,2) )
-		exponent.AddOne(); 
+		exponent.AddOne();
+
+		if( steps )
+			*steps = i;
 	}
 
 

@@ -1,11 +1,11 @@
 /*
- * This file is a part of TTMath Mathematical Library
+ * This file is a part of TTMath Bignum Library
  * and is distributed under the (new) BSD licence.
  * Author: Tomasz Sowa <t.sowa@slimaczek.pl>
  */
 
 /* 
- * Copyright (c) 2006-2008, Tomasz Sowa
+ * Copyright (c) 2006-2009, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -141,7 +141,7 @@ namespace ttmath
 		which are kept in built-in variables for a Big<> type
 		(these variables are defined in ttmathbig.h)
 	*/
-	#define TTMATH_BUILTIN_VARIABLES_SIZE 128u
+	#define TTMATH_BUILTIN_VARIABLES_SIZE 256u
 
 #else
 
@@ -172,7 +172,7 @@ namespace ttmath
 		which are kept in built-in variables for a Big<> type
 		(these variables are defined in ttmathbig.h)
 	*/
-	#define TTMATH_BUILTIN_VARIABLES_SIZE 64ul
+	#define TTMATH_BUILTIN_VARIABLES_SIZE 128ul
 
 #endif
 }

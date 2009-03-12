@@ -1,5 +1,5 @@
 /*
- * This file is a part of TTMath Mathematical Library
+ * This file is a part of TTMath Bignum Library
  * and is distributed under the (new) BSD licence.
  * Author: Tomasz Sowa <t.sowa@slimaczek.pl>
  */
@@ -60,51 +60,6 @@ int main()
 {
 using namespace ttmath;
 
-
-/*
-Int<300> uu, oo;
-
-	uu = -2;
-	oo = 5;
-
-	uint ccc = uu.Pow(oo);
-
-	if( ccc )
-		std::cout << "carry: " << ccc << std::endl;
-	else
-		std::cout << uu << std::endl;
-return 0;	
-*/
-
-
-/*
-	UInt<2> w = 100;
-	w.GetBit(64);
-	std::cout << w << std::endl;	
-
-return 0;
-*/
-
-/*
-	uint q = 100;
-	uint last = UInt<3>::SetBitInWord(q, 3);
-	std::cout << "nowa wartosc: " << q << ", wczesniejszy bit: " << last << std::endl;
-return 0;
-
-*/
-
-/*
-	Big<1, 3> a = -26;
-	Int<3> b = -8;
-
-	uint c = a.Pow(b);
-
-	if ( c )
-		std::cout << "carry: " << c << std::endl;
-	else
-		std::cout << a << std::endl;
-return 0;
-*/
 
 	test_uint();
 
