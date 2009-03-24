@@ -1630,17 +1630,39 @@ public:
 
 		uint man_len_min = (man < another_man)? man : another_man;
 		uint i;
+		uint c = 0;
 
 		for( i = 0 ; i<man_len_min ; ++i )
 			mantissa.table[man-1-i] = another.mantissa.table[another_man-1-i];
 	
 		for( ; i<man ; ++i )
 			mantissa.table[man-1-i] = 0;
-		
-		// mantissa is standardized
-		//c += Standardizing();
 
-	return 0;
+
+		// MS Visual Express 2005 reports a warning (in the lines with 'uint man_diff = ...'):
+		// warning C4307: '*' : integral constant overflow
+		// but we're using 'if( man > another_man )' and 'if( man < another_man )' and there'll be no such a situation here
+		#pragma warning( disable: 4307 )
+
+		if( man > another_man )
+		{
+			uint man_diff = (man - another_man) * TTMATH_BITS_PER_UINT;
+			c += exponent.SubInt(man_diff, 0);
+		}
+		else
+		if( man < another_man )
+		{
+			uint man_diff = (another_man - man) * TTMATH_BITS_PER_UINT;
+			c += exponent.AddInt(man_diff, 0);
+		}
+
+		#pragma warning( default: 4307 )
+
+
+		// mantissa doesn't have to be standardized (either the highest bit is set or all bits are equal zero)
+		CorrectZero();
+
+	return (c == 0 )? 0 : 1;
 	}
 
 
