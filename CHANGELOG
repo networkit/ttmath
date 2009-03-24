@@ -1,3 +1,43 @@
+Version 0.8.3 prerelease (2009.03.24):
+    * fixed:   RclMoveAllWords() and RcrMoveAllWords() sometimes didn't return
+               the proper carry, (when 'bits' was greater than or equal to 'value_size')
+               this had impact on Rcl() and Rcr(), they also returned the wrong carry	
+    * fixed:   UInt::Div() didn't return a correct result when the divisor was equal 1
+               there was an error in UInt::DivInt() - when the divisor was 1 it returned
+               zero and the carry was set
+    * fixed:   there was a TTMATH_REREFENCE_ASSERT error in Big::PowUInt() caused by: start.Mul(start)
+    * fixed:   Big::Add incorrectly rounded 'this' when both exponents were equal
+               it caused that sometimes when adding a zero the result has changed
+               this had impact among other things on FromString() method
+               "0,8" had different binary representation from "0,80"
+    * fixed:   template Big::FromBig(const Big<another_exp, another_man> & another)
+               didn't correctly set the exponent (when the mantisses had different size -
+               when 'man' was different from 'another_man')
+               this had impact on operator= too
+               sample:
+               Big<2,3> a = 100;
+               Big<3,5> b;
+               b = a; // b had a wrong value
+    * changed: UInt::FromString, added a parametr 'after_source'
+               which is pointing at the end of the parsing string
+    * changed: renamed: Big::PowUInt(UInt<pow_size> pow) -> Big::Pow(UInt<pow_size> pow)
+               it returns 2 when there is: 0^0
+    * changed: renamed: Big::PowInt(Int<pow_size> pow) -> Big::Pow(Int<pow_size> pow)
+               it returns 2 when there is: 0^0 or 0^(-something)
+    * changed: renamed: Big::PowBUInt() -> PowUInt(), Big::PowBInt() -> Big::PowInt()
+               they return 2 when the arguments are incorrect (like above)
+    * changed: UInt::SetBitInWord(uint & value, uint bit) is taking the first argument by a reference now,
+               the specific bit is set in the 'value' and the method returns the last state of the bit (zero or one)
+    * changed: UInt::SetBit(uint bit_index) - it's using TTMATH_ASSERT now
+    * changed: the size of built-in variables (constants) in ttmathbig.h
+               now they consist of 256 32bit words
+               macro TTMATH_BUILTIN_VARIABLES_SIZE is equal: 256u on a 32bit platform and 128ul on a 64bit platform
+    * changed: the asm code in ttmathuint.h and ttmathuint64.h has been completely rewritten (much faster now)               
+    * added:   UInt::GetBit(uint bit_index) - returning the state of the specific bit
+    * added:   Big::operator=(double) and Big::Big(double)
+    * added:   UInt::Pow(UInt<value_size> pow) and Int::Pow(Int<value_size> pow)
+
+
 Version 0.8.2 (2008.06.18):
     * added:   UInt::BitNot2() this method has been proposed by
                Arek <kmicicc AnTispam users.sourceforge.net>
