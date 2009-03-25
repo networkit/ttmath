@@ -1642,7 +1642,9 @@ public:
 		// MS Visual Express 2005 reports a warning (in the lines with 'uint man_diff = ...'):
 		// warning C4307: '*' : integral constant overflow
 		// but we're using 'if( man > another_man )' and 'if( man < another_man )' and there'll be no such a situation here
+		#ifndef __GNUC__
 		#pragma warning( disable: 4307 )
+		#endif
 
 		if( man > another_man )
 		{
@@ -1655,9 +1657,10 @@ public:
 			uint man_diff = (another_man - man) * TTMATH_BITS_PER_UINT;
 			c += exponent.AddInt(man_diff, 0);
 		}
-
+		
+		#ifndef __GNUC__
 		#pragma warning( default: 4307 )
-
+		#endif
 
 		// mantissa doesn't have to be standardized (either the highest bit is set or all bits are equal zero)
 		CorrectZero();

@@ -1,4 +1,4 @@
-Version 0.8.3 prerelease (2009.03.24):
+Version 0.8.3 prerelease:
     * fixed:   RclMoveAllWords() and RcrMoveAllWords() sometimes didn't return
                the proper carry, (when 'bits' was greater than or equal to 'value_size')
                this had impact on Rcl() and Rcr(), they also returned the wrong carry	
@@ -18,6 +18,10 @@ Version 0.8.3 prerelease (2009.03.24):
                Big<2,3> a = 100;
                Big<3,5> b;
                b = a; // b had a wrong value
+    * fixed:   Big::Pow(const Big<exp, man> & pow)
+               it's using PowInt() only when pow.exponent is in range (-man*TTMATH_BITS_PER_UINT; 0]
+               previously the powering 'hung' on an input like this: "(1+ 1e-10000) ^ 10e100000000"
+               (there was 10e100000000 iterations in PowInt())
     * changed: UInt::FromString, added a parametr 'after_source'
                which is pointing at the end of the parsing string
     * changed: renamed: Big::PowUInt(UInt<pow_size> pow) -> Big::Pow(UInt<pow_size> pow)
