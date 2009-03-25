@@ -1254,14 +1254,14 @@ public:
 		return 0;
 		}
 
-		Big<exp, man> pow_frac( pow );
-		pow_frac.RemainFraction();
+		if( pow.exponent>-int(man*TTMATH_BITS_PER_UINT) && pow.exponent<=0 )
+		{
+			Big<exp, man> pow_frac( pow );
+			pow_frac.RemainFraction();
 
-		if( pow_frac.IsZero() )
-			return PowInt( pow );
-
-		// pow is with fraction (not integer)
-		// result = e^(pow * ln(this) ) where 'this' must be greater than 0
+			if( pow_frac.IsZero() )
+				return PowInt( pow );
+		}
 
 	return PowFrac(pow);
 	}
