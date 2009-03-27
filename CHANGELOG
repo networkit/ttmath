@@ -22,6 +22,9 @@ Version 0.8.3 prerelease:
                it's using PowInt() only when pow.exponent is in range (-man*TTMATH_BITS_PER_UINT; 0]
                previously the powering 'hung' on an input like this: "(1+ 1e-10000) ^ 10e100000000"
                (there was 10e100000000 iterations in PowInt())
+    * fixed:   in function DegToRad(const ValueType & x, ErrorCode * err = 0) it is better
+               to make division first and then mutliplication -- the result is more
+               accurate especially when x is: 90,180,270 or 360
     * changed: UInt::FromString, added a parametr 'after_source'
                which is pointing at the end of the parsing string
     * changed: renamed: Big::PowUInt(UInt<pow_size> pow) -> Big::Pow(UInt<pow_size> pow)
@@ -40,6 +43,18 @@ Version 0.8.3 prerelease:
     * added:   UInt::GetBit(uint bit_index) - returning the state of the specific bit
     * added:   Big::operator=(double) and Big::Big(double)
     * added:   UInt::Pow(UInt<value_size> pow) and Int::Pow(Int<value_size> pow)
+    * added:   global template functions in ttmath.h:
+               ValueType GradToRad(const ValueType & x, ErrorCode * err = 0)
+               ValueType RadToGrad(const ValueType & x, ErrorCode * err = 0)
+               ValueType DegToGrad(const ValueType & x, ErrorCode * err = 0)
+               ValueType DegToGrad(const ValueType & d, const ValueType & m,
+                                   const ValueType & s, ErrorCode * err = 0)
+               ValueType GradToDeg(const ValueType & x, ErrorCode * err = 0)
+    * added:   Parser::SetDegRadGrad(int angle) - 0 deg, 1 rad (default), 2 grad
+               this affects following functions (in the parser only): sin, cos, tan, cot,
+               asin, acos, atan, acot
+    * added:   functions to the parser: gradtorad(grad), radtograd(rad), degtograd(deg),
+               degtograd(d,m,s), gradtodeg(grad)
 
 
 Version 0.8.2 (2008.06.18):
