@@ -1347,7 +1347,7 @@ namespace ttmath
 
 	/*
  	 *
-	 *  functions for converting between degrees and radians
+	 *  functions for converting between degrees, radians and gradians
 	 *
 	 *
 	 */
@@ -1361,14 +1361,18 @@ namespace ttmath
 	template<class ValueType>
 	ValueType DegToRad(const ValueType & x, ErrorCode * err = 0)
 	{
-	ValueType result, delimiter;
+	ValueType result, temp;
 	uint c = 0;
 
-		result.SetPi();
-		c += result.Mul(x);
+		result = x;
 
-		delimiter = 180;
-		c += result.Div(delimiter);
+		// it is better to make division first and then multiplication
+		// the result is more accurate especially when x is: 90,180,270 or 360
+		temp = 180;
+		c += result.Div(temp);
+
+		temp.SetPi();
+		c += result.Mul(temp);
 
 		if( err )
 			*err = c ? err_overflow : err_ok;
@@ -1466,6 +1470,128 @@ namespace ttmath
 
 	return DegToRad(temp_deg, err);
 	}
+
+
+	/*!
+		this function converts gradians to radians
+		
+		it returns: x * pi / 200
+	*/
+	template<class ValueType>
+	ValueType GradToRad(const ValueType & x, ErrorCode * err = 0)
+	{
+	ValueType result, temp;
+	uint c = 0;
+
+		result = x;
+
+		// it is better to make division first and then multiplication
+		// the result is more accurate especially when x is: 100,200,300 or 400
+		temp = 200;
+		c += result.Div(temp);
+
+		temp.SetPi();
+		c += result.Mul(temp);
+
+		if( err )
+			*err = c ? err_overflow : err_ok;
+
+	return result;
+	}
+
+
+	/*!
+		this function converts radians to gradians
+		
+		it returns: x * 200 / pi
+	*/
+	template<class ValueType>
+	ValueType RadToGrad(const ValueType & x, ErrorCode * err = 0)
+	{
+	ValueType result, delimiter;
+	uint c = 0;
+
+		result = 200;
+		c += result.Mul(x);
+
+		delimiter.SetPi();
+		c += result.Div(delimiter);
+
+		if( err )
+			*err = c ? err_overflow : err_ok;
+
+	return result;
+	}
+
+
+	/*!
+		this function converts degrees to gradians
+		
+		it returns: x * 200 / 180
+	*/
+	template<class ValueType>
+	ValueType DegToGrad(const ValueType & x, ErrorCode * err = 0)
+	{
+	ValueType result, temp;
+	uint c = 0;
+
+		result = x;
+
+		temp = 200;
+		c += result.Mul(temp);
+
+		temp = 180;
+		c += result.Div(temp);
+
+		if( err )
+			*err = c ? err_overflow : err_ok;
+
+	return result;
+	}
+
+
+	/*!
+		this function converts degrees in the long format to gradians
+	*/
+	template<class ValueType>
+	ValueType DegToGrad( const ValueType & d, const ValueType & m, const ValueType & s,
+						 ErrorCode * err = 0)
+	{
+		ValueType temp_deg = DegToDeg(d,m,s,err);
+
+		if( err && *err!=err_ok )
+			return temp_deg;
+
+	return DegToGrad(temp_deg, err);
+	}
+
+
+	/*!
+		this function converts degrees to gradians
+		
+		it returns: x * 180 / 200
+	*/
+	template<class ValueType>
+	ValueType GradToDeg(const ValueType & x, ErrorCode * err = 0)
+	{
+	ValueType result, temp;
+	uint c = 0;
+
+		result = x;
+
+		temp = 180;
+		c += result.Mul(temp);
+
+		temp = 200;
+		c += result.Div(temp);
+
+		if( err )
+			*err = c ? err_overflow : err_ok;
+
+	return result;
+	}
+
+
 
 
 	/*

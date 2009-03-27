@@ -1003,7 +1003,7 @@ public:
 		-12.6 mod -3 = -0.6
 
 		it means:
-		in other words: this(old) = ss2 * q + this(new)(result)
+		in other words: this(old) = ss2 * q + this(new -- result)
 	*/
 	uint Mod(const Big<exp, man> & ss2)
 	{
@@ -1525,8 +1525,6 @@ public:
 			0 - ok
 			1 - overflow
 			2 - incorrect argument (x<=0)
-	
-		parts: look at the LnSurrounding1() method
 	*/
 	uint Ln(const Big<exp,man> & x)
 	{
@@ -1558,7 +1556,7 @@ public:
 
 
 	/*!
-		Logarithm with a base 'base' -- this = Log(x) with a base 'base'
+		Logarithm from 'x' with a 'base'
 
 		we're using the formula:
 			Log(x) with 'base' = ln(x) / ln(base)
@@ -1568,12 +1566,6 @@ public:
 			1 - overflow
 			2 - incorrect argument (x<=0)
 			3 - incorrect base (a<=0 lub a=1)
-
-
-		parts: look at the LnSurrounding1() method
-		  we pass this value only into 'ln(x)' method
-		  because if we passed 'parts' into 'ln(base)' as well then
-		  the error (after dividing) would be too great
 	*/
 	uint Log(const Big<exp,man> & x, const Big<exp,man> & base)
 	{
@@ -1600,7 +1592,6 @@ public:
 		// there can be only a carry
 		uint c = Ln(x);
 
-		// we don't pass the 'parts' here (the error after dividing would be to great)
 		c += denominator.Ln(base);
 		c += Div(denominator);
 
@@ -1612,7 +1603,7 @@ public:
 
 	/*!
 	*
-	*	convertion methods
+	*	converting methods
 	*
 	*/
 
