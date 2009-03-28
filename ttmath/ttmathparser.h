@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2008, Tomasz Sowa
+ * Copyright (c) 2006-2009, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -61,14 +61,14 @@ namespace ttmath
 /*! 
 	\brief Mathematical parser
 
-	let x will be an input string means an expression for converting:
+	let x will be an input string meaning an expression for converting:
 	
 	x = [+|-]Value[operator[+|-]Value][operator[+|-]Value]...
 	where:
 		an operator can be:
-			^ (pow)  (almost the heighest priority, look below at 'short mul')
+			^ (pow)   (the heighest priority)
 
-			* (mul) 
+			* (mul)   (or multiplication without an operator -- short mul)
 			/ (div)   (* and / have the same priority)
 
 			+ (add)
@@ -86,14 +86,22 @@ namespace ttmath
 			|| (logical or) (the lowest priority)
 
 		short mul:
-		or if the second Value (Var below) is either a variable or function there cannot be 
-		an operator between them, e.g.
-	        [+|-]ValueVar is treated as [+|-]Value * Var and the multiplication
-	        has the greatest priority:  2^3m equals 2^(3*m)
-	
+ 		 if the second Value (Var below) is either a variable or function there might not be 
+		 an operator between them, e.g.
+	        "[+|-]Value Var" is treated as "[+|-]Value * Var" and the multiplication
+	        has the same priority as a normal multiplication:
+			4x       = 4 * x
+			2^3m     = (2^3)* m
+			6h^3     = 6 * (h^3)
+	        2sin(pi) = 2 * sin(pi)
+			etc.
 
-		and Value can be:
-			constant e.g. 100
+		Value can be:
+			constant e.g. 100, can be preceded by operators to change the base (radix): [#|&]
+			                   # - hex
+							   & - bin
+							   sample: #10  = 16
+							           &10  = 2
 			variable e.g. pi
 			another expression between brackets e.g (x)
 			function e.g. sin(x)
@@ -112,7 +120,11 @@ namespace ttmath
 		                 for separating parameters
 	    "1 < 2"  (the result will be: 1)
 	    "4 < 3"  (the result will be: 0)
-		"2+x"  (of course if the variable 'x' is defined)
+		"2+x"    (of course if the variable 'x' is defined)
+		"4x+10"
+		"#20+10"     = 32 + 10 = 42
+		"10 ^ -&101" = 10 ^ -5 = 0.00001
+		"8 * -&10"   = 8 * -2  = -16
 		etc.
 
 	we can also use a semicolon for separating any 'x' input strings
@@ -137,7 +149,7 @@ private:
 		pow (^)
 		and 'shortmul' used when there is no any operators between
 		a first parameter and a variable or function
-		(the 'shortmul' has the greatest priority e.g. '5^3m' equals '5^(3*m)' )
+		(the 'shortmul' has the same priority as the normal multiplication )
 */
 	class MatOperator
 	{
@@ -182,16 +194,13 @@ private:
 				break;
 
 			case mul:
+			case shortmul:
 			case div:
 				priority = 12;
 				break;
 
 			case pow:
 				priority = 14;
-				break;
-
-			case shortmul:
-				priority = 20;
 				break;
 
 			default:
@@ -416,7 +425,6 @@ typedef std::map<std::string, pfunction_var> VariablesTable;
 VariablesTable variables_table;
 
 
-
 /*!
 	you can't calculate the factorial if the argument is greater than 'factorial_max'
 	default value is zero which means there are not any limitations
@@ -433,8 +441,6 @@ static void Error(ErrorCode code)
 }
 
 
-
-
 /*!
 	this method skips the white character from the string
 
@@ -445,7 +451,6 @@ void SkipWhiteCharacters()
 	while( (*pstring==' ' ) || (*pstring=='\t') )
 		++pstring;
 }
-
 
 
 /*!
@@ -477,6 +482,7 @@ void RecurrenceParsingVariablesOrFunction_AddName(bool variable, const std::stri
 		visited_functions.insert( name );
 }
 
+
 /*!
 	an auxiliary method for RecurrenceParsingVariablesOrFunction(...)
 */
@@ -487,6 +493,7 @@ void RecurrenceParsingVariablesOrFunction_DeleteName(bool variable, const std::s
 	else
 		visited_functions.erase( name );
 }
+
 
 /*!
 	this method returns the value of a variable or function
@@ -1628,17 +1635,21 @@ return is_it_name_of_function;
 
 
 /*!
-	we're reading a numerical value directly from the string	
+	we're reading a numerical value directly from the string
 */
-void ReadValue(Item & result)
+void ReadValue(Item & result, int reading_base)
 {
 const char * new_stack_pointer;
+bool value_read;
 
-	int carry = result.value.FromString(pstring, base, &new_stack_pointer);
+	int carry = result.value.FromString(pstring, reading_base, &new_stack_pointer, &value_read);
 	pstring   = new_stack_pointer;
 
 	if( carry )
 		Error( err_overflow );
+
+	if( !value_read )
+		Error( err_unknown_character );
 }
 
 
@@ -1664,6 +1675,24 @@ int CharToDigit(int c, int base)
 		return -1;
 
 return c;
+}
+
+
+/*!
+	this method returns true if 'character' is a proper first digit for the value (or a comma -- can be first too)
+*/
+bool ValueStarts(int character, int base)
+{
+	if( character == TTMATH_COMMA_CHARACTER_1 )
+		return true;
+
+	if( TTMATH_COMMA_CHARACTER_2 != 0 && character == TTMATH_COMMA_CHARACTER_2 )
+		return true;
+
+	if( CharToDigit(character, base) != -1 )
+		return true;
+
+return false;
 }
 
 
@@ -1726,19 +1755,33 @@ int  character;
 	return 2;
 	}
 	else
-	if( character=='#' || character=='&' ||
-		character==TTMATH_COMMA_CHARACTER_1 ||
-		(character==TTMATH_COMMA_CHARACTER_2 && TTMATH_COMMA_CHARACTER_2 != 0) ||
-		CharToDigit(character, base)!=-1 )
+	if( character == '#' )
 	{
-		/*
-			warning:
-			if we're using for example the base equal 16
-			we can find a first character like 'e' that is not e=2.71..
-			but the value 14, for this case we must use something like var::e for variables
-			(not implemented yet)
-		*/
-		ReadValue( result );
+		++pstring;
+		SkipWhiteCharacters();
+
+		// after '#' character we do not allow '-' or '+' (can be white characters)
+		if(	ValueStarts(*pstring, 16) )
+			ReadValue( result, 16 );
+		else
+			Error( err_unknown_character );
+	}
+	else
+	if( character == '&' )
+	{
+		++pstring;
+		SkipWhiteCharacters();
+
+		// after '&' character we do not allow '-' or '+' (can be white characters)
+		if(	ValueStarts(*pstring, 2) )
+			ReadValue( result, 2 );
+		else
+			Error( err_unknown_character );
+	}
+	else
+	if(	ValueStarts(character, base) )
+	{
+		ReadValue( result, base );
 	}
 	else
 	if( character>='a' && character<='z' )
@@ -2041,9 +2084,9 @@ void TryRollingUpStack()
 */
 int ReadValueVariableOrFunctionAndPushItIntoStack(Item & temp)
 {
-int kod = ReadValueVariableOrFunction( temp );
+int code = ReadValueVariableOrFunction( temp );
 	
-	if( kod == 0 )
+	if( code == 0 )
 	{
 		if( stack_index < stack.size() )
 			stack[stack_index] = temp;
@@ -2053,13 +2096,13 @@ int kod = ReadValueVariableOrFunction( temp );
 		++stack_index;
 	}
 
-	if( kod == 2 )
+	if( code == 2 )
 		// there was a final bracket, we didn't push it into the stack 
 		// (it'll be read by the 'ReadOperatorAndCheckFinalBracket' method next)
-		kod = 0;
+		code = 0;
 
 
-return kod;
+return code;
 }
 
 

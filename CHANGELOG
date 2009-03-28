@@ -25,6 +25,19 @@ Version 0.8.3 prerelease:
     * fixed:   in function DegToRad(const ValueType & x, ErrorCode * err = 0) it is better
                to make division first and then mutliplication -- the result is more
                accurate especially when x is: 90,180,270 or 360
+    * fixed:   the parser didn't correctly treat operators for changing the base
+               (radix) -- operators '#' and '&', e.g.:
+               '#sin(1)' was equal '0' -- there was a zero from '#' and then
+               it was multipied by 'sin(1)'
+               the parser didn't check whether Big::FromString() has actually
+               read a proper value -- the method Big::FromString() didn't have
+               something to report such a situation
+    * fixed:   Big::FromString() when the base is 10, the method reads the scientific
+               part only if such a part it correctly supplied, e.g:
+               '1234e10', '1234e+10', '1234e-5'
+               previous '1234e' was treated as: '1234e0' (now parsing stops on 'e' and
+               the 'e' can be parsed by other parsers, e.g. the mathematical
+               parser -- now in the parser would be: '1234e' = '1234 * e' = '3354,3597...' )
     * changed: UInt::FromString, added a parametr 'after_source'
                which is pointing at the end of the parsing string
     * changed: renamed: Big::PowUInt(UInt<pow_size> pow) -> Big::Pow(UInt<pow_size> pow)
@@ -40,6 +53,14 @@ Version 0.8.3 prerelease:
                now they consist of 256 32bit words
                macro TTMATH_BUILTIN_VARIABLES_SIZE is equal: 256u on a 32bit platform and 128ul on a 64bit platform
     * changed: the asm code in ttmathuint.h and ttmathuint64.h has been completely rewritten (much faster now)               
+    * changed: in the parser: the form with operators '#' and '&' is as follows:
+               [-|+][#|&]numeric_value
+               previous was: [-|+][#|&][-|+]numeric_value
+    * changed: in the parser: the short form of multiplication has the same
+               priority as the normal multiplication, e.g.:
+               '2x^3' = 2 * (x^3)
+               previous the priority was greater than powering priority
+               previous: '2x^3' = (2*x) ^ 3
     * added:   UInt::GetBit(uint bit_index) - returning the state of the specific bit
     * added:   Big::operator=(double) and Big::Big(double)
     * added:   UInt::Pow(UInt<value_size> pow) and Int::Pow(Int<value_size> pow)
@@ -55,6 +76,13 @@ Version 0.8.3 prerelease:
                asin, acos, atan, acot
     * added:   functions to the parser: gradtorad(grad), radtograd(rad), degtograd(deg),
                degtograd(d,m,s), gradtodeg(grad)
+    * added:   to Int::FromString(): parameter 'const char ** after_source = 0'
+               if exists it's pointing at the end of the parsed string
+    * added:   to UInt::FromString(), Int::FromString(), Big::FromString():
+               parameter 'bool * value_read = 0' - (if exists) tells
+               whether something has actually been read (at least one digit)
+    * removed: Big::FromString() this method doesn't longer recognize operators
+               for changing the base ('#' and '&')
 
 
 Version 0.8.2 (2008.06.18):

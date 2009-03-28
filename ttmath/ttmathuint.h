@@ -3200,8 +3200,12 @@ public:
 		existing first white characters will be ommited
 
 		if the value from s is too large the rest digits will be skipped
+
+		after_source (if exists) is pointing at the end of the parsing string
+
+		value_read (if exists) tells whether something has actually been read (at least one digit)
 	*/
-	uint FromString(const char * s, uint b = 10, const char ** after_source = 0)
+	uint FromString(const char * s, uint b = 10, const char ** after_source = 0, bool * value_read = 0)
 	{
 	UInt<value_size> base( b );
 	UInt<value_size> temp;
@@ -3215,12 +3219,18 @@ public:
 		if( after_source )
 			*after_source = s;
 
+		if( value_read )
+			*value_read = false;
+
 		if( b<2 || b>16 )
 			return 1;
 
 
 		for( ; (z=CharToDigit(*s, b)) != -1 ; ++s)
 		{
+			if( value_read )
+				*value_read = true;
+
 			if( c == 0 )
 			{
 				temp.table[0] = z;

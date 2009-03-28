@@ -3225,39 +3225,48 @@ public:
 		a method for converting a string into its value
 
 		it returns 1 if the value will be too big -- we cannot pass it into the range
-		of our class Big<exp,man>
+		of our class Big<exp,man> (or if the base is incorrect)
 
 		that means only digits before the comma operator can make this value too big, 
 		all digits after the comma we can ignore
 
 		'source' - pointer to the string for parsing
 
-		if 'after_source' is set that when this method have finished its job
-		it set the pointer to the new first character after parsed value
+		if 'after_source' is set that when this method finishes
+		it sets the pointer to the new first character after parsed value
+
+		'value_read' - if the pointer is provided that means the value_read will be true
+		only when a value has been actually read, there can be situation where only such
+		a string '-' or '+' will be parsed -- 'after_source' will be different from 'source' but
+		no value has been read (there are no digits)
+		on other words if 'value_read' is true -- there is at least one digit in the string
 	*/
-	uint FromString(const char * source, uint base = 10, const char ** after_source = 0)
+	uint FromString(const char * source, uint base = 10, const char ** after_source = 0, bool * value_read = 0)
 	{
 	bool is_sign;
+	bool value_read_temp = false;
 
 		if( base<2 || base>16 )
 		{
 			if( after_source )
 				*after_source = source;
 
+			if( value_read )
+				*value_read = value_read_temp;
+
 			return 1;
 		}
 
 		SetZero();
-		FromString_TestNewBase( source, base );
 		FromString_TestSign( source, is_sign );
 
-		uint c = FromString_ReadPartBeforeComma( source, base );
+		uint c = FromString_ReadPartBeforeComma( source, base, value_read_temp );
 
 		if( FromString_TestCommaOperator(source) )
-			c += FromString_ReadPartAfterComma( source, base );
+			c += FromString_ReadPartAfterComma( source, base, value_read_temp );
 
-		if( base==10 && FromString_TestScientific(source) )
-			c += FromString_ReadPartScientific( source );
+		if( value_read_temp && base == 10 )
+			c += FromString_ReadScientificIfExists( source );
 
 		if( is_sign && !IsZero() )
 			ChangeSign();
@@ -3265,36 +3274,15 @@ public:
 		if( after_source )
 			*after_source = source;
 
+		if( value_read )
+			*value_read = value_read_temp;
+
 	return (c==0)? 0 : 1;
 	}
 
 
 
 private:
-
-
-	/*!
-		we're testing whether a user wants to change the base
-
-		if there's a '#' character it means that the user wants the base to be 16,
-		if '&' the base will be 2
-	*/
-	void FromString_TestNewBase( const char * & source, uint & base )
-	{
-		UInt<man>::SkipWhiteCharacters(source);
-
-		if( *source == '#' )
-		{
-			base = 16;
-			++source;
-		}
-		else
-		if( *source == '&' )
-		{
-			base = 2;
-			++source;
-		}
-	}
 
 
 	/*!
@@ -3342,7 +3330,7 @@ private:
 		this method reads the first part of a string
 		(before the comma operator)
 	*/
-	uint FromString_ReadPartBeforeComma( const char * & source, uint base )
+	uint FromString_ReadPartBeforeComma( const char * & source, uint base, bool & value_read )
 	{
 		sint character;
 		Big<exp, man> temp;
@@ -3352,6 +3340,8 @@ private:
 
 		for( ; (character=UInt<man>::CharToDigit(*source, base)) != -1 ; ++source )
 		{
+			value_read = true;
+
 			temp = character;
 
 			if( Mul(base_) )
@@ -3369,7 +3359,7 @@ private:
 		this method reads the second part of a string
 		(after the comma operator)
 	*/
-	uint FromString_ReadPartAfterComma( const char * & source, uint base )
+	uint FromString_ReadPartAfterComma( const char * & source, uint base, bool & value_read )
 	{
 	sint character;
 	uint c = 0, index = 1;
@@ -3386,6 +3376,8 @@ private:
 
 		for( ; (character=UInt<man>::CharToDigit(*source, base)) != -1 ; ++source, ++index )
 		{
+			value_read = true;
+
 			part = character;
 
 			if( power.Mul( base_ ) )
@@ -3422,6 +3414,29 @@ private:
 
 
 	/*!
+		this method checks whether there is a scientific part: [e|E][-|+]value
+
+		it is called when the base is 10 and some digits were read before
+	*/
+	int FromString_ReadScientificIfExists(const char * & source)
+	{
+	int c = 0;
+
+		bool scientific_read = false;
+		const char * before_scientific = source;
+
+		if( FromString_TestScientific(source) )
+			c += FromString_ReadPartScientific( source, scientific_read );
+
+		if( !scientific_read )
+			source = before_scientific;
+
+	return (c==0)? 0 : 1;
+	}
+
+
+
+	/*!
 		we're testing whether is there the character 'e'
 
 		this character is only allowed when we're using the base equals 10
@@ -3445,21 +3460,24 @@ private:
 		this method reads the exponent (after 'e' character) when there's a scientific
 		format of value and only when we're using the base equals 10
 	*/
-	uint FromString_ReadPartScientific( const char * & source )
+	uint FromString_ReadPartScientific( const char * & source, bool & scientific_read )
 	{
 	uint c = 0;
 	Big<exp, man> new_exponent, temp;
 	bool was_sign = false;
 
 		FromString_TestSign( source, was_sign );
-		FromString_ReadPartScientific_ReadExponent( source, new_exponent );
+		c += FromString_ReadPartScientific_ReadExponent( source, new_exponent, scientific_read );
 
-		if( was_sign )
-			new_exponent.ChangeSign();
+		if( scientific_read )
+		{
+			if( was_sign )
+				new_exponent.ChangeSign();
 
-		temp = 10;
-		c += temp.PowInt( new_exponent );
-		c += Mul(temp);
+			temp = 10;
+			c += temp.Pow( new_exponent );
+			c += Mul(temp);
+		}
 
 	return (c==0)? 0 : 1;
 	}
@@ -3469,7 +3487,7 @@ private:
 		this method reads the value of the extra exponent when scientific format is used
 		(only when base == 10)
 	*/
-	uint FromString_ReadPartScientific_ReadExponent( const char * & source, Big<exp, man> & new_exponent )
+	uint FromString_ReadPartScientific_ReadExponent( const char * & source, Big<exp, man> & new_exponent, bool & scientific_read )
 	{
 	sint character;
 	Big<exp, man> base, temp;
@@ -3481,6 +3499,8 @@ private:
 
 		for( ; (character=UInt<man>::CharToDigit(*source, 10)) != -1 ; ++source )
 		{
+			scientific_read = true;
+
 			temp = character;
 
 			if( new_exponent.Mul(base) )

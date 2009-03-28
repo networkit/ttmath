@@ -900,8 +900,12 @@ public:
 
 		existing first white characters will be ommited
 		(between '-' and a first digit can be white characters too)
+
+		after_source (if exists) is pointing at the end of the parsing string
+
+		value_read (if exists) tells whether something has actually been read (at least one digit)
 	*/
-	uint FromString(const char * s, uint b = 10)
+	uint FromString(const char * s, uint b = 10, const char ** after_source = 0, bool * value_read = 0)
 	{
 	bool is_sign = false;
 	
@@ -918,7 +922,7 @@ public:
 			UInt<value_size>::SkipWhiteCharacters(++s);
 		}
 
-		if( UInt<value_size>::FromString(s,b) )
+		if( UInt<value_size>::FromString(s,b,after_source,value_read) )
 			return 1;
 
 		if( is_sign )
@@ -929,12 +933,15 @@ public:
 
 			/*
 				the reference to mmin will be automatically converted to the reference
-				to a UInt type
+				to UInt type
 				(this value can be equal mmin -- look at a description in ChangeSign())
 			*/
 			if( UInt<value_size>::operator>( mmin ) )
 				return 1;
 
+			/*
+				if the value is equal mmin the method ChangeSign() does nothing (only returns 1 but we ignore it)
+			*/
 			ChangeSign();
 		}
 		else
