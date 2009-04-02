@@ -97,7 +97,7 @@ namespace ttmath
 			etc.
 
 		Value can be:
-			constant e.g. 100, can be preceded by operators to change the base (radix): [#|&]
+			constant e.g. 100, can be preceded by operators for changing the base (radix): [#|&]
 			                   # - hex
 							   & - bin
 							   sample: #10  = 16

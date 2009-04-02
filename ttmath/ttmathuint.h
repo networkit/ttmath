@@ -3201,7 +3201,7 @@ public:
 
 		if the value from s is too large the rest digits will be skipped
 
-		after_source (if exists) is pointing at the end of the parsing string
+		after_source (if exists) is pointing at the end of the parsed string
 
 		value_read (if exists) tells whether something has actually been read (at least one digit)
 	*/

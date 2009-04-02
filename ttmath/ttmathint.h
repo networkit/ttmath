@@ -901,7 +901,7 @@ public:
 		existing first white characters will be ommited
 		(between '-' and a first digit can be white characters too)
 
-		after_source (if exists) is pointing at the end of the parsing string
+		after_source (if exists) is pointing at the end of the parsed string
 
 		value_read (if exists) tells whether something has actually been read (at least one digit)
 	*/

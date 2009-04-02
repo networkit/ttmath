@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2008, Tomasz Sowa
+ * Copyright (c) 2006-2009, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -127,6 +127,21 @@ public:
 				return false;
 		
 	return true;
+	}
+
+
+	/*!
+		this method returns true if such an object is defined (name exists)
+	*/
+	bool IsDefined(const std::string & name)
+	{
+		Iterator i = table.find(name);
+
+		if( i != table.end() )
+			// we have this object in our table
+			return true;
+
+	return false;
 	}
 
 
@@ -258,7 +273,7 @@ public:
 
 
 	/*!
-		this method sets the value of a specific object
+		this method gets the value of a specific object
 	*/
 	ErrorCode GetValue(const std::string & name, std::string & value) const
 	{
@@ -280,7 +295,7 @@ public:
 
 
 	/*!
-		this method sets the value of a specific object
+		this method gets the value of a specific object
 		(this version is used for not copying the whole string)
 	*/
 	ErrorCode GetValue(const std::string & name, const char ** value) const
@@ -303,7 +318,7 @@ public:
 
 
 	/*!
-		this method sets the value and the number of parameters
+		this method gets the value and the number of parameters
 		of a specific object
 	*/
 	ErrorCode GetValueAndParam(const std::string & name, std::string & value, int * param) const
