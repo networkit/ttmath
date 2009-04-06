@@ -1,4 +1,4 @@
-Version 0.8.3 prerelease:
+Version 0.8.3 (2009.04.06):
     * fixed:   RclMoveAllWords() and RcrMoveAllWords() sometimes didn't return
                the proper carry, (when 'bits' was greater than or equal to 'value_size')
                this had impact on Rcl() and Rcr(), they also returned the wrong carry	
@@ -38,8 +38,6 @@ Version 0.8.3 prerelease:
                previous '1234e' was treated as: '1234e0' (now parsing stops on 'e' and
                the 'e' can be parsed by other parsers, e.g. the mathematical
                parser -- now in the parser would be: '1234e' = '1234 * e' = '3354,3597...' )
-    * changed: UInt::FromString, added a parametr 'after_source'
-               which is pointing at the end of the parsing string
     * changed: renamed: Big::PowUInt(UInt<pow_size> pow) -> Big::Pow(UInt<pow_size> pow)
                it returns 2 when there is: 0^0
     * changed: renamed: Big::PowInt(Int<pow_size> pow) -> Big::Pow(Int<pow_size> pow)
@@ -52,7 +50,9 @@ Version 0.8.3 prerelease:
     * changed: the size of built-in variables (constants) in ttmathbig.h
                now they consist of 256 32bit words
                macro TTMATH_BUILTIN_VARIABLES_SIZE is equal: 256u on a 32bit platform and 128ul on a 64bit platform
-    * changed: the asm code in ttmathuint.h and ttmathuint64.h has been completely rewritten (much faster now)               
+    * changed: the asm code in ttmathuint.h and ttmathuint64.h has been completely rewritten
+               now UInt<> is faster about 15-30% than UInt<> from 0.8.2
+               this has impact on Big<> too - it's faster about 10% now
     * changed: in the parser: the form with operators '#' and '&' is as follows:
                [-|+][#|&]numeric_value
                previous was: [-|+][#|&][-|+]numeric_value
@@ -76,11 +76,15 @@ Version 0.8.3 prerelease:
                asin, acos, atan, acot
     * added:   functions to the parser: gradtorad(grad), radtograd(rad), degtograd(deg),
                degtograd(d,m,s), gradtodeg(grad)
-    * added:   to Int::FromString(): parameter 'const char ** after_source = 0'
+    * added:   UInt::FromString, added a parametr 'after_source'
+               which is pointing at the end of the parsed string
+    * added:   Int::FromString(): parameter 'const char ** after_source = 0'
                if exists it's pointing at the end of the parsed string
     * added:   to UInt::FromString(), Int::FromString(), Big::FromString():
                parameter 'bool * value_read = 0' - (if exists) tells
                whether something has actually been read (at least one digit)
+    * added:   Objects::IsDefined(const std::string & name)
+               returning true if such an object is defined
     * removed: Big::FromString() this method doesn't longer recognize operators
                for changing the base ('#' and '&')
 
