@@ -647,7 +647,7 @@ public:
 	return 0;
 	}
 
-	// converting from Int
+
 
 	/*!
 		the default assignment operator
@@ -714,7 +714,6 @@ public:
 	}
 
 
-	// converting from UInt
 
 	/*!
 		this operator converts an UInt<another_size> type to this class
@@ -759,8 +758,8 @@ public:
 		// look that 'size' we still set as 'value_size' and not as u.value_size
 		FromUInt(u);
 	}
+ 
 
-	// 
 
 
 #ifdef TTMATH_PLATFORM64

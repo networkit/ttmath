@@ -53,6 +53,13 @@
 
 namespace ttmath
 {
+	/*
+ 	 *
+	 *  functions defined here are used only with Big<> types
+	 *
+	 *
+	 */
+
 
 	/*
  	 *

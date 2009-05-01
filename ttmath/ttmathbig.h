@@ -2255,7 +2255,7 @@ public:
 		a constructor for converting 'uint' to this class
 	*/
 	Big(uint value)
-	{
+	{	
 		FromUInt(value);
 	}
 	
@@ -3367,10 +3367,9 @@ private:
 
 		// we don't remove any white characters here
 
-		// this is only to avoid getting a warning about an uninitialized object
-		// gcc 4.1.2 reports: 'old_value.info' may be used uninitialized in this function
+		// this is only to avoid getting a warning about an uninitialized object 'old_value' which GCC reports
 		// (in fact we will initialize it later when the condition 'testing' is fulfilled)
-		old_value.info = 0;
+		old_value.SetZero();
 
 		power.SetOne();
 

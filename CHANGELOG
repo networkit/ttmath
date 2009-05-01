@@ -1,3 +1,10 @@
+Version 0.8.4 prerelease (2009.05.01):
+	* added:   UInt::PrintLog(const char * msg, std::ostream & output)
+               used for debugging purposes by macro TTMATH_LOG(msg)
+               (it is used in nearly all methods in UInt class)
+    * added:   macro TTMATH_DEBUG_LOG: when defined then TTMATH_LOG() 
+               put some debug information (to std::cout)
+
 Version 0.8.3 (2009.04.06):
     * fixed:   RclMoveAllWords() and RcrMoveAllWords() sometimes didn't return
                the proper carry, (when 'bits' was greater than or equal to 'value_size')

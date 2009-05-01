@@ -81,6 +81,8 @@ namespace ttmath
 	{
 		FromUInt(uint(i));
 
+		TTMATH_LOG("UInt64::operator=(unsigned int)")
+
 	return *this;
 	}
 
@@ -95,6 +97,8 @@ namespace ttmath
 	UInt<value_size>::UInt(unsigned int i)
 	{
 		FromUInt(uint(i));
+
+		TTMATH_LOG("UInt64::UInt(unsigned int)")
 	}
 
 
@@ -110,6 +114,8 @@ namespace ttmath
 	UInt<value_size> & UInt<value_size>::operator=(signed int i)
 	{
 		FromUInt(uint(i));
+
+		TTMATH_LOG("UInt64::operator=(signed int)")
 
 	return *this;
 	}
@@ -127,6 +133,8 @@ namespace ttmath
 	UInt<value_size>::UInt(signed int i)
 	{
 		FromUInt(uint(i));
+
+		TTMATH_LOG("UInt64::UInt(signed int)")
 	}
 
 
@@ -189,6 +197,8 @@ namespace ttmath
 		// cleaning the rest of the mantissa
 		for( ; i >= 0 ; --i)
 			table[i] = 0;
+
+		TTMATH_LOG("UInt64::SetFromTable")
 	}
 
 
@@ -249,7 +259,7 @@ namespace ttmath
 
 		#endif
 
-
+		TTMATH_LOG("UInt64::Add")
 	
 	return c;
 	}
@@ -320,6 +330,7 @@ namespace ttmath
 
 		#endif
 
+		TTMATH_LOG("UInt64::AddInt")
 	
 	return c;
 	}
@@ -405,7 +416,8 @@ namespace ttmath
 
 		#endif
 
-	
+		TTMATH_LOG("UInt64::AddTwoInts")
+
 	return c;
 	}
 
@@ -467,6 +479,7 @@ namespace ttmath
 
 		#endif
 
+		TTMATH_LOG("UInt64::Sub")
 
 	return c;
 	}
@@ -534,7 +547,8 @@ namespace ttmath
 
 		#endif
 
-	
+		TTMATH_LOG("UInt64::SubInt")
+
 	return c;
 	}
 
@@ -592,6 +606,7 @@ namespace ttmath
 	
 		#endif
 
+		TTMATH_LOG("UInt64::Rcl2_one")
 
 	return c;
 	}
@@ -646,6 +661,7 @@ namespace ttmath
 
 		#endif
 
+		TTMATH_LOG("UInt64::Rcr2_one")
 
 	return c;
 	}
@@ -725,6 +741,7 @@ namespace ttmath
 
 		#endif
 
+		TTMATH_LOG("UInt64::Rcl2")
 
 	return c;
 	}
@@ -807,6 +824,7 @@ namespace ttmath
 
 		#endif
 
+		TTMATH_LOG("UInt64::Rcr2")
 
 	return c;
 	}

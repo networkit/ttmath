@@ -64,8 +64,8 @@
 */
 #define TTMATH_MAJOR_VER		0
 #define TTMATH_MINOR_VER		8
-#define TTMATH_REVISION_VER		3
-#define TTMATH_PRERELEASE_VER	0
+#define TTMATH_REVISION_VER		4
+#define TTMATH_PRERELEASE_VER	1
 
 
 /*!
@@ -404,6 +404,19 @@ namespace ttmath
 	#else
 		#define TTMATH_REFERENCE_ASSERT(expression)
 		#define TTMATH_ASSERT(expression)
+	#endif
+
+
+
+	#ifdef TTMATH_DEBUG_LOG
+
+		#define TTMATH_LOG(msg) \
+			PrintLog(msg, std::cout);		
+
+	#else
+
+		#define TTMATH_LOG(msg)
+
 	#endif
 
 

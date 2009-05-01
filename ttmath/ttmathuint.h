@@ -118,6 +118,14 @@ public:
 	}
 
 
+	void PrintLog(const char * msg, std::ostream & output) const
+	{
+		output << msg << std::endl;
+
+		for(uint i=0 ; i<value_size ; ++i)
+			output << " table[" << i << "]: " << table[i] << std::endl;
+	}
+
 
 	/*!
 		this method returns the size of the table
@@ -137,6 +145,8 @@ public:
 
 		for(uint i=0 ; i<value_size ; ++i)
 			table[i] = 0;
+
+		TTMATH_LOG("UInt::SetZero")
 	}
 
 
@@ -147,6 +157,8 @@ public:
 	{
 		SetZero();
 		table[0] = 1;
+
+		TTMATH_LOG("UInt::SetOne")
 	}
 
 
@@ -158,6 +170,8 @@ public:
 	{
 		for(uint i=0 ; i<value_size ; ++i)
 			table[i] = TTMATH_UINT_MAX_VALUE;
+
+		TTMATH_LOG("UInt::SetMax")
 	}
 
 
@@ -168,6 +182,8 @@ public:
 	void SetMin()
 	{
 		SetZero();
+
+		TTMATH_LOG("UInt::SetMin")
 	}
 
 
@@ -220,6 +236,9 @@ public:
 		// cleaning the rest of the mantissa
 		for( ; i>=0 ; --i)
 			table[i] = 0;
+
+
+		TTMATH_LOG("UInt32::SetFromTable")
 	}
 
 
@@ -326,7 +345,8 @@ public:
 
 		#endif
 
-	
+		TTMATH_LOG("UInt32::Add")
+
 	return c;
 	}
 
@@ -427,8 +447,9 @@ public:
 				: "cc", "memory" );
 
 		#endif
-
 	
+		TTMATH_LOG("UInt32::AddInt")
+
 	return c;
 	}
 
@@ -550,6 +571,7 @@ public:
 
 		#endif
 
+		TTMATH_LOG("UInt32::AddTwoInts")
 	
 	return c;
 	}
@@ -646,6 +668,7 @@ public:
 
 		#endif
 
+		TTMATH_LOG("UInt32::Sub")
 
 	return c;
 	}
@@ -745,7 +768,8 @@ public:
 				: "cc", "memory" );
 
 		#endif
-
+		
+		TTMATH_LOG("UInt32::SubInt")
 	
 	return c;
 	}
@@ -856,6 +880,7 @@ private:
 
 		#endif
 
+		TTMATH_LOG("UInt32::Rcl2_one")
 
 	return c;
 	}
@@ -931,6 +956,7 @@ private:
 
 		#endif
 
+		TTMATH_LOG("UInt32::Rcr2_one")
 
 	return c;
 	}
@@ -1056,6 +1082,7 @@ private:
 
 		#endif
 
+		TTMATH_LOG("UInt32::Rcl2")
 
 	return c;
 	}
@@ -1187,6 +1214,7 @@ private:
 
 		#endif
 
+		TTMATH_LOG("UInt32::Rcr2")
 
 	return c;
 	}
@@ -1234,6 +1262,8 @@ private:
 			for( ; first>=0 ; --first )
 				table[first] = mask;
 		}
+
+		TTMATH_LOG("UInt::RclMoveAllWords")
 	}
 	
 public:
@@ -1260,7 +1290,10 @@ public:
 			RclMoveAllWords(rest_bits, last_c, bits, c);
 
 		if( rest_bits == 0 )
+		{
+			TTMATH_LOG("UInt::Rcl")
 			return last_c;
+		}
 
 		// rest_bits is from 1 to TTMATH_BITS_PER_UINT-1 now
 		if( rest_bits == 1 )
@@ -1278,6 +1311,7 @@ public:
 			last_c = Rcl2(rest_bits, c);
 		}
 
+		TTMATH_LOG("UInt::Rcl")
 
 	return last_c;
 	}
@@ -1323,6 +1357,8 @@ private:
 			for( ; first<value_size ; ++first )
 				table[first] = mask;
 		}
+
+		TTMATH_LOG("UInt::RcrMoveAllWords")
 	}
 
 public:
@@ -1349,7 +1385,10 @@ public:
 			RcrMoveAllWords(rest_bits, last_c, bits, c);
 
 		if( rest_bits == 0 )
+		{
+			TTMATH_LOG("UInt::Rcr")
 			return last_c;
+		}
 
 		// rest_bits is from 1 to TTMATH_BITS_PER_UINT-1 now
 		if( rest_bits == 1 )
@@ -1366,6 +1405,8 @@ public:
 		{
 			last_c = Rcr2(rest_bits, c);
 		}
+
+		TTMATH_LOG("UInt::Rcr")
 
 	return last_c;
 	}
@@ -1386,6 +1427,7 @@ public:
 		if( a < 0 )
 		{
 			// there's a value zero
+			TTMATH_LOG("UInt::CompensationToLeft")
 			return moving;
 		}
 
@@ -1409,6 +1451,8 @@ public:
 
 		moving2 = TTMATH_BITS_PER_UINT - moving2 - 1;
 		Rcl(moving2);
+
+		TTMATH_LOG("UInt::CompensationToLeft")
 
 	return moving + moving2;
 	}
@@ -1456,7 +1500,6 @@ public:
 
 		#endif
 
-
 	return result;
 	}
 
@@ -1484,11 +1527,15 @@ public:
 			// is zero
 			index = 0;
 
+			TTMATH_LOG("UInt::FindLeadingBit")
+
 		return false;
 		}
 		
 		// table[table_id] != 0
 		index = FindLeadingBitInWord( table[table_id] );
+
+		TTMATH_LOG("UInt::FindLeadingBit")
 
 	return true;
 	}
@@ -1572,8 +1619,11 @@ public:
 		uint bit   = bit_index % TTMATH_BITS_PER_UINT;
 
 		uint temp = table[index];
-	
-	return SetBitInWord(temp, bit);
+		uint res  = SetBitInWord(temp, bit);
+
+		TTMATH_LOG("UInt::GetBit")
+
+	return res;
 	}
 
 
@@ -1589,8 +1639,11 @@ public:
 
 		uint index = bit_index / TTMATH_BITS_PER_UINT;
 		uint bit   = bit_index % TTMATH_BITS_PER_UINT;
+		uint res   = SetBitInWord(table[index], bit);
 
-	return SetBitInWord(table[index], bit);
+		TTMATH_LOG("UInt::SetBit")
+
+	return res;
 	}
 
 
@@ -1601,6 +1654,8 @@ public:
 	{
 		for(uint x=0 ; x<value_size ; ++x)
 			table[x] &= ss2.table[x];
+
+		TTMATH_LOG("UInt::BitAnd")
 	}
 
 
@@ -1611,6 +1666,8 @@ public:
 	{
 		for(uint x=0 ; x<value_size ; ++x)
 			table[x] |= ss2.table[x];
+
+		TTMATH_LOG("UInt::BitOr")
 	}
 
 
@@ -1621,6 +1678,8 @@ public:
 	{
 		for(uint x=0 ; x<value_size ; ++x)
 			table[x] ^= ss2.table[x];
+
+		TTMATH_LOG("UInt::BitXor")
 	}
 
 
@@ -1631,6 +1690,8 @@ public:
 	{
 		for(uint x=0 ; x<value_size ; ++x)
 			table[x] = ~table[x];
+
+		TTMATH_LOG("UInt::BitNot")
 	}
 
 
@@ -1660,6 +1721,9 @@ public:
 		}
 		else
 			table[0] = 1;
+
+
+		TTMATH_LOG("UInt::BitNot2")
 	}
 
 
@@ -1773,6 +1837,8 @@ public:
 			}
 		}
 
+		TTMATH_LOG("UInt::MulInt(uint)")
+
 	return 0;
 	}
 
@@ -1802,7 +1868,10 @@ public:
 			for(x1size=value_size ; x1size>0 && table[x1size-1]==0 ; --x1size);
 
 			if( x1size==0 )
+			{
+				TTMATH_LOG("UInt::MulInt(uint, UInt<>)")
 				return 0;
+			}
 
 			for(x1start=0 ; x1start<x1size && table[x1start]==0 ; ++x1start);
 		}
@@ -1812,6 +1881,9 @@ public:
 			MulTwoWords(table[x1], ss2, &r2, &r1 );
 			result.AddTwoInts(r2,r1,x1);
 		}
+
+
+		TTMATH_LOG("UInt::MulInt(uint, UInt<>)")
 
 	return 0;
 	}
@@ -1877,12 +1949,20 @@ public:
 		for(uint i=0; i < value_size*TTMATH_BITS_PER_UINT ; ++i)
 		{
 			if( Add(*this) )
+			{
+				TTMATH_LOG("UInt::Mul1")
 				return 1;
+			}
 
 			if( ss1.Rcl(1) )
 				if( Add(ss2) )
+				{
+					TTMATH_LOG("UInt::Mul1")
 					return 1;
+				}
 		}
+
+		TTMATH_LOG("UInt::Mul1")
 
 	return 0;
 	}
@@ -1916,6 +1996,8 @@ public:
 		// multiply
 		// (there will not be a carry)
 		result.Mul1( ss2 );
+
+		TTMATH_LOG("UInt::Mul1Big")
 	}
 
 
@@ -1947,6 +2029,8 @@ public:
 			if( result.table[i] != 0 )
 				return 1;
 
+		TTMATH_LOG("UInt::Mul2")
+
 	return 0;
 	}
 
@@ -1974,7 +2058,10 @@ public:
 			for(x2size=value_size ; x2size>0 && ss2.table[x2size-1]==0 ; --x2size);
 
 			if( x1size==0 || x2size==0 )
+			{
+				TTMATH_LOG("UInt::Mul2Big")
 				return;
+			}
 
 			for(x1start=0 ; x1start<x1size && table[x1start]==0 ; ++x1start);
 			for(x2start=0 ; x2start<x2size && ss2.table[x2start]==0 ; ++x2start);
@@ -1989,6 +2076,8 @@ public:
 				// here will never be a carry
 			}
 		}
+
+		TTMATH_LOG("UInt::Mul2Big")
 	}
 
 
@@ -2060,6 +2149,7 @@ public:
 
 		*r = r_;
 		*rest = rest_;
+
 	}
 
 #endif
@@ -2075,6 +2165,8 @@ public:
 		{
 			if( remainder )
 				*remainder = 0;
+
+			TTMATH_LOG("UInt::DivInt")
 
 		return 0;
 		}
@@ -2093,6 +2185,8 @@ public:
 
 		if( remainder )
 			*remainder = r;
+
+		TTMATH_LOG("UInt::DivInt")
 
 	return 0;
 	}
@@ -2157,6 +2251,7 @@ private:
 				remainder->SetZero();
 
 			SetOne();
+			TTMATH_LOG("UInt::Div_StandardTest")
 			return 0;
 
 		case 3: // 'this' is smaller than v
@@ -2164,6 +2259,7 @@ private:
 				*remainder = *this;
 
 			SetZero();
+			TTMATH_LOG("UInt::Div_StandardTest")
 			return 0;
 
 		case 2: // 'this' is zero
@@ -2171,11 +2267,15 @@ private:
 				remainder->SetZero();
 
 			SetZero();
+			TTMATH_LOG("UInt::Div_StandardTest")
 			return 0;
 
 		case 1: // v is zero
+			TTMATH_LOG("UInt::Div_StandardTest")
 			return 1;
 		}
+
+		TTMATH_LOG("UInt::Div_StandardTest")
 
 	return 2;
 	}
@@ -2282,6 +2382,7 @@ private:
 			goto div_a;
 
 		c = Rcl(1, c);
+		TTMATH_LOG("UInt::Div1_Calculate")
 		return 0;
 
 
@@ -2301,6 +2402,8 @@ private:
 
 		c = Rcl(1, c);
 		c = rest.Add(divisor);
+
+		TTMATH_LOG("UInt::Div1_Calculate")
 
 	return 0;
 	}
@@ -2339,6 +2442,8 @@ public:
 			SetBit(bits_diff);
 		}
 
+		TTMATH_LOG("UInt::Div2")
+
 	return 0;
 	}
 
@@ -2369,7 +2474,10 @@ private:
 													divisor_table_id, divisor_index);
 
 		if( status < 2 )
+		{
+			TTMATH_LOG("UInt::Div2_Calculate")
 			return status;
+		}
 		
 		// here we know that 'this' is greater than divisor
 		// then 'index' is greater or equal 'divisor_index'
@@ -2385,6 +2493,8 @@ private:
 		}
 
 		Sub(divisor_copy, 0);
+
+		TTMATH_LOG("UInt::Div2_Calculate")
 
 	return 2;
 	}
@@ -2402,8 +2512,11 @@ private:
 										uint & divisor_table_id, uint & divisor_index)
 	{
 		if( !divisor.FindLeadingBit(divisor_table_id, divisor_index) )
+		{
 			// division by zero
+			TTMATH_LOG("UInt::Div2_FindLeadingBitsAndCheck")
 			return 1;
+		}
 
 		if(	!FindLeadingBit(table_id, index) )
 		{
@@ -2413,6 +2526,8 @@ private:
 
 			if( remainder )
 				remainder->SetZero();
+
+			TTMATH_LOG("UInt::Div2_FindLeadingBitsAndCheck")
 
 		return 0;
 		}
@@ -2433,6 +2548,8 @@ private:
 				remainder->table[0] = r;
 			}
 
+			TTMATH_LOG("UInt::Div2_FindLeadingBitsAndCheck")
+
 		return 0;
 		}
 	
@@ -2440,8 +2557,13 @@ private:
 		if( Div2_DivisorGreaterOrEqual(	divisor, remainder,
 										table_id, index,
 										divisor_table_id, divisor_index) )
+		{
+			TTMATH_LOG("UInt::Div2_FindLeadingBitsAndCheck")
 			return 0;
+		}
 
+
+		TTMATH_LOG("UInt::Div2_FindLeadingBitsAndCheck")
 
 	return 2;
 	}
@@ -2465,6 +2587,8 @@ private:
 
 			SetZero();
 
+			TTMATH_LOG("UInt::Div2_DivisorGreaterOrEqual")
+
 		return true;
 		}
 
@@ -2484,6 +2608,8 @@ private:
 
 				SetZero();
 
+				TTMATH_LOG("UInt::Div2_DivisorGreaterOrEqual")
+
 			return true;
 			}
 			else
@@ -2496,9 +2622,13 @@ private:
 
 				SetOne();
 
+				TTMATH_LOG("UInt::Div2_DivisorGreaterOrEqual")
+
 			return true;
 			}
 		}
+
+		TTMATH_LOG("UInt::Div2_DivisorGreaterOrEqual")
 
 	return false;
 	}
@@ -2534,6 +2664,8 @@ public:
 				remainder->table[0] = r;
 			}
 
+			TTMATH_LOG("UInt::Div3")
+
 		return 0;
 		}
 
@@ -2544,6 +2676,8 @@ public:
 		++n;
 		m = m - n; 
 		Div3_Division(v, remainder, m, n);
+
+		TTMATH_LOG("UInt::Div3")
 
 	return 0;
 	}
@@ -2599,6 +2733,8 @@ private:
 			Div3_Unnormalize(remainder, n, d);
 
 	*this = q;
+
+	TTMATH_LOG("UInt::Div3_Division")
 	}
 
 
@@ -2615,6 +2751,8 @@ private:
 
 		for( ++i ; i<value_size+1 ; ++i)
 			uu.table[i] = 0;
+
+		TTMATH_LOG("UInt::Div3_MakeNewU")
 	}
 
 
@@ -2627,6 +2765,8 @@ private:
 
 		if( i+j < value_size )
 			table[i+j] = uu.table[i];
+
+		TTMATH_LOG("UInt::Div3_CopyNewU")
 	}
 
 
@@ -2640,6 +2780,8 @@ private:
 			vv.table[i] = v.table[i];
 
 		vv.table[value_size] = 0;
+
+		TTMATH_LOG("UInt::Div3_MakeBiggerV")
 	}
 	
 
@@ -2672,6 +2814,8 @@ private:
 			res = 0;
 		}
 
+		TTMATH_LOG("UInt::Div3_Normalize")
+
 	return res;
 	}
 
@@ -2684,6 +2828,8 @@ private:
 		Rcr(d,0);
 
 		*remainder = *this;
+
+		TTMATH_LOG("UInt::Div3_Unnormalize")
 	}
 
 
@@ -2731,6 +2877,7 @@ private:
 		}
 		while( next_test );
 
+		TTMATH_LOG("UInt::Div3_Calculate")
 
 	return u_temp.table[0];
 	}
@@ -2754,6 +2901,8 @@ private:
 			--qp;
 			uu.Add(vv);
 		}
+
+		TTMATH_LOG("UInt::Div3_MultiplySubtract")
 	}
 
 
@@ -2787,17 +2936,25 @@ public:
 		{
 			if( pow.table[0] & 1 )
 				if( result.Mul(start) )
+				{
+					TTMATH_LOG("UInt::Pow(UInt<>)")
 					return 1;
+				}
 
 			start_temp = start;
 			// in the second Mul algorithm we can use start.Mul(start) directly (there is no TTMATH_ASSERT_REFERENCE there)
 			if( start.Mul(start_temp) )
+			{
+				TTMATH_LOG("UInt::Pow(UInt<>)")
 				return 1;
+			}
 
 			pow.Rcr2_one(0);
 		}
 
 		*this = result;
+
+		TTMATH_LOG("UInt::Pow(UInt<>)")
 
 	return 0;
 	}
@@ -2815,6 +2972,7 @@ public:
 		if( n >= value_size*TTMATH_BITS_PER_UINT )
 		{
 			SetZero();
+			TTMATH_LOG("UInt::ClearFirstBits")
 			return;
 		}
 
@@ -2828,7 +2986,10 @@ public:
 		}
 
 		if( n == 0 )
+		{
+			TTMATH_LOG("UInt::ClearFirstBits")
 			return;
+		}
 
 		// and then we're clearing one word which has left
 		// mask -- all bits are set to one
@@ -2837,6 +2998,8 @@ public:
 		mask = mask << n;
 
 		(*p) &= mask;
+
+		TTMATH_LOG("UInt::ClearFirstBits")
 	}
 
 
@@ -2986,8 +3149,13 @@ public:
 		{
 			for( ; i<argument_size ; ++i)
 				if( p.table[i] != 0 )
+				{
+					TTMATH_LOG("UInt::FromUInt(UInt<>)")
 					return 1;
+				}
 		}
+
+		TTMATH_LOG("UInt::FromUInt(UInt<>)")
 
 	return 0;
 	}
@@ -3002,6 +3170,8 @@ public:
 			table[i] = 0;
 
 		table[0] = value;
+
+		TTMATH_LOG("UInt::FromUInt(uint)")
 	}
 
 
@@ -3015,6 +3185,8 @@ public:
 	{
 		FromUInt(p);
 
+		TTMATH_LOG("UInt::operator=(UInt<argument_size>)")
+
 		return *this;
 	}
 
@@ -3024,6 +3196,8 @@ public:
 	UInt<value_size> & operator=(const UInt<value_size> & p)
 	{
 		FromUInt(p);
+
+		TTMATH_LOG("UInt::operator=(UInt<>)")
 
 		return *this;
 	}
@@ -3036,6 +3210,8 @@ public:
 	{
 		FromUInt(i);
 
+		TTMATH_LOG("UInt::operator=(uint)")
+
 	return *this;
 	}
 
@@ -3046,6 +3222,8 @@ public:
 	UInt(uint i)
 	{
 		FromUInt(i);
+
+		TTMATH_LOG("UInt::UInt(uint)")
 	}
 
 
@@ -3066,6 +3244,8 @@ public:
 	{
 		FromUInt(uint(i));
 
+		TTMATH_LOG("UInt::operator=(sint)")
+
 	return *this;
 	}
 
@@ -3078,6 +3258,8 @@ public:
 	UInt(sint i)
 	{
 		FromUInt(uint(i));
+
+		TTMATH_LOG("UInt::UInt(sint)")
 	}
 
 	/*!
@@ -3086,6 +3268,8 @@ public:
 	UInt(const char * s)
 	{
 		FromString(s);
+
+		TTMATH_LOG("UInt::UInt(const char *)")
 	}
 
 
@@ -3113,6 +3297,8 @@ public:
 	UInt(const UInt<value_size> & u)
 	{
 		FromUInt(u);
+
+		TTMATH_LOG("UInt::UInt(UInt<>)")
 	}
 
 
@@ -3125,6 +3311,8 @@ public:
 	{
 		// look that 'size' we still set as 'value_size' and not as u.value_size
 		FromUInt(u);
+
+		TTMATH_LOG("UInt::UInt(UInt<argument_size>)")
 	}
 
 
@@ -3243,6 +3431,7 @@ public:
 		if( after_source )
 			*after_source = s;
 
+		TTMATH_LOG("UInt::FromString")
 
 	return (c==0)? 0 : 1;
 	}
@@ -3267,6 +3456,8 @@ public:
 	UInt<value_size> & operator=(const char * s)
 	{
 		FromString(s);
+
+		TTMATH_LOG("UInt::operator=(const char *)")
 
 	return *this;
 	}
@@ -3493,6 +3684,8 @@ public:
 	{
 		Sub(p2);
 
+		TTMATH_LOG("UInt::operator-=")
+
 	return *this;
 	}
 
@@ -3508,6 +3701,8 @@ public:
 	UInt<value_size> & operator+=(const UInt<value_size> & p2)
 	{
 		Add(p2);
+
+		TTMATH_LOG("UInt::operator+=")
 
 	return *this;
 	}
@@ -3527,6 +3722,8 @@ public:
 	{
 		Mul(p2);
 
+		TTMATH_LOG("UInt::operator*=")
+
 	return *this;
 	}
 
@@ -3544,6 +3741,8 @@ public:
 	UInt<value_size> & operator/=(const UInt<value_size> & p2)
 	{
 		Div(p2);
+
+		TTMATH_LOG("UInt::operator/=")
 
 	return *this;
 	}
@@ -3569,6 +3768,8 @@ public:
 
 		operator=(remainder);
 
+		TTMATH_LOG("UInt::operator%=")
+
 	return *this;
 	}
 
@@ -3579,6 +3780,8 @@ public:
 	UInt<value_size> & operator++()
 	{
 		AddOne();
+
+		TTMATH_LOG("UInt::operator++")
 
 	return *this;
 	}
@@ -3592,6 +3795,8 @@ public:
 
 		AddOne();
 
+		TTMATH_LOG("UInt::operator++(int)")
+
 	return temp;
 	}
 
@@ -3599,6 +3804,8 @@ public:
 	UInt<value_size> & operator--()
 	{
 		SubOne();
+
+		TTMATH_LOG("UInt::operator--")
 
 	return *this;
 	}
@@ -3609,6 +3816,8 @@ public:
 	UInt<value_size> temp( *this );
 
 		SubOne();
+
+		TTMATH_LOG("UInt::operator--(int)")
 
 	return temp;
 	}
@@ -3659,6 +3868,8 @@ public:
 		s.unget();
 
 		l.FromString(ss);
+
+		TTMATH_LOG("UInt::operator>>")
 
 	return s;
 	}
