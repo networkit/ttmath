@@ -1,9 +1,23 @@
-Version 0.8.4 prerelease (2009.05.01):
+Version 0.8.4 prerelease (2009.05.04):
+    * fixed:   UInt::DivInt() didn't check whether the divisor is zero
+               there was a hardware interruption when the divisor was zero
+               (now the method returns one)
 	* added:   UInt::PrintLog(const char * msg, std::ostream & output)
-               used for debugging purposes by macro TTMATH_LOG(msg)
+               used (for debugging purposes) by macro TTMATH_LOG(msg)
                (it is used in nearly all methods in UInt class)
     * added:   macro TTMATH_DEBUG_LOG: when defined then TTMATH_LOG() 
                put some debug information (to std::cout)
+    * added:   ttmathuint_x86.h, ttmathuint_x86_64.h, ttmathuint_noasm.h, 
+               all the methods which are using assembler code have been 
+               rewritten to no-asm forms, now we have:
+               1. asm for x86      file: ttmathuint_x86.h
+               2. asm for x86_64   file: ttmathuint_x86_64.h
+               3. no asm           file: ttmathuint_noasm.h
+                  (it's used when macro TTMATH_NOASM is defined)
+               The third form can be used on x86 and x86_64 as well and
+               on other platforms with a little effort.
+               (Temporarily I left there some '#ifdef's for debugging.)
+                              
 
 Version 0.8.3 (2009.04.06):
     * fixed:   RclMoveAllWords() and RcrMoveAllWords() sometimes didn't return

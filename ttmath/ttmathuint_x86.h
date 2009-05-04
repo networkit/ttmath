@@ -37,12 +37,26 @@
 
 
 
+#ifndef headerfilettmathuint_x86
+#define headerfilettmathuint_x86
+
+
+#ifndef TTMATH_NOASM
+#ifdef TTMATH_PLATFORM32
+
+
 /*!
-	\file ttmathuint.h
-    \brief template class UInt<uint> for 64bit processors
+	\file ttmathuint_x86.h
+    \brief template class UInt<uint> with assembler code for 32bit x86 processors
+
+	this file is included at the end of ttmathuint.h
 */
 
 
+
+/*!
+    \brief a namespace for the TTMath library
+*/
 namespace ttmath
 {
 
@@ -52,226 +66,114 @@ namespace ttmath
 	*
 	*/
 
-#ifdef TTMATH_PLATFORM64
-
-
 
 	/*!
-		in 64bit platforms we must define additional operators and contructors
-		in order to allow a user initializing the objects in this way:
-			UInt<...> type = 20;
-		or
-			UInt<...> type; 
-			type = 30;
-
-		decimal constants such as 20, 30 etc. are integer literal of type int,
-		if the value is greater it can even be long int,
-		0 is an octal integer of type int
-		(ISO 14882 p2.13.1 Integer literals)
-	*/
-
-	/*!
-		this operator converts the unsigned int type to this class
-
-		***this operator is created only on a 64bit platform***
-		it takes one argument of 32bit
-	*/
-	template<uint value_size>
-	UInt<value_size> & UInt<value_size>::operator=(unsigned int i)
-	{
-		FromUInt(uint(i));
-
-		TTMATH_LOG("UInt64::operator=(unsigned int)")
-
-	return *this;
-	}
-
-
-	/*!
-		a constructor for converting the unsigned int to this class
-
-		***this constructor is created only on a 64bit platform***
-		it takes one argument of 32bit
-	*/
-	template<uint value_size>
-	UInt<value_size>::UInt(unsigned int i)
-	{
-		FromUInt(uint(i));
-
-		TTMATH_LOG("UInt64::UInt(unsigned int)")
-	}
-
-
-	/*!
-		an operator for converting the signed int to this class
-
-		***this constructor is created only on a 64bit platform***
-		it takes one argument of 32bit
-
-		look at the description of UInt::operator=(sint)
-	*/
-	template<uint value_size>
-	UInt<value_size> & UInt<value_size>::operator=(signed int i)
-	{
-		FromUInt(uint(i));
-
-		TTMATH_LOG("UInt64::operator=(signed int)")
-
-	return *this;
-	}
-
-
-	/*!
-		a constructor for converting the signed int to this class
-
-		***this constructor is created only on a 64bit platform***
-		it takes one argument of 32bit
-
-		look at the description of UInt::operator=(sint)
-	*/
-	template<uint value_size>
-	UInt<value_size>::UInt(signed int i)
-	{
-		FromUInt(uint(i));
-
-		TTMATH_LOG("UInt64::UInt(signed int)")
-	}
-
-
-
-	/*!
-		this method copies the value stored in an another table
-		(warning: first values in temp_table are the highest words -- it's different
-		from our table)
-
-		***this method is created only on a 64bit platform***
-
-		we copy as many words as it is possible
-		
-		if temp_table_len is bigger than value_size we'll try to round 
-		the lowest word from table depending on the last not used bit in temp_table
-		(this rounding isn't a perfect rounding -- look at the description below)
-
-		and if temp_table_len is smaller than value_size we'll clear the rest words
-		in the table
-
-		warning: we're using 'temp_table' as a pointer at 32bit words
-	*/
-	template<uint value_size>
-	void UInt<value_size>::SetFromTable(const unsigned int * temp_table, uint temp_table_len)
-	{
-		uint temp_table_index = 0;
-		sint i; // 'i' with a sign
-
-		for(i=value_size-1 ; i>=0 && temp_table_index<temp_table_len; --i, ++temp_table_index)
-		{
-			table[i] = uint(temp_table[ temp_table_index ]) << 32;
-
-			++temp_table_index;
-
-			if( temp_table_index<temp_table_len )
-				table[i] |= temp_table[ temp_table_index ];
-		}
-
-
-		// rounding mantissa
-		if( temp_table_index < temp_table_len )
-		{
-			if( (temp_table[temp_table_index] & TTMATH_UINT_HIGHEST_BIT) != 0 )
-			{
-				/*
-					very simply rounding
-					if the bit from not used last word from temp_table is set to one
-					we're rouding the lowest word in the table
-
-					in fact there should be a normal addition but
-					we don't use Add() or AddTwoInts() because these methods 
-					can set a carry and then there'll be a small problem
-					for optimization
-				*/
-				if( table[0] != TTMATH_UINT_MAX_VALUE )
-					++table[0];
-			}
-		}
-
-		// cleaning the rest of the mantissa
-		for( ; i >= 0 ; --i)
-			table[i] = 0;
-
-		TTMATH_LOG("UInt64::SetFromTable")
-	}
-
-
-
-	/*!
-		this method adding ss2 to the this and adding carry if it's defined
+		adding ss2 to the this and adding carry if it's defined
 		(this = this + ss2 + c)
 
-		***this method is created only on a 64bit platform***
-
 		c must be zero or one (might be a bigger value than 1)
-		function returns carry (1) (if it was)
+		function returns carry (1) (if it has been)
 	*/
 	template<uint value_size>
-	uint UInt<value_size>::Add(const UInt<value_size> & ss2, uint c)
+	uint UInt<value_size>::Add(const UInt<value_size> & ss2, uint c=0)
 	{
 	register uint b = value_size;
 	register uint * p1 = table;
 	register uint * p2 = const_cast<uint*>(ss2.table);
 
-
 		// we don't have to use TTMATH_REFERENCE_ASSERT here
 		// this algorithm doesn't require it
 
 		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
-		#endif
+			
+			//	this part might be compiled with for example visual c
+
+			__asm
+			{
+				push eax
+				push ebx
+				push ecx
+				push edx
+				push esi
+
+				mov ecx,[b]
+				
+				mov ebx,[p1]
+				mov esi,[p2]
+
+				xor eax,eax  // eax=0
+				mov edx,eax  // edx=0
+
+				sub eax,[c]  // CF=c
+
+			p:
+				mov eax,[esi+edx*4]
+				adc [ebx+edx*4],eax
+
+				inc edx
+				dec ecx
+			jnz p
+
+				setc al
+				movzx edx, al
+				mov [c], edx
+
+				pop esi
+				pop edx
+				pop ecx
+				pop ebx
+				pop eax
+			}
+
+
+
+		#endif		
+			
 
 		#ifdef __GNUC__
-			/*
-				this part should be compiled with gcc
-			*/
+			
+			//	this part should be compiled with gcc
+			
 			__asm__ __volatile__(
 			
-				"push %%rcx						\n"
+				"push %%ecx						\n"
 			
-				"xorq %%rax, %%rax				\n"
-				"movq %%rax, %%rdx				\n"
-				"subq %%rdi, %%rax				\n"
+				"xorl %%eax, %%eax				\n"
+				"movl %%eax, %%edx				\n"
+				"subl %%edi, %%eax				\n"
 
 
 			"1:									\n"
-				"movq (%%rsi,%%rdx,8),%%rax		\n"
-				"adcq %%rax, (%%rbx,%%rdx,8)	\n"
+				"movl (%%esi,%%edx,4),%%eax		\n"
+				"adcl %%eax, (%%ebx,%%edx,4)	\n"
 			
-				"incq %%rdx						\n"
-				"decq %%rcx						\n"
+				"incl %%edx						\n"
+				"decl %%ecx						\n"
 			"jnz 1b								\n"
 
 				"setc %%al						\n"
-				"movzx %%al,%%rdx				\n"
+				"movzx %%al,%%edx				\n"
 
-				"pop %%rcx						\n"
+				"pop %%ecx						\n"
 
 				: "=d" (c)
 				: "D" (c), "c" (b), "b" (p1), "S" (p2)
-				: "%rax", "cc", "memory" );
+				: "%eax", "cc", "memory" );
 
 		#endif
 
-		TTMATH_LOG("UInt64::Add")
-	
+		TTMATH_LOG("UInt32::Add")
+
 	return c;
 	}
 
 
 
 	/*!
-		this method adds one word (at a specific position)
-		and returns a carry (if it was)
+		adding one word (at a specific position)
+		and returning a carry (if it has been)
 
-		***this method is created only on a 64bit platform***
-
+		e.g.
 
 		if we've got (value_size=3):
 			table[0] = 10;
@@ -284,10 +186,10 @@ namespace ttmath
 			table[1] = 30 + 2;
 			table[2] = 5;
 
-		of course if there was a carry from table[3] it would be returned
+		of course if there was a carry from table[2] it would be returned
 	*/
 	template<uint value_size>
-	uint UInt<value_size>::AddInt(uint value, uint index)
+	uint UInt<value_size>::AddInt(uint value, uint index = 0)
 	{
 	register uint b = value_size;
 	register uint * p1 = table;
@@ -296,53 +198,87 @@ namespace ttmath
 		TTMATH_ASSERT( index < value_size )
 
 		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
-		#endif
+
+			__asm
+			{
+				push eax
+				push ebx
+				push ecx
+				push edx
+
+				mov ecx, [b]
+				sub ecx, [index]				
+
+				mov edx, [index]
+				mov ebx, [p1]
+
+				mov eax, [value]
+
+			p:
+				add [ebx+edx*4], eax
+			jnc end
+
+				mov eax, 1
+				inc edx
+				dec ecx
+			jnz p
+
+			end:
+				setc al
+				movzx edx, al
+				mov [c], edx
+
+				pop edx
+				pop ecx
+				pop ebx
+				pop eax
+			}
+
+		#endif		
+			
 
 		#ifdef __GNUC__
-
 			__asm__ __volatile__(
+			
+				"push %%eax						\n"
+				"push %%ecx						\n"
 
-				"push %%rax						\n"
-				"push %%rcx						\n"
-
-				"subq %%rdx, %%rcx 				\n"
+				"subl %%edx, %%ecx 				\n"
 
 			"1:									\n"
-				"addq %%rax, (%%rbx,%%rdx,8)	\n"
+				"addl %%eax, (%%ebx,%%edx,4)	\n"
 			"jnc 2f								\n"
 				
-				"movq $1, %%rax					\n"
-				"incq %%rdx						\n"
-				"decq %%rcx						\n"
+				"movl $1, %%eax					\n"
+				"incl %%edx						\n"
+				"decl %%ecx						\n"
 			"jnz 1b								\n"
 
 			"2:									\n"
 				"setc %%al						\n"
-				"movzx %%al, %%rdx				\n"
+				"movzx %%al, %%edx				\n"
 
-				"pop %%rcx						\n"
-				"pop %%rax						\n"
+				"pop %%ecx						\n"
+				"pop %%eax						\n"
 
 				: "=d" (c)
 				: "a" (value), "c" (b), "0" (index), "b" (p1)
 				: "cc", "memory" );
 
 		#endif
-
-		TTMATH_LOG("UInt64::AddInt")
 	
+		TTMATH_LOG("UInt32::AddInt")
+
 	return c;
 	}
 
 
 
+
 	/*!
-		this method adds only two unsigned words to the existing value
+		adding only two unsigned words to the existing value
 		and these words begin on the 'index' position
 		(it's used in the multiplication algorithm 2)
-
-		***this method is created only on a 64bit platform***
 
 		index should be equal or smaller than value_size-2 (index <= value_size-2)
 		x1 - lower word, x2 - higher word
@@ -379,36 +315,76 @@ namespace ttmath
 		TTMATH_ASSERT( index < value_size - 1 )
 
 		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
-		#endif
+			__asm
+			{
+				push eax
+				push ebx
+				push ecx
+				push edx
+
+				mov ecx, [b]
+				sub ecx, [index]				
+
+				mov ebx, [p1]
+				mov edx, [index]
+
+				mov eax, [x1]
+				add [ebx+edx*4], eax
+				inc edx
+				dec ecx
+
+				mov eax, [x2]
+			
+			p:
+				adc [ebx+edx*4], eax
+			jnc end
+
+				mov eax, 0
+				inc edx
+				dec ecx
+			jnz p
+
+			end:
+				setc al
+				movzx edx, al
+				mov [c], edx
+				
+				pop edx
+				pop ecx
+				pop ebx
+				pop eax
+
+			}
+		#endif		
+			
 
 		#ifdef __GNUC__
 			__asm__ __volatile__(
 			
-				"push %%rcx						\n"
-				"push %%rdx						\n"
+				"push %%ecx						\n"
+				"push %%edx						\n"
 
-				"subq %%rdx, %%rcx 				\n"
+				"subl %%edx, %%ecx 				\n"
 				
-				"addq %%rsi, (%%rbx,%%rdx,8) 	\n"
-				"incq %%rdx						\n"
-				"decq %%rcx						\n"
+				"addl %%esi, (%%ebx,%%edx,4) 	\n"
+				"incl %%edx						\n"
+				"decl %%ecx						\n"
 
 			"1:									\n"
-				"adcq %%rax, (%%rbx,%%rdx,8)	\n"
+				"adcl %%eax, (%%ebx,%%edx,4)	\n"
 			"jnc 2f								\n"
 
-				"mov $0, %%rax					\n"
-				"incq %%rdx						\n"
-				"decq %%rcx						\n"
+				"mov $0, %%eax					\n"
+				"incl %%edx						\n"
+				"decl %%ecx						\n"
 			"jnz 1b								\n"
 
 			"2:									\n"
 				"setc %%al						\n"
-				"movzx %%al, %%rax				\n"
+				"movzx %%al, %%eax				\n"
 
-				"pop %%rdx						\n"
-				"pop %%rcx						\n"
+				"pop %%edx						\n"
+				"pop %%ecx						\n"
 
 				: "=a" (c)
 				: "c" (b), "d" (index), "b" (p1), "S" (x1), "0" (x2)
@@ -416,8 +392,8 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt64::AddTwoInts")
-
+		TTMATH_LOG("UInt32::AddTwoInts")
+	
 	return c;
 	}
 
@@ -426,17 +402,15 @@ namespace ttmath
 
 
 	/*!
-		this method's subtracting ss2 from the 'this' and subtracting
+		subtracting ss2 from the 'this' and subtracting
 		carry if it has been defined
 		(this = this - ss2 - c)
 
-		***this method is created only on a 64bit platform***
-
 		c must be zero or one (might be a bigger value than 1)
-		function returns carry (1) (if it was)
+		function returns carry (1) (if it has been)
 	*/
 	template<uint value_size>
-	uint UInt<value_size>::Sub(const UInt<value_size> & ss2, uint c)
+	uint UInt<value_size>::Sub(const UInt<value_size> & ss2, uint c=0)
 	{
 	register uint b = value_size;
 	register uint * p1 = table;
@@ -446,50 +420,89 @@ namespace ttmath
 		// this algorithm doesn't require it
 
 		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+
+			__asm
+			{
+				push eax
+				push ebx
+				push ecx
+				push edx
+				push esi
+
+				mov ecx,[b]
+				
+				mov ebx,[p1]
+				mov esi,[p2]
+
+				xor eax, eax
+				mov edx, eax
+
+				sub eax, [c]
+
+			p:
+				mov eax, [esi+edx*4]
+				sbb [ebx+edx*4], eax
+
+				inc edx
+				dec ecx
+			jnz p
+
+				setc al
+				movzx edx, al
+				mov [c], edx
+
+				pop esi
+				pop edx
+				pop ecx
+				pop ebx
+				pop eax
+			}
+
 		#endif
+
 
 		#ifdef __GNUC__
 			__asm__  __volatile__(
 			
-				"push %%rcx						\n"
+				"push %%ecx						\n"
 			
-				"xorq %%rax, %%rax				\n"
-				"movq %%rax, %%rdx				\n"
-				"subq %%rdi, %%rax				\n"
+				"xorl %%eax, %%eax				\n"
+				"movl %%eax, %%edx				\n"
+				"subl %%edi, %%eax				\n"
 
 
 			"1:									\n"
-				"movq (%%rsi,%%rdx,8),%%rax		\n"
-				"sbbq %%rax, (%%rbx,%%rdx,8)	\n"
+				"movl (%%esi,%%edx,4),%%eax		\n"
+				"sbbl %%eax, (%%ebx,%%edx,4)	\n"
 			
-				"incq %%rdx						\n"
-				"decq %%rcx						\n"
+				"incl %%edx						\n"
+				"decl %%ecx						\n"
 			"jnz 1b								\n"
 
 				"setc %%al						\n"
-				"movzx %%al,%%rdx				\n"
+				"movzx %%al,%%edx				\n"
 
-				"pop %%rcx						\n"
+				"pop %%ecx						\n"
 
 				: "=d" (c)
 				: "D" (c), "c" (b), "b" (p1), "S" (p2)
-				: "%rax", "cc", "memory" );
-
+				: "%eax", "cc", "memory" );
 
 		#endif
 
-		TTMATH_LOG("UInt64::Sub")
+		TTMATH_LOG("UInt32::Sub")
 
 	return c;
 	}
+
+
 
 
 	/*!
 		this method subtracts one word (at a specific position)
 		and returns a carry (if it was)
 
-		***this method is created only on a 64bit platform***
+		e.g.
 
 		if we've got (value_size=3):
 			table[0] = 10;
@@ -505,7 +518,7 @@ namespace ttmath
 		of course if there was a carry from table[3] it would be returned
 	*/
 	template<uint value_size>
-	uint UInt<value_size>::SubInt(uint value, uint index)
+	uint UInt<value_size>::SubInt(uint value, uint index = 0)
 	{
 	register uint b = value_size;
 	register uint * p1 = table;
@@ -514,43 +527,78 @@ namespace ttmath
 		TTMATH_ASSERT( index < value_size )
 
 		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
-		#endif
+			__asm
+			{
+				push eax
+				push ebx
+				push ecx
+				push edx
+
+				mov ecx, [b]
+				sub ecx, [index]				
+
+				mov edx, [index]
+				mov ebx, [p1]
+
+				mov eax, [value]
+
+			p:
+				sub [ebx+edx*4], eax
+			jnc end
+
+				mov eax, 1
+				inc edx
+				dec ecx
+			jnz p
+
+			end:
+				setc al
+				movzx edx, al
+				mov [c], edx
+
+				pop edx
+				pop ecx
+				pop ebx
+				pop eax
+			}
+		#endif		
+			
 
 		#ifdef __GNUC__
 			__asm__ __volatile__(
 			
-				"push %%rax						\n"
-				"push %%rcx						\n"
+				"push %%eax						\n"
+				"push %%ecx						\n"
 
-				"subq %%rdx, %%rcx 				\n"
+				"subl %%edx, %%ecx 				\n"
 
 			"1:									\n"
-				"subq %%rax, (%%rbx,%%rdx,8)	\n"
+				"subl %%eax, (%%ebx,%%edx,4)	\n"
 			"jnc 2f								\n"
 				
-				"movq $1, %%rax					\n"
-				"incq %%rdx						\n"
-				"decq %%rcx						\n"
+				"movl $1, %%eax					\n"
+				"incl %%edx						\n"
+				"decl %%ecx						\n"
 			"jnz 1b								\n"
 
 			"2:									\n"
 				"setc %%al						\n"
-				"movzx %%al, %%rdx				\n"
+				"movzx %%al, %%edx				\n"
 
-				"pop %%rcx						\n"
-				"pop %%rax						\n"
+				"pop %%ecx						\n"
+				"pop %%eax						\n"
 
 				: "=d" (c)
 				: "a" (value), "c" (b), "0" (index), "b" (p1)
 				: "cc", "memory" );
 
 		#endif
-
-		TTMATH_LOG("UInt64::SubInt")
-
+		
+		TTMATH_LOG("UInt32::SubInt")
+	
 	return c;
 	}
+
 
 
 	/*!
@@ -564,8 +612,6 @@ namespace ttmath
 		for example:
 		let this is 001010000
 		after Rcl2_one(1) there'll be 010100001 and Rcl2_one returns 0
-	
-		***this method is created only on a 64bit platform***
 	*/
 	template<uint value_size>
 	uint UInt<value_size>::Rcl2_one(uint c)
@@ -573,43 +619,73 @@ namespace ttmath
 	register sint b = value_size;
 	register uint * p1 = table;
 
-
 		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+			__asm
+			{
+				push ebx
+				push ecx
+				push edx
+
+				mov ebx, [p1]
+
+				xor edx, edx
+				mov ecx, edx
+				sub ecx, [c]
+
+				mov ecx, [b]
+
+			p:
+				rcl dword ptr [ebx+edx*4], 1
+				
+				inc edx
+				dec ecx
+			jnz p
+
+				setc dl
+				movzx edx, dl
+				mov [c], edx
+
+				
+				pop edx
+				pop ecx
+				pop ebx
+			}
 		#endif
+
 
 		#ifdef __GNUC__
 		__asm__  __volatile__(
-		
-			"push %%rdx					\n"
-			"push %%rcx					\n"
 
-			"xorq %%rdx, %%rdx			\n"   // rdx=0
-			"neg %%rax					\n"   // CF=1 if rax!=0 , CF=0 if rax==0
+			"push %%edx					\n"
+			"push %%ecx					\n"
+
+			"xorl %%edx, %%edx			\n"   // edx=0
+			"neg %%eax					\n"   // CF=1 if eax!=0 , CF=0 if eax==0
 
 		"1:								\n"
-			"rclq $1, (%%rbx, %%rdx, 8)	\n"
+			"rcll $1, (%%ebx, %%edx, 4)	\n"
 
-			"incq %%rdx					\n"
-			"decq %%rcx					\n"
+			"incl %%edx					\n"
+			"decl %%ecx					\n"
 		"jnz 1b							\n"
 
 			"setc %%al					\n"
-			"movzx %%al, %%rax			\n"
+			"movzx %%al, %%eax			\n"
 
-			"pop %%rcx					\n"
-			"pop %%rdx					\n"
+			"pop %%ecx					\n"
+			"pop %%edx					\n"
 
 			: "=a" (c)
 			: "0" (c), "c" (b), "b" (p1)
 			: "cc", "memory" );
-	
+
 		#endif
 
-		TTMATH_LOG("UInt64::Rcl2_one")
+		TTMATH_LOG("UInt32::Rcl2_one")
 
 	return c;
 	}
+
 
 
 	/*!
@@ -623,8 +699,6 @@ namespace ttmath
 		for example:
 		let this is 000000010
 		after Rcr2_one(1) there'll be 100000001 and Rcr2_one returns 0
-
-		***this method is created only on a 64bit platform***
 	*/
 	template<uint value_size>
 	uint UInt<value_size>::Rcr2_one(uint c)
@@ -632,28 +706,52 @@ namespace ttmath
 	register sint b = value_size;
 	register uint * p1 = table;
 
-
 		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+			__asm
+			{
+				push ebx
+				push ecx
+
+				mov ebx, [p1]
+
+				xor ecx, ecx
+				sub ecx, [c]
+
+				mov ecx, [b]
+
+			p:
+				rcr dword ptr [ebx+ecx*4-4], 1
+				
+				dec ecx
+			jnz p
+
+				setc cl
+				movzx ecx, cl
+				mov [c], ecx
+
+				pop ecx
+				pop ebx
+			}
 		#endif
+
 
 		#ifdef __GNUC__
 		__asm__  __volatile__(
 
-			"push %%rcx						\n"
+			"push %%ecx						\n"
 
-			"neg %%rax						\n"   // CF=1 if rax!=0 , CF=0 if rax==0
+			"neg %%eax						\n"   // CF=1 if eax!=0 , CF=0 if eax==0
 
 		"1:									\n"
-			"rcrq $1, -8(%%rbx, %%rcx, 8)	\n"
+			"rcrl $1, -4(%%ebx, %%ecx, 4)	\n"
 
-			"decq %%rcx						\n"
+			"decl %%ecx						\n"
 		"jnz 1b								\n"
 
 			"setc %%al						\n"
-			"movzx %%al, %%rax				\n"
+			"movzx %%al, %%eax				\n"
 
-			"pop %%rcx						\n"
+			"pop %%ecx						\n"
 
 			: "=a" (c)
 			: "0" (c), "c" (b), "b" (p1)
@@ -661,7 +759,7 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt64::Rcr2_one")
+		TTMATH_LOG("UInt32::Rcr2_one")
 
 	return c;
 	}
@@ -679,61 +777,109 @@ namespace ttmath
 		for example:
 		let this is 001010000
 		after Rcl2(3, 1) there'll be 010000111 and Rcl2 returns 1
-	
-		***this method is created only on a 64bit platform***
 	*/
 	template<uint value_size>
 	uint UInt<value_size>::Rcl2(uint bits, uint c)
 	{
 	TTMATH_ASSERT( bits>0 && bits<TTMATH_BITS_PER_UINT )
-
+		
 	register sint b = value_size;
 	register uint * p1 = table;
 	register uint mask;
 
 		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+			__asm
+			{
+				push eax
+				push ebx
+				push ecx
+				push edx
+				push esi
+				push edi
+
+				mov edi, [b]
+
+				mov ecx, 32
+				sub ecx, [bits]
+				mov edx, -1
+				shr edx, cl
+				mov [mask], edx
+
+				mov ecx, [bits]
+				mov ebx, [p1]
+
+				xor edx, edx   // edx = 0
+				mov esi, edx   // old value = 0 
+
+				mov eax, [c]
+				or eax, eax
+				cmovnz esi, [mask] // if c then old value = mask
+
+		p:
+				rol dword ptr [ebx+edx*4], cl
+				
+				mov eax, [ebx+edx*4]
+				and eax, [mask] 
+				xor [ebx+edx*4], eax // clearing bits
+				or [ebx+edx*4], esi  // saving old value
+				mov esi, eax
+
+				inc edx
+				dec edi
+			jnz p
+
+				and eax, 1
+				mov [c], eax
+
+				pop edi
+				pop esi
+				pop edx
+				pop ecx
+				pop ebx
+				pop eax
+			}
 		#endif
+
 
 		#ifdef __GNUC__
 		__asm__  __volatile__(
-		
-			"push %%rdx						\n"
-			"push %%rsi						\n"
-			"push %%rdi						\n"
+
+			"push %%edx						\n"
+			"push %%esi						\n"
+			"push %%edi						\n"
 			
-			"movq %%rcx, %%rsi				\n"
-			"movq $64, %%rcx				\n"
-			"subq %%rsi, %%rcx				\n"
-			"movq $-1, %%rdx				\n"
-			"shrq %%cl, %%rdx				\n"
-			"movq %%rdx, %[amask] 			\n"
-			"movq %%rsi, %%rcx				\n"
+			"movl %%ecx, %%esi				\n"
+			"movl $32, %%ecx				\n"
+			"subl %%esi, %%ecx				\n"
+			"movl $-1, %%edx				\n"
+			"shrl %%cl, %%edx				\n"
+			"movl %%edx, %[amask]			\n"
+			"movl %%esi, %%ecx				\n"
 
-			"xorq %%rdx, %%rdx				\n"
-			"movq %%rdx, %%rsi				\n"
+			"xorl %%edx, %%edx				\n"
+			"movl %%edx, %%esi				\n"
 
-			"orq %%rax, %%rax				\n"
-			"cmovnz %[amask], %%rsi			\n"
+			"orl %%eax, %%eax				\n"
+			"cmovnz %[amask], %%esi			\n"
 
 		"1:									\n"
-			"rolq %%cl, (%%rbx,%%rdx,8)		\n"
+			"roll %%cl, (%%ebx,%%edx,4)		\n"
 
-			"movq (%%rbx,%%rdx,8), %%rax	\n"
-			"andq %[amask], %%rax			\n"
-			"xorq %%rax, (%%rbx,%%rdx,8)	\n"
-			"orq  %%rsi, (%%rbx,%%rdx,8)	\n"
-			"movq %%rax, %%rsi				\n"
+			"movl (%%ebx,%%edx,4), %%eax	\n"
+			"andl %[amask], %%eax			\n"
+			"xorl %%eax, (%%ebx,%%edx,4)	\n"
+			"orl  %%esi, (%%ebx,%%edx,4)	\n"
+			"movl %%eax, %%esi				\n"
 			
-			"incq %%rdx						\n"
-			"decq %%rdi						\n"
+			"incl %%edx						\n"
+			"decl %%edi						\n"
 		"jnz 1b								\n"
 			
-			"and $1, %%rax					\n"
+			"and $1, %%eax					\n"
 
-			"pop %%rdi						\n"
-			"pop %%rsi						\n"
-			"pop %%rdx						\n"
+			"pop %%edi						\n"
+			"pop %%esi						\n"
+			"pop %%edx						\n"
 
 			: "=a" (c)
 			: "0" (c), "D" (b), "b" (p1), "c" (bits), [amask] "m" (mask)
@@ -741,10 +887,12 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt64::Rcl2")
+		TTMATH_LOG("UInt32::Rcl2")
 
 	return c;
 	}
+
+
 
 
 	/*!
@@ -758,8 +906,6 @@ namespace ttmath
 		for example:
 		let this is 000000010
 		after Rcr2(2, 1) there'll be 110000000 and Rcr2 returns 1
-
-		***this method is created only on a 64bit platform***
 	*/
 	template<uint value_size>
 	uint UInt<value_size>::Rcr2(uint bits, uint c)
@@ -771,52 +917,104 @@ namespace ttmath
 	register uint mask;
 
 		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+			__asm
+			{
+				push eax
+				push ebx
+				push ecx
+				push edx
+				push esi
+				push edi
+
+				mov edi, [b]
+
+				mov ecx, 32
+				sub ecx, [bits]
+				mov edx, -1
+				shl edx, cl
+				mov [mask], edx
+
+				mov ecx, [bits]
+				mov ebx, [p1]
+
+				xor edx, edx   // edx = 0
+				mov esi, edx   // old value = 0 
+				add edx, edi   
+				dec edx        // edx - is pointing at the last word
+
+				mov eax, [c]
+				or eax, eax
+				cmovnz esi, [mask] // if c then old value = mask
+
+			p:
+				ror dword ptr [ebx+edx*4], cl
+				
+				mov eax, [ebx+edx*4]
+				and eax, [mask] 
+				xor [ebx+edx*4], eax // clearing bits
+				or [ebx+edx*4], esi  // saving old value
+				mov esi, eax
+
+				dec edx
+				dec edi
+			jnz p
+
+				rol eax, 1    // 31bit will be first
+				and eax, 1  
+				mov [c], eax
+
+				pop edi
+				pop esi
+				pop edx
+				pop ecx
+				pop ebx
+				pop eax
+			}
 		#endif
 
 
 		#ifdef __GNUC__
 			__asm__  __volatile__(
 
-			"push %%rdx						\n"
-			"push %%rsi						\n"
-			"push %%rdi						\n"
+			"push %%edx						\n"
+			"push %%esi						\n"
+			"push %%edi						\n"
 			
-			"movq %%rcx, %%rsi				\n"
-			"movq $64, %%rcx				\n"
-			"subq %%rsi, %%rcx				\n"
-			"movq $-1, %%rdx				\n"
-			"shlq %%cl, %%rdx				\n"
-			"movq %%rdx, %[amask]			\n"
-			"movq %%rsi, %%rcx				\n"
+			"movl %%ecx, %%esi				\n"
+			"movl $32, %%ecx				\n"
+			"subl %%esi, %%ecx				\n"
+			"movl $-1, %%edx				\n"
+			"shll %%cl, %%edx				\n"
+			"movl %%edx, %[amask]			\n"
+			"movl %%esi, %%ecx				\n"
 
-			"xorq %%rdx, %%rdx				\n"
-			"movq %%rdx, %%rsi				\n"
-			"addq %%rdi, %%rdx				\n"
-			"decq %%rdx						\n"
+			"xorl %%edx, %%edx				\n"
+			"movl %%edx, %%esi				\n"
+			"addl %%edi, %%edx				\n"
+			"decl %%edx						\n"
 
-			"orq %%rax, %%rax				\n"
-			"cmovnz %[amask], %%rsi			\n"
+			"orl %%eax, %%eax				\n"
+			"cmovnz %[amask], %%esi			\n"
 
 		"1:									\n"
-			"rorq %%cl, (%%rbx,%%rdx,8)		\n"
+			"rorl %%cl, (%%ebx,%%edx,4)		\n"
 
-			"movq (%%rbx,%%rdx,8), %%rax	\n"
-			"andq %[amask], %%rax			\n"
-			"xorq %%rax, (%%rbx,%%rdx,8)	\n"
-			"orq  %%rsi, (%%rbx,%%rdx,8)	\n"
-			"movq %%rax, %%rsi				\n"
+			"movl (%%ebx,%%edx,4), %%eax	\n"
+			"andl %[amask], %%eax			\n"
+			"xorl %%eax, (%%ebx,%%edx,4)	\n"
+			"orl  %%esi, (%%ebx,%%edx,4)	\n"
+			"movl %%eax, %%esi				\n"
 			
-			"decq %%rdx						\n"
-			"decq %%rdi						\n"
+			"decl %%edx						\n"
+			"decl %%edi						\n"
 		"jnz 1b								\n"
 			
-			"rolq $1, %%rax					\n"
-			"andq $1, %%rax					\n"
+			"roll $1, %%eax					\n"
+			"andl $1, %%eax					\n"
 
-			"pop %%rdi						\n"
-			"pop %%rsi						\n"
-			"pop %%rdx						\n"
+			"pop %%edi						\n"
+			"pop %%esi						\n"
+			"pop %%edx						\n"
 
 			: "=a" (c)
 			: "0" (c), "D" (b), "b" (p1), "c" (bits), [amask] "m" (mask)
@@ -824,17 +1022,16 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt64::Rcr2")
+		TTMATH_LOG("UInt32::Rcr2")
 
 	return c;
 	}
 
 
+
 	/*
 		this method returns the number of the highest set bit in one 32-bit word
 		if the 'x' is zero this method returns '-1'
-
-		***this method is created only on a 64bit platform***
 	*/
 	template<uint value_size>
 	sint UInt<value_size>::FindLeadingBitInWord(uint x)
@@ -842,15 +1039,28 @@ namespace ttmath
 	register sint result;
 
 		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+			__asm
+			{
+				push eax
+				push edx
+
+				mov edx,-1
+				bsr eax,[x]
+				cmovz eax,edx
+				mov [result], eax
+
+				pop edx
+				pop eax
+			}
 		#endif
+
 
 		#ifdef __GNUC__
 			__asm__  __volatile__(
 
-			"bsrq %1, %0		\n"
+			"bsrl %1, %0		\n"
 			"jnz 1f				\n"
-			"movq $-1, %0		\n"
+			"movl $-1, %0		\n"
 			"1:					\n"
 
 			: "=R" (result)
@@ -859,19 +1069,18 @@ namespace ttmath
 
 		#endif
 
-
 	return result;
 	}
+
+
+
 
 
 	/*!
 		this method sets a special bit in the 'value'
 		and returns the last state of the bit (zero or one)
 
-		***this method is created only on a 64bit platform***
-
-		bit is from <0,63>
-
+		bit is from <0,31>
 		e.g.
 		 uint x = 100;
 		 uint bit = SetBitInWord(x, 3);
@@ -881,22 +1090,38 @@ namespace ttmath
 	uint UInt<value_size>::SetBitInWord(uint & value, uint bit)
 	{
 		TTMATH_ASSERT( bit < TTMATH_BITS_PER_UINT )
-		
+
 		uint old_bit;
 		uint v = value;
 
-
 		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+			__asm
+			{
+			push ebx
+			push eax
+
+			mov eax, [v]
+			mov ebx, [bit]
+			bts eax, ebx
+			mov [v], eax
+
+			setc bl
+			movzx ebx, bl
+			mov [old_bit], ebx
+
+			pop eax
+			pop ebx
+			}
 		#endif
+
 
 		#ifdef __GNUC__
 			__asm__  __volatile__(
 
-			"btsq %%rbx, %%rax		\n"
+			"btsl %%ebx, %%eax		\n"
 
 			"setc %%bl				\n"
-			"movzx %%bl, %%rbx		\n"
+			"movzx %%bl, %%ebx		\n"
 			
 			: "=a" (v), "=b" (old_bit)
 			: "0" (v), "1" (bit)
@@ -910,12 +1135,6 @@ namespace ttmath
 	}
 
 
-	/*!
-	 *
-	 * Multiplication
-	 *
-	 *
-	*/
 
 
 	/*!
@@ -923,11 +1142,9 @@ namespace ttmath
 		result2 - higher word
 		result1 - lower word of the result
 	
-		this methos never returns a carry
+		this method never returns a carry
 
-		***this method is created only on a 64bit platform***
-
-		it is an auxiliary method for version two of the multiplication algorithm
+		it is an auxiliary method for second version of the multiplication algorithm
 	*/
 	template<uint value_size>
 	void UInt<value_size>::MulTwoWords(uint a, uint b, uint * result2, uint * result1)
@@ -936,21 +1153,37 @@ namespace ttmath
 		we must use these temporary variables in order to inform the compilator
 		that value pointed with result1 and result2 has changed
 
-		this has no effect in visual studio but it's usefull when
-		using gcc and options like -O
+		this has no effect in visual studio but it's useful when
+		using gcc and options like -Ox
 	*/
 	register uint result1_;
 	register uint result2_;
 
 		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+
+			__asm
+			{
+			push eax
+			push edx
+
+			mov eax, [a]
+			mul dword ptr [b]
+
+			mov [result2_], edx
+			mov [result1_], eax
+
+			pop edx
+			pop eax
+			}
+
 		#endif
+
 
 		#ifdef __GNUC__
 
 		__asm__ __volatile__(
 		
-			"mulq %%rdx			\n"
+			"mull %%edx			\n"
 
 			: "=a" (result1_), "=d" (result2_)
 			: "0" (a), "1" (b)
@@ -966,6 +1199,7 @@ namespace ttmath
 
 
 
+
 	/*!
 	 *
 	 * Division
@@ -974,11 +1208,11 @@ namespace ttmath
 	*/
 	
 
+
+
 	/*!
 		this method calculates 64bits word a:b / 32bits c (a higher, b lower word)
 		r = a:b / c and rest - remainder
-		
-		***this method is created only on a 64bit platform***
 
 		*
 		* WARNING:
@@ -988,7 +1222,7 @@ namespace ttmath
 		*
 	*/
 	template<uint value_size>
-	void UInt<value_size>::DivTwoWords(uint a,uint b, uint c, uint * r, uint * rest)
+	void UInt<value_size>::DivTwoWords(uint a, uint b, uint c, uint * r, uint * rest)
 	{
 		register uint r_;
 		register uint rest_;
@@ -997,15 +1231,32 @@ namespace ttmath
 			the multiplication algorithm MulTwoWords
 		*/
 
+		TTMATH_ASSERT( c != 0 )
+
 		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+			__asm
+			{
+				push eax
+				push edx
+
+				mov edx, [a]
+				mov eax, [b]
+				div dword ptr [c]
+
+				mov [r_], eax
+				mov [rest_], edx
+
+				pop edx
+				pop eax
+			}
 		#endif
+
 
 		#ifdef __GNUC__
 		
 			__asm__ __volatile__(
 
-			"divq %%rcx				\n"
+			"divl %%ecx				\n"
 
 			: "=a" (r_), "=d" (rest_)
 			: "d" (a), "a" (b), "c" (c)
@@ -1016,8 +1267,15 @@ namespace ttmath
 
 		*r = r_;
 		*rest = rest_;
+
 	}
 
-#endif
+
 
 } //namespace
+
+
+
+#endif //ifdef TTMATH_PLATFORM32
+#endif //ifndef TTMATH_NOASM
+#endif

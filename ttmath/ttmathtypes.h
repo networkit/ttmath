@@ -83,7 +83,7 @@
 	 gcc -DTTMATH_RELEASE -o myprogram myprogram.cpp 
 	or by defining this macro in your code before using any header files of this library
 
-	if TTMATH_RELEASE is not set then TTMATH_DEBUG is set	
+	if TTMATH_RELEASE is not set then TTMATH_DEBUG is set automatically
 */
 #ifndef TTMATH_RELEASE
 	#define TTMATH_DEBUG
@@ -120,6 +120,18 @@ namespace ttmath
 	typedef unsigned int uint;
 	typedef signed   int sint;
 
+
+	/*!
+		this type is twice bigger than uint
+		(64bit on a 32bit platforms)
+
+		although C++ Standard - ANSI ISO IEC 14882:2003 doesn't define such a type (long long) 
+		but it is defined in C99 and in upcoming C++0x /3.9.1 (2)/ and many compilers support it
+
+		this type is used in UInt::MulTwoWords and UInt::DivTwoWords when macro TTMATH_NOASM is defined
+	*/
+	typedef unsigned long long int ulint;
+
 	/*!
 		how many bits there are in the uint type
 	*/
@@ -150,6 +162,15 @@ namespace ttmath
 	*/
 	typedef unsigned long uint;
 	typedef signed   long sint;
+
+	/*!
+		on 64bit platform we do not define ulint
+		sizeof(long long) is 8 (64bit) but we need 128bit
+
+		on 64 bit platform (when there is defined TTMATH_NOASM macro)
+		methods UInt::MulTwoWords and UInt::DivTwoWords are using other algorithms than those on 32 bit
+	*/
+	//typedef unsigned long long int ulint;
 
 	/*!
 		how many bits there are in the uint type
