@@ -75,7 +75,7 @@ namespace ttmath
 		function returns carry (1) (if it has been)
 	*/
 	template<uint value_size>
-	uint UInt<value_size>::Add(const UInt<value_size> & ss2, uint c=0)
+	uint UInt<value_size>::Add(const UInt<value_size> & ss2, uint c)
 	{
 	register uint b = value_size;
 	register uint * p1 = table;
@@ -189,7 +189,7 @@ namespace ttmath
 		of course if there was a carry from table[2] it would be returned
 	*/
 	template<uint value_size>
-	uint UInt<value_size>::AddInt(uint value, uint index = 0)
+	uint UInt<value_size>::AddInt(uint value, uint index)
 	{
 	register uint b = value_size;
 	register uint * p1 = table;
@@ -410,7 +410,7 @@ namespace ttmath
 		function returns carry (1) (if it has been)
 	*/
 	template<uint value_size>
-	uint UInt<value_size>::Sub(const UInt<value_size> & ss2, uint c=0)
+	uint UInt<value_size>::Sub(const UInt<value_size> & ss2, uint c)
 	{
 	register uint b = value_size;
 	register uint * p1 = table;
@@ -518,7 +518,7 @@ namespace ttmath
 		of course if there was a carry from table[3] it would be returned
 	*/
 	template<uint value_size>
-	uint UInt<value_size>::SubInt(uint value, uint index = 0)
+	uint UInt<value_size>::SubInt(uint value, uint index)
 	{
 	register uint b = value_size;
 	register uint * p1 = table;

@@ -77,7 +77,7 @@ namespace ttmath
 	{
 	uint b = value_size;
 	uint * p1 = table;
-	const uint * p2 = const_cast<uint*>(ss2.table);
+	const uint * p2 = ss2.table;
 	uint dummy, dummy2;
 
 		// we don't have to use TTMATH_REFERENCE_ASSERT here
