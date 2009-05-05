@@ -1050,6 +1050,9 @@ public:
 	{
 		if( divisor == 0 )
 		{
+			if( remainder )
+				*remainder = 0; // this is for convenience, without it the compiler can report that 'remainder' is uninitialized
+
 			TTMATH_LOG("UInt::DivInt")
 
 		return 1;
@@ -1732,6 +1735,8 @@ private:
 	UInt<2> u_temp;
 	uint rp;
 	bool next_test;
+
+		TTMATH_ASSERT( v1 != 0 )
 
 		u_temp.table[1] = u2;
 		u_temp.table[0] = u1;

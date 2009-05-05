@@ -75,10 +75,10 @@ namespace ttmath
 	template<uint value_size>
 	uint UInt<value_size>::Add(const UInt<value_size> & ss2, uint c)
 	{
-	register uint b = value_size;
-	register uint * p1 = table;
-	register uint * p2 = const_cast<uint*>(ss2.table);
-
+	uint b = value_size;
+	uint * p1 = table;
+	const uint * p2 = const_cast<uint*>(ss2.table);
+	uint dummy, dummy2;
 
 		// we don't have to use TTMATH_REFERENCE_ASSERT here
 		// this algorithm doesn't require it
@@ -92,30 +92,23 @@ namespace ttmath
 				this part should be compiled with gcc
 			*/
 			__asm__ __volatile__(
-			
-				"push %%rcx						\n"
-			
-				"xorq %%rax, %%rax				\n"
-				"movq %%rax, %%rdx				\n"
-				"subq %%rdi, %%rax				\n"
-
+	
+				"xorq %%rdx, %%rdx				\n"
+				"neg %%rax						\n"     // CF=1 if rax!=0 , CF=0 if rax==0
 
 			"1:									\n"
-				"movq (%%rsi,%%rdx,8),%%rax		\n"
+				"movq (%%rsi,%%rdx,8), %%rax	\n"
 				"adcq %%rax, (%%rbx,%%rdx,8)	\n"
 			
 				"incq %%rdx						\n"
 				"decq %%rcx						\n"
 			"jnz 1b								\n"
 
-				"setc %%al						\n"
-				"movzx %%al,%%rdx				\n"
+				"adcq %%rcx, %%rcx				\n"
 
-				"pop %%rcx						\n"
-
-				: "=d" (c)
-				: "D" (c), "c" (b), "b" (p1), "S" (p2)
-				: "%rax", "cc", "memory" );
+				: "=c" (c), "=a" (dummy), "=d" (dummy2)
+				: "0" (b), "1" (c), "b" (p1), "S" (p2)
+				: "cc", "memory" );
 
 		#endif
 
@@ -149,9 +142,10 @@ namespace ttmath
 	template<uint value_size>
 	uint UInt<value_size>::AddInt(uint value, uint index)
 	{
-	register uint b = value_size;
-	register uint * p1 = table;
-	register uint c;
+	uint b = value_size;
+	uint * p1 = table;
+	uint c;
+	uint dummy, dummy2;
 
 		TTMATH_ASSERT( index < value_size )
 
@@ -162,9 +156,6 @@ namespace ttmath
 		#ifdef __GNUC__
 
 			__asm__ __volatile__(
-
-				"push %%rax						\n"
-				"push %%rcx						\n"
 
 				"subq %%rdx, %%rcx 				\n"
 
@@ -181,10 +172,7 @@ namespace ttmath
 				"setc %%al						\n"
 				"movzx %%al, %%rdx				\n"
 
-				"pop %%rcx						\n"
-				"pop %%rax						\n"
-
-				: "=d" (c)
+				: "=d" (c), "=a" (dummy), "=c" (dummy2)
 				: "a" (value), "c" (b), "0" (index), "b" (p1)
 				: "cc", "memory" );
 
@@ -232,9 +220,10 @@ namespace ttmath
 	template<uint value_size>
 	uint UInt<value_size>::AddTwoInts(uint x2, uint x1, uint index)
 	{
-	register uint b = value_size;
-	register uint * p1 = table;
-	register uint c;
+	uint b = value_size;
+	uint * p1 = table;
+	uint c;
+	uint dummy, dummy2;
 
 		TTMATH_ASSERT( index < value_size - 1 )
 
@@ -245,9 +234,6 @@ namespace ttmath
 		#ifdef __GNUC__
 			__asm__ __volatile__(
 			
-				"push %%rcx						\n"
-				"push %%rdx						\n"
-
 				"subq %%rdx, %%rcx 				\n"
 				
 				"addq %%rsi, (%%rbx,%%rdx,8) 	\n"
@@ -267,11 +253,8 @@ namespace ttmath
 				"setc %%al						\n"
 				"movzx %%al, %%rax				\n"
 
-				"pop %%rdx						\n"
-				"pop %%rcx						\n"
-
-				: "=a" (c)
-				: "c" (b), "d" (index), "b" (p1), "S" (x1), "0" (x2)
+				: "=a" (c), "=c" (dummy), "=d" (dummy2)
+				: "1" (b), "2" (index), "b" (p1), "S" (x1), "0" (x2)
 				: "cc", "memory" );
 
 		#endif
@@ -298,9 +281,10 @@ namespace ttmath
 	template<uint value_size>
 	uint UInt<value_size>::Sub(const UInt<value_size> & ss2, uint c)
 	{
-	register uint b = value_size;
-	register uint * p1 = table;
-	register uint * p2 = const_cast<uint*>(ss2.table);
+	uint b = value_size;
+	uint * p1 = table;
+	const uint * p2 = ss2.table;
+	uint dummy, dummy2;
 
 		// we don't have to use TTMATH_REFERENCE_ASSERT here
 		// this algorithm doesn't require it
@@ -311,30 +295,23 @@ namespace ttmath
 
 		#ifdef __GNUC__
 			__asm__  __volatile__(
-			
-				"push %%rcx						\n"
-			
-				"xorq %%rax, %%rax				\n"
-				"movq %%rax, %%rdx				\n"
-				"subq %%rdi, %%rax				\n"
-
+	
+				"xorq %%rdx, %%rdx				\n"
+				"neg %%rax						\n"     // CF=1 if rax!=0 , CF=0 if rax==0
 
 			"1:									\n"
-				"movq (%%rsi,%%rdx,8),%%rax		\n"
+				"movq (%%rsi,%%rdx,8), %%rax	\n"
 				"sbbq %%rax, (%%rbx,%%rdx,8)	\n"
 			
 				"incq %%rdx						\n"
 				"decq %%rcx						\n"
 			"jnz 1b								\n"
 
-				"setc %%al						\n"
-				"movzx %%al,%%rdx				\n"
+				"adcq %%rcx, %%rcx				\n"
 
-				"pop %%rcx						\n"
-
-				: "=d" (c)
-				: "D" (c), "c" (b), "b" (p1), "S" (p2)
-				: "%rax", "cc", "memory" );
+				: "=c" (c), "=a" (dummy), "=d" (dummy2)
+				: "0" (b), "1" (c), "b" (p1), "S" (p2)
+				: "cc", "memory" );
 
 
 		#endif
@@ -367,9 +344,10 @@ namespace ttmath
 	template<uint value_size>
 	uint UInt<value_size>::SubInt(uint value, uint index)
 	{
-	register uint b = value_size;
-	register uint * p1 = table;
-	register uint c;
+	uint b = value_size;
+	uint * p1 = table;
+	uint c;
+	uint dummy, dummy2;
 
 		TTMATH_ASSERT( index < value_size )
 
@@ -380,9 +358,6 @@ namespace ttmath
 		#ifdef __GNUC__
 			__asm__ __volatile__(
 			
-				"push %%rax						\n"
-				"push %%rcx						\n"
-
 				"subq %%rdx, %%rcx 				\n"
 
 			"1:									\n"
@@ -398,11 +373,8 @@ namespace ttmath
 				"setc %%al						\n"
 				"movzx %%al, %%rdx				\n"
 
-				"pop %%rcx						\n"
-				"pop %%rax						\n"
-
-				: "=d" (c)
-				: "a" (value), "c" (b), "0" (index), "b" (p1)
+				: "=d" (c), "=a" (dummy), "=c" (dummy2)
+				: "1" (value), "2" (b), "0" (index), "b" (p1)
 				: "cc", "memory" );
 
 		#endif
@@ -430,9 +402,9 @@ namespace ttmath
 	template<uint value_size>
 	uint UInt<value_size>::Rcl2_one(uint c)
 	{
-	register sint b = value_size;
-	register uint * p1 = table;
-
+	sint b = value_size;
+	uint * p1 = table;
+	uint dummy, dummy2;
 
 		#ifndef __GNUC__
 			#error "another compiler than GCC is currently not supported in 64bit mode"
@@ -441,9 +413,6 @@ namespace ttmath
 		#ifdef __GNUC__
 		__asm__  __volatile__(
 		
-			"push %%rdx					\n"
-			"push %%rcx					\n"
-
 			"xorq %%rdx, %%rdx			\n"   // rdx=0
 			"neg %%rax					\n"   // CF=1 if rax!=0 , CF=0 if rax==0
 
@@ -454,14 +423,10 @@ namespace ttmath
 			"decq %%rcx					\n"
 		"jnz 1b							\n"
 
-			"setc %%al					\n"
-			"movzx %%al, %%rax			\n"
+			"adcq %%rcx, %%rcx			\n"
 
-			"pop %%rcx					\n"
-			"pop %%rdx					\n"
-
-			: "=a" (c)
-			: "0" (c), "c" (b), "b" (p1)
+			: "=c" (c), "=a" (dummy), "=d" (dummy2)
+			: "1" (c), "0" (b), "b" (p1)
 			: "cc", "memory" );
 	
 		#endif
@@ -489,9 +454,9 @@ namespace ttmath
 	template<uint value_size>
 	uint UInt<value_size>::Rcr2_one(uint c)
 	{
-	register sint b = value_size;
-	register uint * p1 = table;
-
+	sint b = value_size;
+	uint * p1 = table;
+	uint dummy;
 
 		#ifndef __GNUC__
 			#error "another compiler than GCC is currently not supported in 64bit mode"
@@ -499,8 +464,6 @@ namespace ttmath
 
 		#ifdef __GNUC__
 		__asm__  __volatile__(
-
-			"push %%rcx						\n"
 
 			"neg %%rax						\n"   // CF=1 if rax!=0 , CF=0 if rax==0
 
@@ -510,13 +473,10 @@ namespace ttmath
 			"decq %%rcx						\n"
 		"jnz 1b								\n"
 
-			"setc %%al						\n"
-			"movzx %%al, %%rax				\n"
+			"adcq %%rcx, %%rcx				\n"
 
-			"pop %%rcx						\n"
-
-			: "=a" (c)
-			: "0" (c), "c" (b), "b" (p1)
+			: "=c" (c), "=a" (dummy)
+			: "1" (c), "0" (b), "b" (p1)
 			: "cc", "memory" );
 
 		#endif
@@ -547,10 +507,9 @@ namespace ttmath
 	{
 	TTMATH_ASSERT( bits>0 && bits<TTMATH_BITS_PER_UINT )
 
-	// !!! why there is signed here?
-	register sint b = value_size;
-	register uint * p1 = table;
-	register uint mask;
+	uint b = value_size;
+	uint * p1 = table;
+	uint dummy, dummy2, dummy3;
 
 		#ifndef __GNUC__
 			#error "another compiler than GCC is currently not supported in 64bit mode"
@@ -559,29 +518,25 @@ namespace ttmath
 		#ifdef __GNUC__
 		__asm__  __volatile__(
 		
-			"push %%rdx						\n"
-			"push %%rsi						\n"
-			"push %%rdi						\n"
-			
 			"movq %%rcx, %%rsi				\n"
 			"movq $64, %%rcx				\n"
 			"subq %%rsi, %%rcx				\n"
 			"movq $-1, %%rdx				\n"
 			"shrq %%cl, %%rdx				\n"
-			"movq %%rdx, %[amask] 			\n"
+			"movq %%rdx, %%r8 				\n"
 			"movq %%rsi, %%rcx				\n"
 
 			"xorq %%rdx, %%rdx				\n"
 			"movq %%rdx, %%rsi				\n"
 
 			"orq %%rax, %%rax				\n"
-			"cmovnz %[amask], %%rsi			\n"
+			"cmovnz %%r8, %%rsi				\n"
 
 		"1:									\n"
 			"rolq %%cl, (%%rbx,%%rdx,8)		\n"
 
 			"movq (%%rbx,%%rdx,8), %%rax	\n"
-			"andq %[amask], %%rax			\n"
+			"andq %%r8, %%rax				\n"
 			"xorq %%rax, (%%rbx,%%rdx,8)	\n"
 			"orq  %%rsi, (%%rbx,%%rdx,8)	\n"
 			"movq %%rax, %%rsi				\n"
@@ -592,13 +547,9 @@ namespace ttmath
 			
 			"and $1, %%rax					\n"
 
-			"pop %%rdi						\n"
-			"pop %%rsi						\n"
-			"pop %%rdx						\n"
-
-			: "=a" (c)
-			: "0" (c), "D" (b), "b" (p1), "c" (bits), [amask] "m" (mask)
-			: "cc", "memory" );
+			: "=a" (c), "=D" (dummy), "=S" (dummy2), "=d" (dummy3)
+			: "0" (c), "1" (b), "b" (p1), "c" (bits)
+			: "%r8", "cc", "memory" );
 
 		#endif
 
@@ -627,9 +578,9 @@ namespace ttmath
 	{
 	TTMATH_ASSERT( bits>0 && bits<TTMATH_BITS_PER_UINT )
 
-	register sint b = value_size;
-	register uint * p1 = table;
-	register uint mask;
+	sint b = value_size;
+	uint * p1 = table;
+	uint dummy, dummy2, dummy3;
 
 		#ifndef __GNUC__
 			#error "another compiler than GCC is currently not supported in 64bit mode"
@@ -639,16 +590,12 @@ namespace ttmath
 		#ifdef __GNUC__
 			__asm__  __volatile__(
 
-			"push %%rdx						\n"
-			"push %%rsi						\n"
-			"push %%rdi						\n"
-			
 			"movq %%rcx, %%rsi				\n"
 			"movq $64, %%rcx				\n"
 			"subq %%rsi, %%rcx				\n"
 			"movq $-1, %%rdx				\n"
 			"shlq %%cl, %%rdx				\n"
-			"movq %%rdx, %[amask]			\n"
+			"movq %%rdx, %%R8				\n"
 			"movq %%rsi, %%rcx				\n"
 
 			"xorq %%rdx, %%rdx				\n"
@@ -657,13 +604,13 @@ namespace ttmath
 			"decq %%rdx						\n"
 
 			"orq %%rax, %%rax				\n"
-			"cmovnz %[amask], %%rsi			\n"
+			"cmovnz %%R8, %%rsi				\n"
 
 		"1:									\n"
 			"rorq %%cl, (%%rbx,%%rdx,8)		\n"
 
 			"movq (%%rbx,%%rdx,8), %%rax	\n"
-			"andq %[amask], %%rax			\n"
+			"andq %%R8, %%rax			\n"
 			"xorq %%rax, (%%rbx,%%rdx,8)	\n"
 			"orq  %%rsi, (%%rbx,%%rdx,8)	\n"
 			"movq %%rax, %%rsi				\n"
@@ -675,13 +622,9 @@ namespace ttmath
 			"rolq $1, %%rax					\n"
 			"andq $1, %%rax					\n"
 
-			"pop %%rdi						\n"
-			"pop %%rsi						\n"
-			"pop %%rdx						\n"
-
-			: "=a" (c)
-			: "0" (c), "D" (b), "b" (p1), "c" (bits), [amask] "m" (mask)
-			: "cc", "memory" );
+			: "=a" (c), "=D" (dummy), "=S" (dummy2), "=d" (dummy3)
+			: "0" (c), "1" (b), "b" (p1), "c" (bits)
+			: "%r8", "cc", "memory" );
 
 		#endif
 

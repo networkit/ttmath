@@ -1,7 +1,16 @@
-Version 0.8.4 prerelease (2009.05.04):
+Version 0.8.4 prerelease (2009.05.05):
     * fixed:   UInt::DivInt() didn't check whether the divisor is zero
                there was a hardware interruption when the divisor was zero
                (now the method returns one)
+    * fixed:   the problem with GCC optimization on x86_64
+               sometimes when using -O2 or -O3 GCC doesn't set correctly
+               the stack pointer (actually the stack is used for other things)
+               and you can't use instructions like push/pop in assembler code.
+               All the asm code in x86_64 have been rewritten, now instructions
+               push/pop are not used, other thing which have access to stack 
+               (like "m" (mask) constraints in Rcl2 and Rcr2) have also gone away,
+               now the library works well with -O2 and -O3 and the asm code
+               is a little faster
 	* added:   UInt::PrintLog(const char * msg, std::ostream & output)
                used (for debugging purposes) by macro TTMATH_LOG(msg)
                (it is used in nearly all methods in UInt class)
