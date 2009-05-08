@@ -120,7 +120,6 @@ namespace ttmath
 	typedef unsigned int uint;
 	typedef signed   int sint;
 
-
 	/*!
 		this type is twice bigger than uint
 		(64bit on a 32bit platforms)
@@ -129,8 +128,11 @@ namespace ttmath
 		but it is defined in C99 and in upcoming C++0x /3.9.1 (2)/ and many compilers support it
 
 		this type is used in UInt::MulTwoWords and UInt::DivTwoWords when macro TTMATH_NOASM is defined
+		but only on a 32bit platform
 	*/
-	typedef unsigned long long int ulint;
+	#ifdef TTMATH_NOASM
+		typedef unsigned long long int ulint;
+	#endif
 
 	/*!
 		how many bits there are in the uint type
