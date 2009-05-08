@@ -423,7 +423,7 @@ namespace ttmath
 			if( c )
 				// Sin is from <-1,1> and cannot make an overflow
 				// but the carry can be from the Taylor series
-				// (then we only breaks our calculations)
+				// (then we only break our calculations)
 				break;
 
 			if( addition )

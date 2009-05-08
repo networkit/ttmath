@@ -1,4 +1,4 @@
-Version 0.8.4 prerelease (2009.05.05):
+Version 0.8.4 prerelease (2009.05.08):
     * fixed:   UInt::DivInt() didn't check whether the divisor is zero
                there was a hardware interruption when the divisor was zero
                (now the method returns one)
@@ -25,7 +25,6 @@ Version 0.8.4 prerelease (2009.05.05):
                   (it's used when macro TTMATH_NOASM is defined)
                The third form can be used on x86 and x86_64 as well and
                on other platforms with a little effort.
-               (Temporarily I left there some '#ifdef's for debugging.)
                               
 
 Version 0.8.3 (2009.04.06):

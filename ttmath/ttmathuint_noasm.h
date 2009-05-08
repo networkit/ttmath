@@ -116,7 +116,7 @@ namespace ttmath
 			table[1] = 30 + 2;
 			table[2] = 5;
 
-		of course if there was a carry from table[3] it would be returned
+		of course if there was a carry from table[2] it would be returned
 	*/
 	template<uint value_size>
 	uint UInt<value_size>::AddInt(uint value, uint index)
@@ -175,7 +175,7 @@ namespace ttmath
 	{
 	uint i, c;
 
-		TTMATH_ASSERT( index < value_size )
+		TTMATH_ASSERT( index < value_size - 1 )
 
 
 		c = AddTwoWords(table[index],   x1, 0, &table[index]);
@@ -255,7 +255,7 @@ namespace ttmath
 			table[1] = 30 - 2;
 			table[2] = 5;
 
-		of course if there was a carry from table[3] it would be returned
+		of course if there was a carry from table[2] it would be returned
 	*/
 	template<uint value_size>
 	uint UInt<value_size>::SubInt(uint value, uint index)
@@ -473,8 +473,8 @@ namespace ttmath
 
 		uint mask = 1;
 
-		while( bit-- > 0 )
-			mask = mask << 1;
+		if( bit > 1 )
+			mask = mask << bit;
 
 		uint last = value & mask;
 		value     = value | mask;
@@ -601,7 +601,6 @@ namespace ttmath
 	*/
 	
 
-	// !! maybe returns something? a carry? or when c is zero?
 	/*!
 		this method calculates 64bits word a:b / 32bits c (a higher, b lower word)
 		r = a:b / c and rest - remainder
@@ -648,10 +647,6 @@ namespace ttmath
 		{
 			*r    = b / c;
 			*rest = b % c;
-
-#ifdef TTMATH_WARTOWNIK
-			++tester_wartownik1; // !!!!! skasowac
-#endif
 		}
 		else
 		if( c_.u_.high == 0 )
@@ -674,10 +669,6 @@ namespace ttmath
 			*rest        = temp2.u % c;
 
 			*r = res_.u;
-#ifdef TTMATH_WARTOWNIK
-			++tester_wartownik2; // !!!!! skasowac
-#endif
-
 		}
 		else
 		{
@@ -690,6 +681,13 @@ namespace ttmath
 
 #ifdef TTMATH_PLATFORM64
 
+
+	/*!
+		this method is available only on 64bit platforms
+		
+		the same algorithm like the third division algorithm in ttmathuint.h
+		but now with the radix=2^32
+	*/
 	template<uint value_size>
 	void UInt<value_size>::DivTwoWords2(uint a, uint b, uint c, uint * r, uint * rest)
 	{
@@ -704,7 +702,6 @@ namespace ttmath
 		c_.u  = c;
 
 		// normalizing
-		// a0 will actually not be used
 		uint d = DivTwoWordsNormalize(a_, b_, c_);
 
 		// loop from j=1 to j=0
@@ -748,12 +745,7 @@ namespace ttmath
 			a_.u = a_.u << 1; // carry bits from 'a' are simply skipped 
 
 			if( bc )
-			{
 				a_.u = a_.u | 1;
-	#ifdef TTMATH_WARTOWNIK
-				++tester_wartownik3; // !!!!! skasowac
-	#endif
-			}
 		}
 
 	return d;
@@ -802,23 +794,11 @@ namespace ttmath
 
 			if( decrease )
 			{
-				#ifdef TTMATH_WARTOWNIK
-				++tester_wartownik4; // !!!!! skasowac
-				#endif
-
 				--qp_.u;
 				rp_.u += v_.u_.high;
 
 				if( rp_.u_.high == 0 ) 
-				{
 					next_test = true;
-
-					#ifdef TTMATH_WARTOWNIK
-					++tester_wartownik5; // !!!!! skasowac
-					#endif
-				}
-
-				
 			}
 		}
 		while( next_test );
@@ -849,20 +829,12 @@ namespace ttmath
 		temp_.u_.low  = u_.u_.high;
 		c = SubTwoWords(temp_.u, res_high, c, &sub_res_high_.u);
 
-#ifdef TTMATH_WARTOWNIK
-		++tester_wartownik6; // !!!!! skasowac
-#endif
-
 		if( c )
 		{
 			--q;
 
 			c = AddTwoWords(sub_res_low_.u, v_.u, 0, &sub_res_low_.u);
 			AddTwoWords(sub_res_high_.u, 0, c, &sub_res_high_.u);
-
-			#ifdef TTMATH_WARTOWNIK
-			++tester_wartownik7; // !!!!! skasowac
-			#endif
 		}
 
 		u_.u_.high = sub_res_high_.u_.low;

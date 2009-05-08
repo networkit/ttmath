@@ -21,6 +21,6 @@ This means only C++ developers can use this library and one thing they have
 to do is to use 'include' directive of the preprocessor. How big the
 values can be is set directly in the source code by the programmer.
 
-Author: Tomasz Sowa <t.sowa@slimaczek.pl>
-Project pages: http://ttmath.slimaczek.pl
+Author: Tomasz Sowa <t.sowa@ttmath.org>
+Project pages: http://www.ttmath.org
 http://sourceforge.net/projects/ttmath

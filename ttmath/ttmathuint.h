@@ -2903,7 +2903,6 @@ public:
 
 
 private:
-public: // !!! chwilowo public
 	uint Rcl2_one(uint c);
 	uint Rcr2_one(uint c);
 	uint Rcl2(uint bits, uint c);

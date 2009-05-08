@@ -463,7 +463,6 @@ namespace ttmath
 
 		#ifdef __GNUC__
 			__asm__  __volatile__(
-			
 				"push %%ecx						\n"
 			
 				"xorl %%eax, %%eax				\n"
@@ -515,7 +514,7 @@ namespace ttmath
 			table[1] = 30 - 2;
 			table[2] = 5;
 
-		of course if there was a carry from table[3] it would be returned
+		of course if there was a carry from table[2] it would be returned
 	*/
 	template<uint value_size>
 	uint UInt<value_size>::SubInt(uint value, uint index)
@@ -1138,16 +1137,15 @@ namespace ttmath
 
 
 	/*!
-		multiplication: result2:result1 = a * b
-		result2 - higher word
-		result1 - lower word of the result
+		multiplication: result_high:result_low = a * b
+		result_high - higher word of the result
+		result_low  - lower word of the result
 	
-		this method never returns a carry
-
-		it is an auxiliary method for second version of the multiplication algorithm
+		this methos never returns a carry
+		this method is used in the second version of the multiplication algorithms
 	*/
 	template<uint value_size>
-	void UInt<value_size>::MulTwoWords(uint a, uint b, uint * result2, uint * result1)
+	void UInt<value_size>::MulTwoWords(uint a, uint b, uint * result_high, uint * result_low)
 	{
 	/*
 		we must use these temporary variables in order to inform the compilator
@@ -1192,8 +1190,8 @@ namespace ttmath
 		#endif
 
 
-		*result1 = result1_;
-		*result2 = result2_;
+		*result_low  = result1_;
+		*result_high = result2_;
 	}
 
 

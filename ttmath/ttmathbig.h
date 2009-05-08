@@ -1874,7 +1874,7 @@ public:
 		// error but I leave it at the moment as is
 		TTMATH_ASSERT( sizeof(double) == 8 )
 
-		// I am not sure what will be on a plaltform which has 
+		// I am not sure what will be on a platform which has 
 		// a different endianness... but we use this library only
 		// on x86 and amd (intel) 64 bits (as there's a lot of assembler code)
 		union 
