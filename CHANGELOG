@@ -11,7 +11,7 @@ Version 0.8.4 (2009.05.08):
                (like "m" (mask) constraints in Rcl2 and Rcr2) have also gone away,
                now the library works well with -O2 and -O3 and the asm code
                is a little faster
-	* added:   UInt::PrintLog(const char * msg, std::ostream & output)
+    * added:   UInt::PrintLog(const char * msg, std::ostream & output)
                used (for debugging purposes) by macro TTMATH_LOG(msg)
                (it is used in nearly all methods in UInt class)
     * added:   macro TTMATH_DEBUG_LOG: when defined then TTMATH_LOG() 
