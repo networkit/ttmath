@@ -1,3 +1,17 @@
+Version 0.8.5 (2009.05.11):
+    * fixed:   Big::Mod(x) didn't correctly return a carry
+               and the result was sometimes very big (even greater than x)
+    * fixed:   global function Mod(x) didn't set an ErrorCode object
+    * fixed:   global function Round() didn't test a carry
+               now it sets ErrorCode object
+    * changed: function Sin(x) to Sin(x, ErrorCode * err=0)
+               when x was very big the function returns zero
+               now it sets ErrorCode object to err_overflow
+               and the result is undefined
+               the same is to Cos() function
+    * changed: PrepareSin(x) is using Big::Mod() now when reducing 2PI period
+               should be a little accurate especially on a very big 'x'
+               
 Version 0.8.4 (2009.05.08):
     * fixed:   UInt::DivInt() didn't check whether the divisor is zero
                there was a hardware interruption when the divisor was zero
