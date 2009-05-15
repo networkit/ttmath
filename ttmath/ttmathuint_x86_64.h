@@ -112,7 +112,7 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt64::Add")
+		TTMATH_LOG("UInt::Add")
 	
 	return c;
 	}
@@ -178,7 +178,7 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt64::AddInt")
+		TTMATH_LOG("UInt::AddInt")
 	
 	return c;
 	}
@@ -259,7 +259,90 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt64::AddTwoInts")
+		TTMATH_LOG("UInt::AddTwoInts")
+
+	return c;
+	}
+
+
+
+	/*!
+		this static method addes one vector to the other
+		'ss1' is larger in size or equal to 'ss2'
+
+		ss1 points to the first (larger) vector
+		ss2 points to the second vector
+		ss1_size - size of the ss1 (and size of the result too)
+		ss2_size - size of the ss2
+		result - is the result vector (which has size the same as ss1: ss1_size)
+
+		Example:  ss1_size is 5, ss2_size is 3
+		ss1:      ss2:   result (output):
+		  5        1         5+1
+		  4        3         4+3
+		  2        7         2+7
+		  6                  6
+		  9                  9
+	  of course the carry is propagated and will be returned from the last item
+	  (this method is used by the Karatsuba multiplication algorithm)
+	*/
+	template<uint value_size>
+	uint UInt<value_size>::AddVector(const uint * ss1, const uint * ss2, uint ss1_size, uint ss2_size, uint * result)
+	{
+		TTMATH_ASSERT( ss1_size >= ss2_size )
+
+		uint rest = ss1_size - ss2_size;
+		uint c;
+
+		#ifndef __GNUC__
+			#error "another compiler than GCC is currently not supported in 64bit mode"
+		#endif
+
+		#ifdef __GNUC__
+			
+		//	this part should be compiled with gcc
+		uint dummy1, dummy2, dummy3;
+
+			__asm__ __volatile__(
+				"mov %%rdx, %%r8					\n"
+				"xor %%rdx, %%rdx					\n"   // rdx = 0, cf = 0
+			"1:										\n"
+				"mov (%%rsi,%%rdx,8), %%rax			\n"
+				"adc (%%rbx,%%rdx,8), %%rax			\n"
+				"mov %%rax, (%%rdi,%%rdx,8)			\n"
+
+				"inc %%rdx							\n"
+				"dec %%rcx							\n"
+			"jnz 1b									\n"
+
+				"adc %%rcx, %%rcx					\n"   // rcx has the cf state
+
+				"or %%r8, %%r8						\n"
+				"jz 3f								\n"
+				
+				"xor %%rbx, %%rbx					\n"
+				"sub %%rcx, %%rbx					\n"   // setting cf from rcx
+				"mov %%r8, %%rcx					\n"   // rcx=rest and is != 0
+				"mov $0, %%rbx						\n"
+			"2:										\n"
+				"mov (%%rsi, %%rdx, 8), %%rax		\n"
+				"adc %%rbx, %%rax 					\n"
+				"mov %%rax, (%%rdi, %%rdx, 8)		\n"
+
+				"inc %%rdx							\n"
+				"dec %%rcx							\n"
+			"jnz 2b									\n"
+
+				"adc %%rcx, %%rcx					\n"
+			"3:										\n"
+
+				: "=a" (dummy1), "=b" (dummy2), "=c" (c),       "=d" (dummy3)
+				:                "1" (ss2),     "2" (ss2_size), "3" (rest),   "S" (ss1),  "D" (result)
+				: "%r8", "cc", "memory" );
+
+		#endif
+
+		TTMATH_LOG("UInt::AddVector")
 
 	return c;
 	}
@@ -316,7 +399,7 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt64::Sub")
+		TTMATH_LOG("UInt::Sub")
 
 	return c;
 	}
@@ -379,10 +462,99 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt64::SubInt")
+		TTMATH_LOG("UInt::SubInt")
 
 	return c;
 	}
+
+
+
+
+	/*!
+		this static method subtractes one vector from the other
+		'ss1' is larger in size or equal to 'ss2'
+
+		ss1 points to the first (larger) vector
+		ss2 points to the second vector
+		ss1_size - size of the ss1 (and size of the result too)
+		ss2_size - size of the ss2
+		result - is the result vector (which has size the same as ss1: ss1_size)
+
+		Example:  ss1_size is 5, ss2_size is 3
+		ss1:      ss2:   result (output):
+		  5        1         5-1
+		  4        3         4-3
+		  2        7         2-7
+		  6                  6-1  (the borrow from previous item)
+		  9                  9
+		               return (carry): 0
+	  of course the carry (borrow) is propagated and will be returned from the last item
+	  (this method is used by the Karatsuba multiplication algorithm)
+	*/
+	template<uint value_size>
+	uint UInt<value_size>::SubVector(const uint * ss1, const uint * ss2, uint ss1_size, uint ss2_size, uint * result)
+	{
+		TTMATH_ASSERT( ss1_size >= ss2_size )
+
+		uint rest = ss1_size - ss2_size;
+		uint c;
+
+		#ifndef __GNUC__
+			#error "another compiler than GCC is currently not supported in 64bit mode"
+		#endif
+
+		#ifdef __GNUC__
+
+		/*
+			the asm code is nearly the same as in AddVector
+			only two instructions 'adc' are changed to 'sbb'
+		*/
+		uint dummy1, dummy2, dummy3;
+
+			__asm__ __volatile__(
+				"mov %%rdx, %%r8					\n"
+				"xor %%rdx, %%rdx					\n"   // rdx = 0, cf = 0
+			"1:										\n"
+				"mov (%%rsi,%%rdx,8), %%rax			\n"
+				"sbb (%%rbx,%%rdx,8), %%rax			\n"
+				"mov %%rax, (%%rdi,%%rdx,8)			\n"
+
+				"inc %%rdx							\n"
+				"dec %%rcx							\n"
+			"jnz 1b									\n"
+
+				"adc %%rcx, %%rcx					\n"   // rcx has the cf state
+
+				"or %%r8, %%r8						\n"
+				"jz 3f								\n"
+				
+				"xor %%rbx, %%rbx					\n"
+				"sub %%rcx, %%rbx					\n"   // setting cf from rcx
+				"mov %%r8, %%rcx					\n"   // rcx=rest and is != 0
+				"mov $0, %%rbx						\n"
+			"2:										\n"
+				"mov (%%rsi, %%rdx, 8), %%rax		\n"
+				"sbb %%rbx, %%rax 					\n"
+				"mov %%rax, (%%rdi, %%rdx, 8)		\n"
+
+				"inc %%rdx							\n"
+				"dec %%rcx							\n"
+			"jnz 2b									\n"
+
+				"adc %%rcx, %%rcx					\n"
+			"3:										\n"
+
+				: "=a" (dummy1), "=b" (dummy2), "=c" (c),       "=d" (dummy3)
+				:                "1" (ss2),     "2" (ss2_size), "3" (rest),   "S" (ss1),  "D" (result)
+				: "%r8", "cc", "memory" );
+
+		#endif
+
+		TTMATH_LOG("UInt::SubVector")
+
+	return c;
+	}
+
 
 
 	/*!
@@ -431,7 +603,7 @@ namespace ttmath
 	
 		#endif
 
-		TTMATH_LOG("UInt64::Rcl2_one")
+		TTMATH_LOG("UInt::Rcl2_one")
 
 	return c;
 	}
@@ -481,7 +653,7 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt64::Rcr2_one")
+		TTMATH_LOG("UInt::Rcr2_one")
 
 	return c;
 	}
@@ -553,7 +725,7 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt64::Rcl2")
+		TTMATH_LOG("UInt::Rcl2")
 
 	return c;
 	}
@@ -628,7 +800,7 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt64::Rcr2")
+		TTMATH_LOG("UInt::Rcr2")
 
 	return c;
 	}

@@ -1,4 +1,4 @@
-Version 0.8.5 (2009.05.11):
+Version 0.8.5 prerelease (2009.05.15):
     * fixed:   Big::Mod(x) didn't correctly return a carry
                and the result was sometimes very big (even greater than x)
     * fixed:   global function Mod(x) didn't set an ErrorCode object
@@ -11,6 +11,25 @@ Version 0.8.5 (2009.05.11):
                the same is to Cos() function
     * changed: PrepareSin(x) is using Big::Mod() now when reducing 2PI period
                should be a little accurate especially on a very big 'x'
+    * changed: uint Mul(const UInt<value_size> & ss2, uint algorithm = 100)
+               void MulBig(const UInt<value_size> & ss2, UInt<value_size*2> & result, uint algorithm = 100)
+               those methods by default use MulFastest() and MulFastestBig()
+    * changed: changed a little Mul2Big() to cooperate with Mul3Big()
+    * added:   uint UInt::Mul3(const UInt<value_size> & ss2)
+               void UInt::Mul3Big(const UInt<value_size> & ss2, UInt<value_size*2> & result)
+               a new multiplication algorithm: Karatsuba multiplication,
+               on a vector UInt<100> with all items different from zero this algorithm is faster
+               about 3 times than Mul2Big(), and on a vector UInt<1000> with all items different from
+               zero this algorithm is faster more than 5 times than Mul2Big()
+               (measured on 32bit platform with GCC 4.3.3 with -O3 and -DTTMATH_RELEASE)
+    * added:   uint MulFastest(const UInt<value_size> & ss2)
+               void MulFastestBig(const UInt<value_size> & ss2, UInt<value_size*2> & result)
+               those methods are trying to select the fastest multiplication algorithm
+    * added:   uint AddVector(const uint * ss1, const uint * ss2, uint ss1_size, uint ss2_size, uint * result)
+               uint SubVector(const uint * ss1, const uint * ss2, uint ss1_size, uint ss2_size, uint * result)
+               three forms: asm x86, asm x86_64, no-asm
+               those methods are used by the Karatsuba multiplication algorithm
+               
                
 Version 0.8.4 (2009.05.08):
     * fixed:   UInt::DivInt() didn't check whether the divisor is zero

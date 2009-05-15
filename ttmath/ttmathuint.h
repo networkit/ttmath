@@ -840,8 +840,10 @@ public:
 
 	/*!
 		the multiplication 'this' = 'this' * ss2
+
+		algorithm: 100 - means automatically choose the fastest algorithm
 	*/
-	uint Mul(const UInt<value_size> & ss2, uint algorithm = 2)
+	uint Mul(const UInt<value_size> & ss2, uint algorithm = 100)
 	{
 		switch( algorithm )
 		{
@@ -849,8 +851,14 @@ public:
 			return Mul1(ss2);
 
 		case 2:
-		default:
 			return Mul2(ss2);
+
+		case 3:
+			return Mul3(ss2);
+
+		case 100:
+		default:
+			return MulFastest(ss2);
 		}
 	}
 
@@ -860,10 +868,12 @@ public:
 
 		since the 'result' is twice bigger than 'this' and 'ss2' 
 		this method never returns a carry
+
+		algorithm: 100 - means automatically choose the fastest algorithm
 	*/
 	void MulBig(const UInt<value_size> & ss2,
 				UInt<value_size*2> & result, 
-				uint algorithm = 2)
+				uint algorithm = 100)
 	{
 		switch( algorithm )
 		{
@@ -871,8 +881,14 @@ public:
 			return Mul1Big(ss2, result);
 
 		case 2:
-		default:
 			return Mul2Big(ss2, result);
+
+		case 3:
+			return Mul3Big(ss2, result);
+
+		case 100:
+		default:
+			return MulFastestBig(ss2, result);
 		}
 	}
 
@@ -964,7 +980,7 @@ public:
 	uint Mul2(const UInt<value_size> & ss2)
 	{
 	UInt<value_size*2> result;
-	uint i;
+	uint i, c = 0;
 
 		Mul2Big(ss2, result);
 	
@@ -975,11 +991,14 @@ public:
 		// testing carry
 		for( ; i<value_size*2 ; ++i)
 			if( result.table[i] != 0 )
-				return 1;
+			{
+				c = 1;
+				break;
+			}
 
 		TTMATH_LOG("UInt::Mul2")
 
-	return 0;
+	return c;
 	}
 
 
@@ -991,44 +1010,385 @@ public:
 	*/
 	void Mul2Big(const UInt<value_size> & ss2, UInt<value_size*2> & result)
 	{
-	uint r2,r1;
-	uint x1size=value_size, x2size=value_size;
-	uint x1start=0, x2start=0;
-
-		result.SetZero();
-
-		if( value_size > 2 )
-		{	
-			// if the value_size is smaller than or equal to 2
-			// there is no sense to set x1size (and others) to another values
-
-			for(x1size=value_size ; x1size>0 && table[x1size-1]==0 ; --x1size);
-			for(x2size=value_size ; x2size>0 && ss2.table[x2size-1]==0 ; --x2size);
-
-			if( x1size==0 || x2size==0 )
-			{
-				TTMATH_LOG("UInt::Mul2Big")
-				return;
-			}
-
-			for(x1start=0 ; x1start<x1size && table[x1start]==0 ; ++x1start);
-			for(x2start=0 ; x2start<x2size && ss2.table[x2start]==0 ; ++x2start);
-		}
-
-		for(uint x1=x1start ; x1<x1size ; ++x1)
-		{
-			for(uint x2=x2start ; x2<x2size ; ++x2)
-			{
-				MulTwoWords(table[x1], ss2.table[x2], &r2, &r1);
-				result.AddTwoInts(r2,r1,x2+x1);
-				// here will never be a carry
-			}
-		}
+		Mul2Big2<value_size>(table, ss2.table, result);
 
 		TTMATH_LOG("UInt::Mul2Big")
 	}
 
 
+private:
+
+	/*!
+		an auxiliary method for calculating the multiplication 
+
+		arguments we're taking as pointers (this is to improve the Mul3Big2()- avoiding
+		unnecessary copying objects), the result should be taken as a pointer too,
+		but at the moment there is no method AddTwoInts() which can operate on pointers
+	*/
+	template<uint ss_size>
+	void Mul2Big2(const uint * ss1, const uint * ss2, UInt<ss_size*2> & result)
+	{
+	uint x1size  = ss_size, x2size  = ss_size;
+	uint x1start = 0,       x2start = 0;
+
+		if( ss_size > 2 )
+		{	
+			// if the ss_size is smaller than or equal to 2
+			// there is no sense to set x1size (and others) to another values
+
+			for(x1size=ss_size ; x1size>0 && ss1[x1size-1]==0 ; --x1size);
+			for(x2size=ss_size ; x2size>0 && ss2[x2size-1]==0 ; --x2size);
+
+			for(x1start=0 ; x1start<x1size && ss1[x1start]==0 ; ++x1start);
+			for(x2start=0 ; x2start<x2size && ss2[x2start]==0 ; ++x2start);
+		}
+
+		Mul2Big3<ss_size>(ss1, ss2, result, x1start, x1size, x2start, x2size);
+	}
+
+
+
+	/*!
+		an auxiliary method for calculating the multiplication 
+	*/
+	template<uint ss_size>
+	void Mul2Big3(const uint * ss1, const uint * ss2, UInt<ss_size*2> & result, uint x1start, uint x1size, uint x2start, uint x2size)
+	{
+	uint r2, r1;
+
+		result.SetZero();
+
+		if( x1size==0 || x2size==0 )
+			return;
+
+		for(uint x1=x1start ; x1<x1size ; ++x1)
+		{
+			for(uint x2=x2start ; x2<x2size ; ++x2)
+			{
+				MulTwoWords(ss1[x1], ss2[x2], &r2, &r1);
+				result.AddTwoInts(r2, r1, x2+x1);
+				// here will never be a carry
+			}
+		}
+	}
+
+
+public:
+
+
+	/*!
+		multiplication: this = this * ss2
+
+		This is Karatsuba Multiplication algorithm, we're using it when value_size is greater than
+		or equal to TTMATH_USE_KARATSUBA_MULTIPLICATION_FROM_SIZE macro (defined in ttmathuint.h).
+		If value_size is smaller then we're using Mul2Big() instead.
+
+		Karatsuba multiplication:
+		Assume we have:
+			this = x = x1*B^m + x0
+			ss2  = y = y1*B^m + y0
+		where x0 and y0 are less than B^m
+		the product from multiplication we can show as:
+	    x*y = (x1*B^m + x0)(y1*B^m + y0) = z2*B^(2m) + z1*B^m + z0
+		where
+		    z2 = x1*y1
+			z1 = x1*y0 + x0*y1
+			z0 = x0*y0 
+		this is standard schoolbook algorithm with O(n^2), Karatsuba observed that z1 can be given in other form:
+			z1 = (x1 + x0)*(y1 + y0) - z2 - z0    / z1 = (x1*y1 + x1*y0 + x0*y1 + x0*y0) - x1*y1 - x0*y0 = x1*y0 + x0*y1 /
+		and to calculate the multiplication we need only three multiplications (with some additions and subtractions)			
+
+		Our objects 'this' and 'ss2' we divide into two parts and by using recurrence we calculate the multiplication.
+		Karatsuba multiplication has O( n^(ln(3)/ln(2)) )
+	*/
+	uint Mul3(const UInt<value_size> & ss2)
+	{
+	UInt<value_size*2> result;
+	uint i, c = 0;
+
+		Mul3Big(ss2, result);
+	
+		// copying result
+		for(i=0 ; i<value_size ; ++i)
+			table[i] = result.table[i];
+
+		// testing carry
+		for( ; i<value_size*2 ; ++i)
+			if( result.table[i] != 0 )
+			{
+				c = 1;
+				break;
+			}
+
+		TTMATH_LOG("UInt::Mul3")
+
+	return c;
+	}
+
+
+
+	/*!
+		multiplication: result = this * ss2
+
+		result is twice bigger than this and ss2,
+		this method never returns carry,
+		(Karatsuba multiplication)
+	*/
+	void Mul3Big(const UInt<value_size> & ss2, UInt<value_size*2> & result)
+	{
+		Mul3Big2<value_size>(table, ss2.table, result.table);
+
+		TTMATH_LOG("UInt::Mul3Big")
+	}
+
+
+
+private:
+
+	/*!
+		an auxiliary method for calculating the Karatsuba multiplication
+
+		result_size is equal ss_size*2
+	*/
+	template<uint ss_size>
+	void Mul3Big2(const uint * ss1, const uint * ss2, uint * result)
+	{
+	const uint * x1, * x0, * y1, * y0;
+
+
+		if( ss_size>1 && ss_size<TTMATH_USE_KARATSUBA_MULTIPLICATION_FROM_SIZE )
+		{
+			UInt<ss_size*2> res;
+			Mul2Big2<ss_size>(ss1, ss2, res);
+
+			for(uint i=0 ; i<ss_size*2 ; ++i)
+				result[i] = res.table[i];
+
+		return;
+		}
+		else
+		if( ss_size == 1 )
+		{
+			return MulTwoWords(*ss1, *ss2, &result[1], &result[0]);
+		}
+
+
+		if( (ss_size & 1) == 1 )
+		{
+			// ss_size is odd
+			x0 = ss1;
+			y0 = ss2;
+			x1 = ss1 + ss_size / 2 + 1;
+			y1 = ss2 + ss_size / 2 + 1;
+
+			// the second vectors (x1 and y1) are smaller about one from the first ones (x0 and y0)
+			Mul3Big3<ss_size/2 + 1, ss_size/2, ss_size*2>(x1, x0, y1, y0, result);
+		}
+		else
+		{
+			// ss_size is even
+			x0 = ss1;
+			y0 = ss2;
+			x1 = ss1 + ss_size / 2;
+			y1 = ss2 + ss_size / 2;
+			
+			// all four vectors (x0 x1 y0 y1) are equal in size
+			Mul3Big3<ss_size/2, ss_size/2, ss_size*2>(x1, x0, y1, y0, result);
+		}
+	}
+
+
+
+#ifdef _MSC_VER
+#pragma warning (disable : 4717)
+//warning C4717: recursive on all control paths, function will cause runtime stack overflow
+//we have the stop point in Mul3Big2() method
+#endif
+
+
+	/*!
+		an auxiliary method for calculating the Karatsuba multiplication
+
+			x = x1*B^m + x0
+			y = y1*B^m + y0
+
+			first_size  - is the size of vectors: x0 and y0
+			second_size - is the size of vectors: x1 and y1 (can be either equal first_size or smaller about one from first_size)
+
+			x*y = (x1*B^m + x0)(y1*B^m + y0) = z2*B^(2m) + z1*B^m + z0
+		      where
+			   z0 = x0*y0 
+			   z2 = x1*y1
+			   z1 = (x1 + x0)*(y1 + y0) - z2 - z0
+	*/
+	template<uint first_size, uint second_size, uint result_size>
+	void Mul3Big3(const uint * x1, const uint * x0, const uint * y1, const uint * y0, uint * result)
+	{
+	uint i, c, xc, yc;
+
+		UInt<first_size>   temp, temp2;
+		UInt<first_size*3> z1;
+
+		// z0 and z2 we store directly in the result (we don't use any temporary variables)
+		Mul3Big2<first_size>(x0, y0, result);                  // z0
+		Mul3Big2<second_size>(x1, y1, result+first_size*2);    // z2
+
+		// now we calculate z1
+		// temp  = (x0 + x1)
+		// temp2 = (y0 + y1)
+		// we're using temp and temp2 with UInt<first_size>, although there can be a carry but 
+		// we simple remember it in xc and yc (xc and yc can be either 0 or 1),
+		// and (x0 + x1)*(y0 + y1) we calculate in this way (schoolbook algorithm):
+		// 
+		//                 xc     |     temp
+		//                 yc     |     temp2
+		//               --------------------
+		//               (temp    *   temp2)
+		//               xc*temp2 |
+		//               yc*temp  |
+		//       xc*yc |                     
+		//       ----------     z1     --------
+		//
+		// and the result is never larger in size than 3*first_size
+
+		xc = AddVector(x0, x1, first_size, second_size, temp.table);
+		yc = AddVector(y0, y1, first_size, second_size, temp2.table);
+
+		Mul3Big2<first_size>(temp.table, temp2.table, z1.table);
+
+		// clearing the rest of z1
+		for(i=first_size*2 ; i<first_size*3 ; ++i)
+			z1.table[i] = 0;
+
+		
+		if( xc )
+		{
+			c = AddVector(z1.table+first_size, temp2.table, first_size*3-first_size, first_size, z1.table+first_size);
+			TTMATH_ASSERT( c==0 )
+		}
+
+		if( yc )
+		{
+			c = AddVector(z1.table+first_size, temp.table, first_size*3-first_size, first_size, z1.table+first_size);
+			TTMATH_ASSERT( c==0 )
+		}
+
+
+		if( xc && yc )
+		{
+			for( i=first_size*2 ; i<first_size*3 ; ++i )
+				if( ++z1.table[i] != 0 )
+					break;  // break if there was no carry 
+		}
+
+		// z1 = z1 - z2
+		c = SubVector(z1.table, result+first_size*2, first_size*3, second_size*2, z1.table);
+		TTMATH_ASSERT(c==0)
+
+		// z1 = z1 - z0
+		c = SubVector(z1.table, result, first_size*3, first_size*2, z1.table);
+		TTMATH_ASSERT(c==0)
+
+		// here we've calculated the z1
+		// now we're adding it to the result
+
+		if( first_size > second_size )
+		{
+			uint z1_size = result_size - first_size;
+			TTMATH_ASSERT( z1_size <= first_size*3 )
+
+			for(i=z1_size ; i<first_size*3 ; ++i)
+				TTMATH_ASSERT( z1.table[i] == 0 )
+				;
+			
+			c = AddVector(result+first_size, z1.table, result_size-first_size, z1_size, result+first_size);
+			TTMATH_ASSERT(c==0)
+		}
+		else
+		{
+			c = AddVector(result+first_size, z1.table, result_size-first_size, first_size*3, result+first_size);
+			TTMATH_ASSERT(c==0)
+		}
+	}
+
+
+#ifdef _MSC_VER
+#pragma warning (default : 4717)
+#endif
+
+
+public:
+
+
+	/*!
+		multiplication this = this * ss2
+	*/
+	uint MulFastest(const UInt<value_size> & ss2)
+	{
+	UInt<value_size*2> result;
+	uint i, c = 0;
+
+		MulFastestBig(ss2, result);
+	
+		// copying result
+		for(i=0 ; i<value_size ; ++i)
+			table[i] = result.table[i];
+
+		// testing carry
+		for( ; i<value_size*2 ; ++i)
+			if( result.table[i] != 0 )
+			{
+				c = 1;
+				break;
+			}
+
+		TTMATH_LOG("UInt::MulFastest")
+
+	return c;
+	}
+
+
+	/*!
+		multiplication result = this * ss2
+
+		this method is trying to select the fastest algorithm
+		(in the future this method can be improved)
+	*/
+	void MulFastestBig(const UInt<value_size> & ss2, UInt<value_size*2> & result)
+	{
+		if( value_size < TTMATH_USE_KARATSUBA_MULTIPLICATION_FROM_SIZE )
+			return Mul2Big(ss2, result);
+
+		uint x1size  = value_size, x2size  = value_size;
+		uint x1start = 0,          x2start = 0;
+
+		for(x1size=value_size ; x1size>0 && table[x1size-1]==0 ; --x1size);
+		for(x2size=value_size ; x2size>0 && ss2.table[x2size-1]==0 ; --x2size);
+
+		if( x1size==0 || x2size==0 )
+		{
+			// either 'this' or 'ss2' is equal zero - the result is zero too
+			result.SetZero();
+			return;
+		}
+
+		for(x1start=0 ; x1start<x1size && table[x1start]==0 ; ++x1start);
+		for(x2start=0 ; x2start<x2size && ss2.table[x2start]==0 ; ++x2start);
+
+		uint distancex1 = x1size - x1start;
+		uint distancex2 = x2size - x2start;
+
+		if( distancex1 < 3 || distancex2 < 3 )
+			// either 'this' or 'ss2' have only 2 (or 1) item different from zero (side by side)
+			// (this condition in the future can be improved)
+			return Mul2Big3<value_size>(table, ss2.table, result, x1start, x1size, x2start, x2size);
+
+
+		// Karatsuba multiplication
+		Mul3Big(ss2, result);
+
+		TTMATH_LOG("UInt::MulFastestBig")
+	}
 
 
 	/*!
@@ -2909,16 +3269,34 @@ private:
 	uint Rcr2(uint bits, uint c);
 
 public:
-	
 	uint Add(const UInt<value_size> & ss2, uint c=0);
 	uint AddInt(uint value, uint index = 0);
 	uint AddTwoInts(uint x2, uint x1, uint index);
+	static uint AddVector(const uint * ss1, const uint * ss2, uint ss1_size, uint ss2_size, uint * result);
 	uint Sub(const UInt<value_size> & ss2, uint c=0);
 	uint SubInt(uint value, uint index = 0);
+	static uint SubVector(const uint * ss1, const uint * ss2, uint ss1_size, uint ss2_size, uint * result);
 	static sint FindLeadingBitInWord(uint x);
 	static uint SetBitInWord(uint & value, uint bit);
 	static void MulTwoWords(uint a, uint b, uint * result_high, uint * result_low);
 	static void DivTwoWords(uint a,uint b, uint c, uint * r, uint * rest);
+};
+
+
+
+/*!
+	this specialization is needed in order to not confused the compiler "error: ISO C++ forbids zero-size array"
+	when compiling Mul3Big2() method
+*/
+template<>
+class UInt<0>
+{
+public:
+	uint table[1];
+
+	void Mul2Big(const UInt<0> &, UInt<0> &) { TTMATH_ASSERT(false) };
+	void SetZero() { TTMATH_ASSERT(false) };
+	uint AddTwoInts(uint, uint, uint) { TTMATH_ASSERT(false) return 0; };
 };
 
 

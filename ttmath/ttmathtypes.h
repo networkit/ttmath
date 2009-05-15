@@ -237,6 +237,17 @@ namespace ttmath
 
 
 
+/*!
+	this is a limit when calculating Karatsuba multiplication
+	if the size of a vector is smaller than TTMATH_USE_KARATSUBA_MULTIPLICATION_FROM_SIZE
+	the Karatsuba algorithm will use standard schoolbook multiplication
+*/
+#ifdef __GNUC__
+#define TTMATH_USE_KARATSUBA_MULTIPLICATION_FROM_SIZE 3
+#else
+#define TTMATH_USE_KARATSUBA_MULTIPLICATION_FROM_SIZE 5
+#endif
+
 
 namespace ttmath
 {

@@ -1642,7 +1642,7 @@ public:
 		// MS Visual Express 2005 reports a warning (in the lines with 'uint man_diff = ...'):
 		// warning C4307: '*' : integral constant overflow
 		// but we're using 'if( man > another_man )' and 'if( man < another_man )' and there'll be no such a situation here
-		#ifndef __GNUC__
+		#ifdef _MSC_VER
 		#pragma warning( disable: 4307 )
 		#endif
 
@@ -1658,7 +1658,7 @@ public:
 			c += exponent.AddInt(man_diff, 0);
 		}
 		
-		#ifndef __GNUC__
+		#ifdef _MSC_VER
 		#pragma warning( default: 4307 )
 		#endif
 
@@ -3426,9 +3426,9 @@ private:
 
 		it is called when the base is 10 and some digits were read before
 	*/
-	int FromString_ReadScientificIfExists(const char * & source)
+	uint FromString_ReadScientificIfExists(const char * & source)
 	{
-	int c = 0;
+	uint c = 0;
 
 		bool scientific_read = false;
 		const char * before_scientific = source;
