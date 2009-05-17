@@ -78,7 +78,6 @@ namespace ttmath
 	uint b = value_size;
 	uint * p1 = table;
 	const uint * p2 = ss2.table;
-	uint dummy, dummy2;
 
 		// we don't have to use TTMATH_REFERENCE_ASSERT here
 		// this algorithm doesn't require it
@@ -88,13 +87,15 @@ namespace ttmath
 		#endif
 
 		#ifdef __GNUC__
+		uint dummy, dummy2;
+
 			/*
 				this part should be compiled with gcc
 			*/
 			__asm__ __volatile__(
 	
 				"xorq %%rdx, %%rdx				\n"
-				"neg %%rax						\n"     // CF=1 if rax!=0 , CF=0 if rax==0
+				"negq %%rax						\n"     // CF=1 if rax!=0 , CF=0 if rax==0
 
 			"1:									\n"
 				"movq (%%rsi,%%rdx,8), %%rax	\n"
@@ -107,7 +108,7 @@ namespace ttmath
 				"adcq %%rcx, %%rcx				\n"
 
 				: "=c" (c), "=a" (dummy), "=d" (dummy2)
-				: "0" (b), "1" (c), "b" (p1), "S" (p2)
+				: "0" (b),  "1" (c), "b" (p1), "S" (p2)
 				: "cc", "memory" );
 
 		#endif
@@ -145,7 +146,6 @@ namespace ttmath
 	uint b = value_size;
 	uint * p1 = table;
 	uint c;
-	uint dummy, dummy2;
 
 		TTMATH_ASSERT( index < value_size )
 
@@ -154,7 +154,8 @@ namespace ttmath
 		#endif
 
 		#ifdef __GNUC__
-
+		uint dummy, dummy2;
+	
 			__asm__ __volatile__(
 
 				"subq %%rdx, %%rcx 				\n"
@@ -172,8 +173,8 @@ namespace ttmath
 				"setc %%al						\n"
 				"movzx %%al, %%rdx				\n"
 
-				: "=d" (c), "=a" (dummy), "=c" (dummy2)
-				: "a" (value), "c" (b), "0" (index), "b" (p1)
+				: "=d" (c),    "=a" (dummy), "=c" (dummy2)
+				: "0" (index), "1" (value),  "2" (b), "b" (p1)
 				: "cc", "memory" );
 
 		#endif
@@ -223,7 +224,6 @@ namespace ttmath
 	uint b = value_size;
 	uint * p1 = table;
 	uint c;
-	uint dummy, dummy2;
 
 		TTMATH_ASSERT( index < value_size - 1 )
 
@@ -232,6 +232,8 @@ namespace ttmath
 		#endif
 
 		#ifdef __GNUC__
+		uint dummy, dummy2;
+
 			__asm__ __volatile__(
 			
 				"subq %%rdx, %%rcx 				\n"
@@ -254,7 +256,7 @@ namespace ttmath
 				"movzx %%al, %%rax				\n"
 
 				: "=a" (c), "=c" (dummy), "=d" (dummy2)
-				: "1" (b), "2" (index), "b" (p1), "S" (x1), "0" (x2)
+				: "0" (x2), "1" (b),      "2" (index), "b" (p1), "S" (x1)
 				: "cc", "memory" );
 
 		#endif
@@ -299,10 +301,10 @@ namespace ttmath
 		#endif
 
 		#ifdef __GNUC__
+		uint dummy1, dummy2, dummy3;	
 			
-		//	this part should be compiled with gcc
-		uint dummy1, dummy2, dummy3;
-
+			//	this part should be compiled with gcc
+		
 			__asm__ __volatile__(
 				"mov %%rdx, %%r8					\n"
 				"xor %%rdx, %%rdx					\n"   // rdx = 0, cf = 0
@@ -320,10 +322,9 @@ namespace ttmath
 				"or %%r8, %%r8						\n"
 				"jz 3f								\n"
 				
-				"xor %%rbx, %%rbx					\n"
-				"sub %%rcx, %%rbx					\n"   // setting cf from rcx
+				"xor %%rbx, %%rbx					\n"   // ebx = 0
+				"neg %%rcx							\n"   // setting cf from rcx
 				"mov %%r8, %%rcx					\n"   // rcx=rest and is != 0
-				"mov $0, %%rbx						\n"
 			"2:										\n"
 				"mov (%%rsi, %%rdx, 8), %%rax		\n"
 				"adc %%rbx, %%rax 					\n"
@@ -367,7 +368,7 @@ namespace ttmath
 	uint b = value_size;
 	uint * p1 = table;
 	const uint * p2 = ss2.table;
-	uint dummy, dummy2;
+	
 
 		// we don't have to use TTMATH_REFERENCE_ASSERT here
 		// this algorithm doesn't require it
@@ -377,10 +378,12 @@ namespace ttmath
 		#endif
 
 		#ifdef __GNUC__
+		uint dummy, dummy2;
+
 			__asm__  __volatile__(
 	
 				"xorq %%rdx, %%rdx				\n"
-				"neg %%rax						\n"     // CF=1 if rax!=0 , CF=0 if rax==0
+				"negq %%rax						\n"     // CF=1 if rax!=0 , CF=0 if rax==0
 
 			"1:									\n"
 				"movq (%%rsi,%%rdx,8), %%rax	\n"
@@ -393,9 +396,8 @@ namespace ttmath
 				"adcq %%rcx, %%rcx				\n"
 
 				: "=c" (c), "=a" (dummy), "=d" (dummy2)
-				: "0" (b), "1" (c), "b" (p1), "S" (p2)
+				: "0" (b),  "1" (c), "b" (p1), "S" (p2)
 				: "cc", "memory" );
-
 
 		#endif
 
@@ -456,8 +458,8 @@ namespace ttmath
 				"setc %%al						\n"
 				"movzx %%al, %%rdx				\n"
 
-				: "=d" (c), "=a" (dummy), "=c" (dummy2)
-				: "1" (value), "2" (b), "0" (index), "b" (p1)
+				: "=d" (c),    "=a" (dummy), "=c" (dummy2)
+				: "0" (index), "1" (value),  "2" (b), "b" (p1)
 				: "cc", "memory" );
 
 		#endif
@@ -528,10 +530,9 @@ namespace ttmath
 				"or %%r8, %%r8						\n"
 				"jz 3f								\n"
 				
-				"xor %%rbx, %%rbx					\n"
-				"sub %%rcx, %%rbx					\n"   // setting cf from rcx
+				"xor %%rbx, %%rbx					\n"   // ebx = 0
+				"neg %%rcx							\n"   // setting cf from rcx
 				"mov %%r8, %%rcx					\n"   // rcx=rest and is != 0
-				"mov $0, %%rbx						\n"
 			"2:										\n"
 				"mov (%%rsi, %%rdx, 8), %%rax		\n"
 				"sbb %%rbx, %%rax 					\n"
@@ -576,17 +577,19 @@ namespace ttmath
 	{
 	sint b = value_size;
 	uint * p1 = table;
-	uint dummy, dummy2;
+	
 
 		#ifndef __GNUC__
 			#error "another compiler than GCC is currently not supported in 64bit mode"
 		#endif
 
 		#ifdef __GNUC__
+		uint dummy, dummy2;
+
 		__asm__  __volatile__(
 		
 			"xorq %%rdx, %%rdx			\n"   // rdx=0
-			"neg %%rax					\n"   // CF=1 if rax!=0 , CF=0 if rax==0
+			"negq %%rax					\n"   // CF=1 if rax!=0 , CF=0 if rax==0
 
 		"1:								\n"
 			"rclq $1, (%%rbx, %%rdx, 8)	\n"
@@ -598,7 +601,7 @@ namespace ttmath
 			"adcq %%rcx, %%rcx			\n"
 
 			: "=c" (c), "=a" (dummy), "=d" (dummy2)
-			: "1" (c), "0" (b), "b" (p1)
+			: "0" (b),  "1" (c), "b" (p1)
 			: "cc", "memory" );
 	
 		#endif
@@ -628,16 +631,18 @@ namespace ttmath
 	{
 	sint b = value_size;
 	uint * p1 = table;
-	uint dummy;
+	
 
 		#ifndef __GNUC__
 			#error "another compiler than GCC is currently not supported in 64bit mode"
 		#endif
 
 		#ifdef __GNUC__
+		uint dummy;
+
 		__asm__  __volatile__(
 
-			"neg %%rax						\n"   // CF=1 if rax!=0 , CF=0 if rax==0
+			"negq %%rax						\n"   // CF=1 if rax!=0 , CF=0 if rax==0
 
 		"1:									\n"
 			"rcrq $1, -8(%%rbx, %%rcx, 8)	\n"
@@ -648,7 +653,7 @@ namespace ttmath
 			"adcq %%rcx, %%rcx				\n"
 
 			: "=c" (c), "=a" (dummy)
-			: "1" (c), "0" (b), "b" (p1)
+			: "0" (b),  "1" (c), "b" (p1)
 			: "cc", "memory" );
 
 		#endif
@@ -681,13 +686,15 @@ namespace ttmath
 
 	uint b = value_size;
 	uint * p1 = table;
-	uint dummy, dummy2, dummy3;
+
 
 		#ifndef __GNUC__
 			#error "another compiler than GCC is currently not supported in 64bit mode"
 		#endif
 
 		#ifdef __GNUC__
+		uint dummy, dummy2, dummy3;
+
 		__asm__  __volatile__(
 		
 			"movq %%rcx, %%rsi				\n"
@@ -700,7 +707,6 @@ namespace ttmath
 
 			"xorq %%rdx, %%rdx				\n"
 			"movq %%rdx, %%rsi				\n"
-
 			"orq %%rax, %%rax				\n"
 			"cmovnz %%r8, %%rsi				\n"
 
@@ -720,7 +726,7 @@ namespace ttmath
 			"and $1, %%rax					\n"
 
 			: "=a" (c), "=D" (dummy), "=S" (dummy2), "=d" (dummy3)
-			: "0" (c), "1" (b), "b" (p1), "c" (bits)
+			: "0" (c),  "1" (b), "b" (p1), "c" (bits)
 			: "%r8", "cc", "memory" );
 
 		#endif
@@ -774,7 +780,6 @@ namespace ttmath
 			"movq %%rdx, %%rsi				\n"
 			"addq %%rdi, %%rdx				\n"
 			"decq %%rdx						\n"
-
 			"orq %%rax, %%rax				\n"
 			"cmovnz %%R8, %%rsi				\n"
 
@@ -782,7 +787,7 @@ namespace ttmath
 			"rorq %%cl, (%%rbx,%%rdx,8)		\n"
 
 			"movq (%%rbx,%%rdx,8), %%rax	\n"
-			"andq %%R8, %%rax			\n"
+			"andq %%R8, %%rax				\n"
 			"xorq %%rax, (%%rbx,%%rdx,8)	\n"
 			"orq  %%rsi, (%%rbx,%%rdx,8)	\n"
 			"movq %%rax, %%rsi				\n"
@@ -815,23 +820,25 @@ namespace ttmath
 	template<uint value_size>
 	sint UInt<value_size>::FindLeadingBitInWord(uint x)
 	{
-	register sint result;
+	sint result;
+
 
 		#ifndef __GNUC__
 			#error "another compiler than GCC is currently not supported in 64bit mode"
 		#endif
 
 		#ifdef __GNUC__
-			__asm__  __volatile__(
+		uint dummy;
 
-			"bsrq %1, %0		\n"
-			"jnz 1f				\n"
-			"movq $-1, %0		\n"
-			"1:					\n"
+				__asm__ (
 
-			: "=R" (result)
-			: "R" (x)
-			: "cc" );
+				"movq $-1, %1          \n"
+				"bsrq %2, %0           \n"
+				"cmovz %1, %0          \n"
+
+				: "=r" (result), "=&r" (dummy)
+				: "r" (x)
+				: "cc" );
 
 		#endif
 
@@ -867,15 +874,15 @@ namespace ttmath
 		#endif
 
 		#ifdef __GNUC__
-			__asm__  __volatile__(
+
+			__asm__ (
 
 			"btsq %%rbx, %%rax		\n"
-
 			"setc %%bl				\n"
 			"movzx %%bl, %%rbx		\n"
 			
 			: "=a" (v), "=b" (old_bit)
-			: "0" (v), "1" (bit)
+			: "0" (v),  "1" (bit)
 			: "cc" );
 
 		#endif
@@ -914,8 +921,8 @@ namespace ttmath
 		this has no effect in visual studio but it's usefull when
 		using gcc and options like -O
 	*/
-	register uint result1_;
-	register uint result2_;
+	uint result1_;
+	uint result2_;
 
 		#ifndef __GNUC__
 			#error "another compiler than GCC is currently not supported in 64bit mode"
@@ -923,12 +930,12 @@ namespace ttmath
 
 		#ifdef __GNUC__
 
-		__asm__ __volatile__(
+		__asm__ (
 		
 			"mulq %%rdx			\n"
 
 			: "=a" (result1_), "=d" (result2_)
-			: "0" (a), "1" (b)
+			: "0" (a),         "1" (b)
 			: "cc" );
 
 		#endif
@@ -965,8 +972,8 @@ namespace ttmath
 	template<uint value_size>
 	void UInt<value_size>::DivTwoWords(uint a,uint b, uint c, uint * r, uint * rest)
 	{
-		register uint r_;
-		register uint rest_;
+		uint r_;
+		uint rest_;
 		/*
 			these variables have similar meaning like those in
 			the multiplication algorithm MulTwoWords
@@ -980,7 +987,7 @@ namespace ttmath
 
 		#ifdef __GNUC__
 		
-			__asm__ __volatile__(
+			__asm__ (
 
 			"divq %%rcx				\n"
 
