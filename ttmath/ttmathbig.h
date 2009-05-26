@@ -87,13 +87,34 @@ unsigned char info;
 /*!
 	the number of a bit from 'info' which means that a value is with a sign
 	(when the bit is set)
-
-	/at the moment the rest bits from 'info' are not used/
 */
 #define TTMATH_BIG_SIGN 128
 
 
+/*!
+	Not a number
+	if this bit is set that there is no a valid number
+*/
+#define TTMATH_BIG_NAN  64
 
+
+
+
+	/*!
+		this method sets NaN if there was a carry (and returns 1 in such a case)
+
+		c can be 0, 1 or other value different from zero
+	*/
+	uint CheckCarry(uint c)
+	{
+		if( c != 0 )
+		{
+			SetNan();
+			return 1;
+		}
+
+	return 0;
+	}
 
 public:
 
@@ -118,8 +139,9 @@ public:
 			return 0;
 
 		uint comp = mantissa.CompensationToLeft();
+		uint c    = exponent.Sub( comp );
 
-	return exponent.Sub( comp );
+	return CheckCarry(c);
 	}
 
 
@@ -183,6 +205,15 @@ public:
 		exponent.SubOne();
 	}
 
+
+	/*!
+		this method sets NaN flag (Not a Number)
+		when this flag is set that means there is no a valid number
+	*/
+	void SetNan()
+	{
+		info |= TTMATH_BIG_NAN;	
+	}
 
 
 private:
@@ -504,6 +535,7 @@ public:
 	{
 		/*
 			we only have to test the mantissa
+			also we don't check the NaN flag
 		*/
 		return mantissa.IsZero();
 	}
@@ -511,11 +543,22 @@ public:
 
 	/*!
 		this method returns true when there's the sign set
+		also we don't check the NaN flag
 	*/
 	bool IsSign() const
 	{
 		return (info & TTMATH_BIG_SIGN) == TTMATH_BIG_SIGN;
 	}
+
+
+	/*!
+		this method returns true when there is not a valid number
+	*/
+	bool IsNan() const
+	{
+		return (info & TTMATH_BIG_NAN) == TTMATH_BIG_NAN;
+	}
+
 
 
 	/*!
@@ -540,6 +583,9 @@ public:
 	*/
 	void Sgn()
 	{
+		if( IsNan() )
+			return;
+
 		if( IsSign() )
 		{
 			SetOne();
@@ -614,6 +660,9 @@ public:
 
 	uint c = 0;
 
+		if( IsNan() || ss2.IsNan() )
+			return CheckCarry(1);
+
 		exp_offset.Sub( ss2.exponent );
 		exp_offset.Abs();
 
@@ -662,7 +711,7 @@ public:
 
 		c += Standardizing();
 
-	return (c==0)? 0 : 1;
+	return CheckCarry(c);
 	}
 
 
@@ -690,13 +739,16 @@ public:
 	*/
 	uint BitAnd(Big<exp, man> ss2)
 	{
+		if( IsNan() || ss2.IsNan() )
+			return CheckCarry(1);
+
 		if( IsSign() || ss2.IsSign() )
 			return 2;
-		
-	Int<exp> exp_offset( exponent );
-	Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
 
-	uint c = 0;
+		Int<exp> exp_offset( exponent );
+		Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
+
+		uint c = 0;
 
 		exp_offset.Sub( ss2.exponent );
 		exp_offset.Abs();
@@ -723,7 +775,7 @@ public:
 
 		c += Standardizing();
 
-	return (c==0)? 0 : 1;
+	return CheckCarry(c);
 	}
 
 
@@ -738,13 +790,16 @@ public:
 	*/
 	uint BitOr(Big<exp, man> ss2)
 	{
+		if( IsNan() || ss2.IsNan() )
+			return CheckCarry(1);
+
 		if( IsSign() || ss2.IsSign() )
 			return 2;
 		
-	Int<exp> exp_offset( exponent );
-	Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
+		Int<exp> exp_offset( exponent );
+		Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
 
-	uint c = 0;
+		uint c = 0;
 
 		exp_offset.Sub( ss2.exponent );
 		exp_offset.Abs();
@@ -768,7 +823,7 @@ public:
 
 		c += Standardizing();
 
-	return (c==0)? 0 : 1;
+	return CheckCarry(c);
 	}
 
 
@@ -783,13 +838,16 @@ public:
 	*/
 	uint BitXor(Big<exp, man> ss2)
 	{
+		if( IsNan() || ss2.IsNan() )
+			return CheckCarry(1);
+
 		if( IsSign() || ss2.IsSign() )
 			return 2;
 		
-	Int<exp> exp_offset( exponent );
-	Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
+		Int<exp> exp_offset( exponent );
+		Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
 
-	uint c = 0;
+		uint c = 0;
 
 		exp_offset.Sub( ss2.exponent );
 		exp_offset.Abs();
@@ -813,7 +871,7 @@ public:
 
 		c += Standardizing();
 
-	return (c==0)? 0 : 1;
+	return CheckCarry(c);
 	}
 
 
@@ -828,6 +886,9 @@ public:
 	UInt<man+1> man_result;
 	uint i,c = 0;
 
+		if( IsNan() )
+			return 1;
+
 		// man_result = mantissa * ss2.mantissa
 		mantissa.MulInt(ss2, man_result);
 
@@ -837,7 +898,7 @@ public:
 		{
 			// 'i' will be from 0 to TTMATH_BITS_PER_UINT
 			i = man_result.CompensationToLeft();
-			c  = exponent.Add( TTMATH_BITS_PER_UINT - i );
+			c = exponent.Add( TTMATH_BITS_PER_UINT - i );
 
 			for(i=0 ; i<man ; ++i)
 				mantissa.table[i] = man_result.table[i+1];
@@ -856,7 +917,7 @@ public:
 
 		c += Standardizing();
 
-	return (c==0)? 0 : 1;
+	return CheckCarry(c);
 	}
 
 
@@ -867,6 +928,9 @@ public:
 	*/
 	uint MulInt(sint ss2)
 	{
+		if( IsNan() )
+			return 1;
+
 		if( ss2 == 0 )
 		{
 			SetZero();
@@ -906,6 +970,9 @@ public:
 	UInt<man*2> man_result;
 	uint i,c;
 
+		if( IsNan() || ss2.IsNan() )
+			return CheckCarry(1);
+
 		// man_result = mantissa * ss2.mantissa
 		mantissa.MulBig(ss2.mantissa, man_result);
 
@@ -936,7 +1003,7 @@ public:
 
 		c += Standardizing();
 
-	return (c==0)? 0 : 1;
+	return CheckCarry(c);
 	}
 	
 
@@ -954,11 +1021,8 @@ public:
 	UInt<man*2> man2;
 	uint i,c = 0;
 		
-		if( ss2.IsZero() )
-		{
-			// we don't divide by zero
-			return 1;
-		}
+		if( IsNan() || ss2.IsNan() || ss2.IsZero() )
+			return CheckCarry(1);
 
 		for(i=0 ; i<man ; ++i)
 		{
@@ -991,7 +1055,7 @@ public:
 
 		c += Standardizing();
 
-	return (c==0)? 0 : 1;
+	return CheckCarry(c);
 	}
 
 
@@ -1005,13 +1069,16 @@ public:
 		-12.6 mod -3 = -0.6
 
 		it means:
-		in other words: this(old) = ss2 * q + this(new -- result)
+		in other words: this(old) = ss2 * q + this(new)
 	*/
 	uint Mod(const Big<exp, man> & ss2)
 	{
 	TTMATH_REFERENCE_ASSERT( ss2 )
 
 	uint c = 0;
+
+		if( IsNan() || ss2.IsNan() )
+			return CheckCarry(1);
 
 		if( !SmallerWithoutSignThan(ss2) )
 		{
@@ -1026,7 +1093,7 @@ public:
 				c += 1;
 		}
 
-	return (c==0)? 0 : 1;
+	return CheckCarry(c);
 	}
 
 
@@ -1046,30 +1113,35 @@ public:
 	template<uint pow_size>
 	uint Pow(UInt<pow_size> pow)
 	{
-		if(pow.IsZero() && IsZero())
+		if( IsNan() )
+			return 1;
+
+		if( pow.IsZero() && IsZero() )
+		{
 			// we don't define zero^zero
+			SetNan();
 			return 2;
+		}
 
 		Big<exp, man> start(*this), start_temp;
 		Big<exp, man> result;
 		result.SetOne();
+		uint c = 0;
 
-		while( !pow.IsZero() )
+		while( !c && !pow.IsZero() )
 		{
 			if( pow.table[0] & 1 )
-				if( result.Mul(start) )
-					return 1;
+				c += result.Mul(start);
 
 			start_temp = start;
-			if( start.Mul(start_temp) )
-				return 1;
+			c += start.Mul(start_temp);
 
 			pow.Rcr(1);
 		}
 
 		*this = result;
 
-	return 0;
+	return CheckCarry(c);
 	}
 
 
@@ -1085,27 +1157,29 @@ public:
 	template<uint pow_size>
 	uint Pow(Int<pow_size> pow)
 	{
+		if( IsNan() )
+			return 1;
+
 		if( !pow.IsSign() )
 			return Pow( UInt<pow_size>(pow) );
 
 		if( IsZero() )
+		{
 			// if 'p' is negative then
 			// 'this' must be different from zero
+			SetNan();
 			return 2;
+		}
 
-		if( pow.ChangeSign() )
-			return 1;
+		uint c = pow.ChangeSign();
 
 		Big<exp, man> t(*this);
-		uint c_temp = t.Pow( UInt<pow_size>(pow) );
-		if( c_temp > 0 )
-			return c_temp;
+		c += t.Pow( UInt<pow_size>(pow) ); // here can only be a carry (return:1)
 
 		SetOne();
-		if( Div(t) )
-			return 1;
+		c += Div(t);
 
-	return 0;
+	return CheckCarry(c);
 	}
 
 
@@ -1142,8 +1216,14 @@ public:
 	*/
 	uint PowUInt(Big<exp, man> pow)
 	{
+		if( IsNan() || pow.IsNan() )
+			return CheckCarry(1);
+
 		if( pow.IsZero() && IsZero() )
+		{
+			SetNan();
 			return 2;
+		}
 
 		if( pow.IsSign() )
 			pow.Abs();
@@ -1152,27 +1232,26 @@ public:
 		Big<exp, man> result;
 		Big<exp, man> one;
 		Int<exp> e_one;
+		uint c = 0;
 
 		e_one.SetOne();
 		one.SetOne();
 		result = one;
 
-		while( pow >= one )
+		while( !c && pow >= one )
 		{
 			if( pow.Mod2() )
-				if( result.Mul(start) )
-					return 1;
+				c += result.Mul(start);
 
 			start_temp = start;
-			if( start.Mul(start_temp) )
-				return 1;
+			c += start.Mul(start_temp);
 
-			pow.exponent.Sub( e_one );
+			c += pow.exponent.Sub( e_one );
 		}
 
 		*this = result;
 
-	return 0;
+	return CheckCarry(c);
 	}
 
 
@@ -1190,24 +1269,27 @@ public:
 	{
 		TTMATH_REFERENCE_ASSERT( pow )
 	
+		if( IsNan() || pow.IsNan() )
+			return CheckCarry(1);
+
 		if( !pow.IsSign() )
 			return PowUInt(pow);
 
 		if( IsZero() )
+		{
 			// if 'pow' is negative then
 			// 'this' must be different from zero
+			SetNan();
 			return 2;
+		}
 
 		Big<exp, man> temp(*this);
-		uint c_temp = temp.PowUInt(pow);
-		if( c_temp > 0 )
-			return c_temp;
+		uint c = temp.PowUInt(pow); // here can only be a carry (result:1)
 
 		SetOne();
-		if( Div(temp) )
-			return 1;
+		c += Div(temp);
 
-	return 0;
+	return CheckCarry(c);
 	}
 
 
@@ -1225,16 +1307,22 @@ public:
 	{
 		TTMATH_REFERENCE_ASSERT( pow )
 
+		if( IsNan() || pow.IsNan() )
+			return CheckCarry(1);
+
 		Big<exp, man> temp;
 		uint c = temp.Ln(*this);
 
-		if( c!= 0 )
+		if( c != 0 ) // can be 2 from Ln()
+		{
+			SetNan();
 			return c;
+		}
 
 		c += temp.Mul(pow);
 		c += Exp(temp);
 
-	return (c==0)? 0 : 1;
+	return CheckCarry(c);
 	}
 
 
@@ -1252,11 +1340,17 @@ public:
 	{
 		TTMATH_REFERENCE_ASSERT( pow )
 
+		if( IsNan() || pow.IsNan() )
+			return CheckCarry(1);
+
 		if( IsZero() )
 		{
 			// 0^pow will be 0 only for pow>0
 			if( pow.IsSign() || pow.IsZero() )
+			{
+				SetNan();
 				return 2;
+			}
 
 			SetZero();
 
@@ -1278,7 +1372,7 @@ public:
 
 private:
 
-#ifdef CONSTANTSGENERATOR
+#ifdef TTMATH_CONSTANTSGENERATOR
 public:
 #endif
 
@@ -1306,7 +1400,7 @@ public:
 		old_value = *this;
 
 		// we begin from 1 in order to not testing at the beginning
-	#ifdef CONSTANTSGENERATOR
+	#ifdef TTMATH_CONSTANTSGENERATOR
 		for(i=1 ; true ; ++i)
 	#else
 		for(i=1 ; i<=TTMATH_ARITHMETIC_MAX_LOOP ; ++i)
@@ -1367,6 +1461,9 @@ public:
 	{
 	uint c = 0;
 		
+		if( x.IsNan() )
+			return CheckCarry(1);
+
 		if( x.IsZero() )
 		{
 			SetOne();
@@ -1419,7 +1516,7 @@ public:
 			c += PowUInt(e_);
 		}
 	
-	return (c==0)? 0 : 1;
+	return CheckCarry(c);
 	}
 
 
@@ -1427,7 +1524,7 @@ public:
 
 private:
 
-#ifdef CONSTANTSGENERATOR
+#ifdef TTMATH_CONSTANTSGENERATOR
 public:
 #endif
 
@@ -1469,7 +1566,7 @@ public:
 		uint i;
 
 
-	#ifdef CONSTANTSGENERATOR
+	#ifdef TTMATH_CONSTANTSGENERATOR
 		for(i=1 ; true ; ++i)
 	#else
 		// we begin from 1 in order to not testing at the beginning
@@ -1532,15 +1629,21 @@ public:
 
 		return values:
 			0 - ok
-			1 - overflow
+			1 - overflow (carry)
 			2 - incorrect argument (x<=0)
 	*/
 	uint Ln(const Big<exp,man> & x)
 	{
 		TTMATH_REFERENCE_ASSERT( x )
 
+		if( x.IsNan() )
+			return CheckCarry(1);
+
 		if( x.IsSign() || x.IsZero() )
+		{
+			SetNan();
 			return 2;
+		}
 
 		// m will be the value of the mantissa in range <1,2)
 		Big<exp,man> m(x);
@@ -1559,7 +1662,7 @@ public:
 		c += exponent_temp.Mul(ln2);
 		c += Add(exponent_temp);
 
-	return (c==0)? 0 : 1;
+	return CheckCarry(c);
 	}
 
 
@@ -1581,14 +1684,23 @@ public:
 		TTMATH_REFERENCE_ASSERT( base )
 		TTMATH_REFERENCE_ASSERT( x )
 
+		if( x.IsNan() || base.IsNan() )
+			return CheckCarry(1);
+
 		if( x.IsSign() || x.IsZero() )
+		{
+			SetNan();
 			return 2;
+		}
 
 		Big<exp,man> denominator;;
 		denominator.SetOne();
 
 		if( base.IsSign() || base.IsZero() || base==denominator )
+		{
+			SetNan();
 			return 3;
+		}
 		
 		if( x == denominator ) // (this is: if x == 1)
 		{
@@ -1597,14 +1709,14 @@ public:
 			return 0;
 		}
 
-		// another error values we've tested at the start
-		// there can be only a carry
+		// another error values we've tested at the beginning
+		// there can only be a carry
 		uint c = Ln(x);
 
 		c += denominator.Ln(base);
 		c += Div(denominator);
 
-	return (c==0)? 0 : 1;
+	return CheckCarry(c);
 	}
 
 
@@ -1625,8 +1737,14 @@ public:
 	{
 		info = another.info;
 
-		if( exponent.FromInt(another.exponent) )
+		if( IsNan() )
 			return 1;
+
+		if( exponent.FromInt(another.exponent) )
+		{
+			SetNan();
+			return 1;
+		}
 
 		uint man_len_min = (man < another_man)? man : another_man;
 		uint i;
@@ -1641,7 +1759,7 @@ public:
 
 		// MS Visual Express 2005 reports a warning (in the lines with 'uint man_diff = ...'):
 		// warning C4307: '*' : integral constant overflow
-		// but we're using 'if( man > another_man )' and 'if( man < another_man )' and there'll be no such a situation here
+		// but we're using 'if( man > another_man )' and 'if( man < another_man )' and there'll be no such situation here
 		#ifdef _MSC_VER
 		#pragma warning( disable: 4307 )
 		#endif
@@ -1665,7 +1783,7 @@ public:
 		// mantissa doesn't have to be standardized (either the highest bit is set or all bits are equal zero)
 		CorrectZero();
 
-	return (c == 0 )? 0 : 1;
+	return CheckCarry(c);
 	}
 
 
@@ -2474,13 +2592,16 @@ public:
 		FromBig(value);
 	}
 
+
 	/*!
 		a default constructor
 
-		warning: we don't set any of the members to zero etc.
+		we don't set any of the members to zero
+		only NaN flag is set
 	*/
 	Big()
 	{
+		SetNan();
 	}
 
 
@@ -2497,7 +2618,7 @@ public:
 	*/
 	Big<exp,man> & operator=(const Big<exp,man> & value)
 	{
-		info = value.info;
+		info     = value.info;
 		exponent = value.exponent;
 		mantissa = value.mantissa;
 
@@ -2561,9 +2682,16 @@ public:
 					char decimal_point = TTMATH_COMMA_CHARACTER_1 ) const
 	{
 		static char error_overflow_msg[] = "overflow";
+		static char error_nan_msg[]      = "NaN";
 		result.erase();
-		
-		if(base<2 || base>16)
+
+		if( IsNan() )
+		{
+			result = error_nan_msg;
+			return 0;
+		}
+
+		if( base<2 || base>16 )
 		{
 			result = error_overflow_msg;
 			return 1;
@@ -3257,6 +3385,8 @@ public:
 
 		if( base<2 || base>16 )
 		{
+			SetNan();
+
 			if( after_source )
 				*after_source = source;
 
@@ -3286,7 +3416,7 @@ public:
 		if( value_read )
 			*value_read = value_read_temp;
 
-	return (c==0)? 0 : 1;
+	return CheckCarry(c);
 	}
 
 
@@ -3587,6 +3717,7 @@ public:
 		and returns the result
 
 		(in other words it treats 'this' and 'ss2' as values without a sign)
+		we don't check the NaN flag
 	*/
 	bool SmallerWithoutSignThan(const Big<exp,man> & ss2) const
 	{
@@ -3621,6 +3752,7 @@ public:
 		and returns the result
 
 		(in other words it treats 'this' and 'ss2' as values without a sign)
+		we don't check the NaN flag
 	*/
 	bool GreaterWithoutSignThan(const Big<exp,man> & ss2) const
 	{
@@ -3655,6 +3787,7 @@ public:
 		and returns the result
 
 		(in other words it treats 'this' and 'ss2' as values without a sign)
+		we don't check the NaN flag
 	*/
 	bool EqualWithoutSign(const Big<exp,man> & ss2) const
 	{
@@ -3861,7 +3994,7 @@ public:
 	*/
 	void SkipFraction()
 	{
-		if( IsZero() )
+		if( IsNan() || IsZero() )
 			return;
 
 		if( !exponent.IsSign() )
@@ -3895,7 +4028,7 @@ public:
 	*/
 	void RemainFraction()
 	{
-		if( IsZero() )
+		if( IsNan() || IsZero() )
 			return;
 
 		if( !exponent.IsSign() )
@@ -3945,6 +4078,9 @@ public:
 	Big<exp,man> half;
 	uint c;
 
+		if( IsNan() )
+			return 1;
+
 		half.Set05();
 
 		if( IsSign() )
@@ -3960,7 +4096,7 @@ public:
 
 		SkipFraction();
 
-	return c;
+	return CheckCarry(c);
 	}
 
 

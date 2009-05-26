@@ -91,7 +91,7 @@ void CalcE()
 	ttmath::Big<1,400> e;
 	ttmath::uint steps;
 
-	// macro CONSTANTSGENERATOR has to be defined	
+	// macro TTMATH_CONSTANTSGENERATOR has to be defined	
 	e.ExpSurrounding0(1, &steps);
 	std::cout << "---------------- e ----------------" << std::endl;
 	e.mantissa.PrintTable(std::cout);
@@ -105,7 +105,7 @@ void CalcLn(int x)
 	ttmath::Big<1,400> ln;
 	ttmath::uint steps;
 
-	// macro CONSTANTSGENERATOR has to be defined	
+	// macro TTMATH_CONSTANTSGENERATOR has to be defined	
 	ln.LnSurrounding1(x, &steps);
 	std::cout << "---------------- ln(" << x << ") ----------------" << std::endl;
 	ln.mantissa.PrintTable(std::cout);

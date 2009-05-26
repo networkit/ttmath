@@ -1,6 +1,6 @@
 o      = main.o
 CC     = g++
-CFLAGS = -s -O2 -DCONSTANTSGENERATOR
+CFLAGS = -s -O2 -DTTMATH_CONSTANTSGENERATOR
 name   = gen
 
 
