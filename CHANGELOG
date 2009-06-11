@@ -1,4 +1,4 @@
-Version 0.8.5 prerelease (2009.05.15):
+Version 0.8.5 prerelease (2009.06.11):
     * fixed:   Big::Mod(x) didn't correctly return a carry
                and the result was sometimes very big (even greater than x)
     * fixed:   global function Mod(x) didn't set an ErrorCode object
@@ -7,7 +7,7 @@ Version 0.8.5 prerelease (2009.05.15):
     * changed: function Sin(x) to Sin(x, ErrorCode * err=0)
                when x was very big the function returns zero
                now it sets ErrorCode object to err_overflow
-               and the result is undefined
+               and the result has a NaN flag set
                the same is to Cos() function
     * changed: PrepareSin(x) is using Big::Mod() now when reducing 2PI period
                should be a little accurate especially on a very big 'x'
@@ -29,6 +29,31 @@ Version 0.8.5 prerelease (2009.05.15):
                uint SubVector(const uint * ss1, const uint * ss2, uint ss1_size, uint ss2_size, uint * result)
                three forms: asm x86, asm x86_64, no-asm
                those methods are used by the Karatsuba multiplication algorithm
+    * added:   to Big<> class: support for NaN flag (Not a Number)
+               bool Big::IsNan() - returns true if the NaN flag is set
+               void Big::SetNan() - sets the NaN flag
+               The NaN flag is set by default after creating an object:
+                 Big<1, 2> a;    // NaN is set (it means the object has not a valid number)
+                 std::cout << a; // cout gives "NaN"
+                 a = 123;        // now NaN is not set
+                 std::cout << a; // cout gives "123"
+               The NaN is set if there was a carry during calculations
+                 a.Mul(very_big_value); // a will have a NaN set
+               The NaN is set if an argument is NaN too
+                 b.SetNan();
+                 a.Add(b);  // a will have NaN because b has NaN too
+               If you try to do something on a NaN object, the result is a NaN too
+                 a.SetNan();
+                 a.Add(2);  // a is still a NaN 
+               The NaN is set if you use incorrect arguments
+                 a.Ln(-10); // a will have the NaN flag
+               The only way to clear the NaN flag is to assign a correct value or other correct object,
+               supposing 'a' has NaN flag, to remove the flag you can either:
+                 a = 10;
+                 a.FromInt(30);
+                 a.SetOne(); 
+                 a.FromBig(other_object_without_nan);
+                 etc.
                
                
 Version 0.8.4 (2009.05.08):

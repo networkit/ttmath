@@ -704,7 +704,12 @@ public:
 			// there shouldn't be a carry here because
 			// (1) (2) guarantee that the mantissa of this
 			// is greater than or equal to the mantissa of the ss2
-			uint c_temp = mantissa.Sub(ss2.mantissa);
+			
+			#ifdef TTMATH_DEBUG
+			// this is to get rid of a warning saying that c_temp is not used
+			uint c_temp = /* mantissa.Sub(ss2.mantissa); */
+			#endif
+			mantissa.Sub(ss2.mantissa);
 
 			TTMATH_ASSERT( c_temp == 0 )
 		}
@@ -2022,9 +2027,10 @@ public:
 			// If E=2047 and F is zero and S is 1, then V=-Infinity
 			// If E=2047 and F is zero and S is 0, then V=Infinity
 
-			// at the moment we do not support NaN, -Infinity and +Infinity
+			// we do not support -Infinity and +Infinity
+			// we assume that there is always NaN 
 
-			SetZero();
+			SetNaN();
 		}
 		else
 		if( e > 0 )
@@ -2135,9 +2141,10 @@ public:
 			// If E=2047 and F is zero and S is 1, then V=-Infinity
 			// If E=2047 and F is zero and S is 0, then V=Infinity
 
-			// at the moment we do not support NaN, -Infinity and +Infinity
+			// we do not support -Infinity and +Infinity
+			// we assume that there is always NaN 
 
-			SetZero();
+			SetNaN();
 		}
 		else
 		if( e > 0 )
@@ -2227,12 +2234,19 @@ public:
 			return 0;
 		}
 
+		if( IsNan() )
+		{
+			result = ToDouble_SetDouble( false, 2047, 0, false, true);
+
+		return 0;
+		}
+
 		sint e_correction = sint(man*TTMATH_BITS_PER_UINT) - 1;
 
 		if( exponent >= 1024 - e_correction )
 		{
 			// +/- infinity
-			result = ToDouble_SetDouble( IsSign(), 2047, 0, true);
+			result = ToDouble_SetDouble( 0, 2047, 0, true);
 
 		return 1;
 		}
@@ -2267,7 +2281,7 @@ private:
 #ifdef TTMATH_PLATFORM32
 
 	// 32bit platforms
-	double ToDouble_SetDouble(bool is_sign, uint e, sint move, bool infinity = false) const
+	double ToDouble_SetDouble(bool is_sign, uint e, sint move, bool infinity = false, bool nan = false) const
 	{
 		union 
 		{
@@ -2281,6 +2295,12 @@ private:
 			temp.u[1] |= 0x80000000u;
 
 		temp.u[1] |= (e << 20) & 0x7FF00000u;
+
+		if( nan )
+		{
+			temp.u[0] |= 1;
+			return temp.d;
+		}
 
 		if( infinity )
 			return temp.d;
@@ -2304,7 +2324,7 @@ private:
 #else
 
 	// 64bit platforms
-	double ToDouble_SetDouble(bool is_sign, uint e, sint move, bool infinity = false) const
+	double ToDouble_SetDouble(bool is_sign, uint e, sint move, bool infinity = false, bool nan = false) const
 	{
 		union 
 		{
@@ -2318,6 +2338,12 @@ private:
 			temp.u |= 0x8000000000000000ul;
 		                
 		temp.u |= (e << 52) & 0x7FF0000000000000ul;
+
+		if( nan )
+		{
+			temp.u |= 1;
+			return temp.d;
+		}
 
 		if( infinity )
 			return temp.d;
@@ -3088,7 +3114,7 @@ private:
 			else
 				was_carry = false;
 
-			new_man[i] = UInt<man>::DigitToChar( digit );
+			new_man[i] = static_cast<char>( UInt<man>::DigitToChar(digit) );
 		}
 
 		if( i<0 && was_carry )

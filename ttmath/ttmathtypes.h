@@ -360,7 +360,7 @@ namespace ttmath
 			foo.Add(foo);
 		but there are only few methods which can do that
 	*/
-	class ReferenceError : public std::logic_error, ExceptionInfo
+	class ReferenceError : public std::logic_error, public ExceptionInfo
 	{
 	public:
 
@@ -392,7 +392,7 @@ namespace ttmath
 		the name and the line of a file where the macro TTMATH_ASSERT
 		was used)
 	*/
-	class RuntimeError : public std::runtime_error, ExceptionInfo
+	class RuntimeError : public std::runtime_error, public ExceptionInfo
 	{
 	public:
 

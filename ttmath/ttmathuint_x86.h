@@ -105,13 +105,13 @@ namespace ttmath
 				mov eax,[c]
 				neg eax              // CF=1 if rax!=0 , CF=0 if rax==0
 
-			p:
+			ttmath_loop:
 				mov eax,[esi+edx*4]
 				adc [ebx+edx*4],eax
 
 				inc edx
 				dec ecx
-			jnz p
+			jnz ttmath_loop
 
 				adc ecx, ecx
 				mov [c], ecx
@@ -204,16 +204,16 @@ namespace ttmath
 
 				mov eax, [value]
 
-			p:
+			ttmath_loop:
 				add [ebx+edx*4], eax
-			jnc end
+			jnc ttmath_end
 
 				mov eax, 1
 				inc edx
 				dec ecx
-			jnz p
+			jnz ttmath_loop
 
-			end:
+			ttmath_end:
 				setc al
 				movzx edx, al
 				mov [c], edx
@@ -321,16 +321,16 @@ namespace ttmath
 
 				mov eax, [x2]
 			
-			p:
+			ttmath_loop:
 				adc [ebx+edx*4], eax
-			jnc end
+			jnc ttmath_end
 
 				mov eax, 0
 				inc edx
 				dec ecx
-			jnz p
+			jnz ttmath_loop
 
-			end:
+			ttmath_end:
 				setc al
 				movzx edx, al
 				mov [c], edx
@@ -423,36 +423,37 @@ namespace ttmath
 				mov ebx, [ss2]
 				mov edi, [result]
 
-			p:
+			ttmath_loop:
 				mov eax, [esi+edx*4]
 				adc eax, [ebx+edx*4]
 				mov [edi+edx*4], eax
 
 				inc edx
 				dec ecx
-			jnz p
+			jnz ttmath_loop
 
 				adc ecx, ecx             // ecx has the cf state
 
 				mov ebx, [rest]
 				or ebx, ebx
-				jz end
+				jz ttmath_end
 				
 				xor ebx, ebx             // ebx = 0
 				neg ecx                  // setting cf from ecx
 				mov ecx, [rest]          // ecx is != 0
-			p2:
+			
+			ttmath_loop2:
 				mov eax, [esi+edx*4]
 				adc eax, ebx 
 				mov [edi+edx*4], eax
 
 				inc edx
 				dec ecx
-			jnz p2
+			jnz ttmath_loop2
 
 				adc ecx, ecx
 
-			end:
+			ttmath_end:
 				mov [c], ecx
 
 				popad
@@ -548,13 +549,13 @@ namespace ttmath
 				mov eax,[c]
 				neg eax              // CF=1 if rax!=0 , CF=0 if rax==0
 
-			p:
+			ttmath_loop:
 				mov eax,[esi+edx*4]
 				sbb [ebx+edx*4],eax
 
 				inc edx
 				dec ecx
-			jnz p
+			jnz ttmath_loop
 
 				adc ecx, ecx
 				mov [c], ecx
@@ -646,16 +647,16 @@ namespace ttmath
 
 				mov eax, [value]
 
-			p:
+			ttmath_loop:
 				sub [ebx+edx*4], eax
-			jnc end
+			jnc ttmath_end
 
 				mov eax, 1
 				inc edx
 				dec ecx
-			jnz p
+			jnz ttmath_loop
 
-			end:
+			ttmath_end:
 				setc al
 				movzx edx, al
 				mov [c], edx
@@ -750,36 +751,37 @@ namespace ttmath
 				mov ebx, [ss2]
 				mov edi, [result]
 
-			p:
+			ttmath_loop:
 				mov eax, [esi+edx*4]
 				sbb eax, [ebx+edx*4]
 				mov [edi+edx*4], eax
 
 				inc edx
 				dec ecx
-			jnz p
+			jnz ttmath_loop
 
 				adc ecx, ecx             // ecx has the cf state
 
 				mov ebx, [rest]
 				or ebx, ebx
-				jz end
+				jz ttmath_end
 				
 				xor ebx, ebx             // ebx = 0
 				neg ecx                  // setting cf from ecx
 				mov ecx, [rest]          // ecx is != 0
-			p2:
+
+			ttmath_loop2:
 				mov eax, [esi+edx*4]
 				sbb eax, ebx 
 				mov [edi+edx*4], eax
 
 				inc edx
 				dec ecx
-			jnz p2
+			jnz ttmath_loop2
 
 				adc ecx, ecx
 
-			end:
+			ttmath_end:
 				mov [c], ecx
 
 				popad
@@ -870,12 +872,12 @@ namespace ttmath
 				neg ecx
 				mov ecx, [b]
 
-			p:
+			ttmath_loop:
 				rcl dword ptr [ebx+edx*4], 1
 				
 				inc edx
 				dec ecx
-			jnz p
+			jnz ttmath_loop
 
 				adc ecx, ecx
 				mov [c], ecx
@@ -946,11 +948,11 @@ namespace ttmath
 				neg ecx
 				mov ecx, [b]
 
-			p:
+			ttmath_loop:
 				rcr dword ptr [ebx+ecx*4-4], 1
 				
 				dec ecx
-			jnz p
+			jnz ttmath_loop
 
 				adc ecx, ecx
 				mov [c], ecx
@@ -1045,7 +1047,7 @@ namespace ttmath
 				or eax, eax
 				cmovnz esi, ebp      // if(c) esi=mask else esi=0
 
-		p:
+			ttmath_loop:
 				rol dword ptr [ebx+edx*4], cl
 				
 				mov eax, [ebx+edx*4]
@@ -1056,7 +1058,7 @@ namespace ttmath
 
 				inc edx
 				dec edi
-			jnz p
+			jnz ttmath_loop
 
 				pop ebp              // restoring ebp
 
@@ -1175,7 +1177,7 @@ namespace ttmath
 				or eax, eax
 				cmovnz esi, ebp      // if(c) esi=mask else esi=0
 
-			p:
+			ttmath_loop:
 				ror dword ptr [ebx+edx*4], cl
 				
 				mov eax, [ebx+edx*4]
@@ -1186,7 +1188,7 @@ namespace ttmath
 
 				dec edx
 				dec edi
-			jnz p
+			jnz ttmath_loop
 
 				pop ebp              // restoring ebp
 

@@ -45,6 +45,12 @@
     \brief Mathematics functions.
 */
 
+#ifdef _MSC_VER
+//warning C4127: conditional expression is constant
+#pragma warning( disable: 4127 )
+#endif
+
+
 #include "ttmathbig.h"
 #include "ttmathobjects.h"
 
@@ -1727,7 +1733,7 @@ namespace ttmath
 
 
 		template<class ValueType>
-		bool RootCheckIndexOne(ValueType & x, const ValueType & index, ErrorCode * err)
+		bool RootCheckIndexOne(const ValueType & index, ErrorCode * err)
 		{
 			ValueType one;
 			one.SetOne();
@@ -1769,11 +1775,12 @@ namespace ttmath
 
 
 		template<class ValueType>
-		bool RootCheckXZero(ValueType & x, const ValueType & index, ErrorCode * err)
+		bool RootCheckXZero(ValueType & x, ErrorCode * err)
 		{
 			if( x.IsZero() )
 			{
 				// root(0;index) is zero (if index!=0)
+				// RootCheckIndexZero() must be called beforehand
 				x.SetZero();
 
 				if( err )
@@ -1842,9 +1849,9 @@ namespace ttmath
 
 		if( RootCheckIndexSign(x, index, err) ) return x;
 		if( RootCheckIndexZero(x, index, err) ) return x;
-		if( RootCheckIndexOne (x, index, err) ) return x;
+		if( RootCheckIndexOne (   index, err) ) return x;
 		if( RootCheckIndexFrac(x, index, err) ) return x;
-		if( RootCheckXZero    (x, index, err) ) return x;
+		if( RootCheckXZero    (x,        err) ) return x;
 
 		// index integer and index!=0
 		// x!=0
@@ -2078,5 +2085,10 @@ namespace ttmath
 	he can only use '#include <ttmath/ttmath.h>' even if he uses the parser
 */
 #include "ttmathparser.h"
+
+
+#ifdef _MSC_VER
+#pragma warning( default: 4127 )
+#endif
 
 #endif

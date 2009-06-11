@@ -40,6 +40,7 @@
 #ifndef headerfilettmathuint
 #define headerfilettmathuint
 
+
 /*!
 	\file ttmathuint.h
     \brief template class UInt<uint>
@@ -47,6 +48,7 @@
 
 #include <iostream>
 #include <iomanip>
+
 
 #include "ttmathtypes.h"
 
@@ -1813,7 +1815,7 @@ private:
 
 		if( Div2_DivisorGreaterOrEqual(	divisor, remainder,
 										table_id, index,
-										divisor_table_id, divisor_index) )
+										divisor_index) )
 		{
 			TTMATH_LOG("UInt::Div2_FindLeadingBitsAndCheck")
 			return 0;
@@ -1833,7 +1835,7 @@ private:
 	bool Div2_DivisorGreaterOrEqual(	const UInt<value_size> & divisor,
 										UInt<value_size> * remainder, 
 										uint table_id, uint index,
-										uint divisor_table_id, uint divisor_index  )
+										uint divisor_index  )
 	{
 		if( divisor_index > index )
 		{
@@ -2706,7 +2708,7 @@ public:
 		do
 		{
 			temp.DivInt(b, &rem);
-			character = DigitToChar( rem );
+			character = static_cast<char>( DigitToChar(rem) );
 			result.insert(result.begin(), character);
 		}
 		while( !temp.IsZero() );
