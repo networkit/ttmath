@@ -2144,7 +2144,7 @@ public:
 			// we do not support -Infinity and +Infinity
 			// we assume that there is always NaN 
 
-			SetNaN();
+			SetNan();
 		}
 		else
 		if( e > 0 )
