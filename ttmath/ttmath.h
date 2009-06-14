@@ -1902,13 +1902,16 @@ namespace ttmath
 
 		while( !carry && multipler<maxvalue  )
 		{
-			// !! the test here we don't have to make in all iterations (performance)
-			if( stop && stop->WasStopSignal() )
+			if( stop && (multipler & 127)==0 ) // it means 'stop && (multipler % 128)==0'
 			{
-				if( err )
-					*err = err_interrupt;
+				// after each 128 iterations we make a test
+				if( stop->WasStopSignal() )
+				{
+					if( err )
+						*err = err_interrupt;
 
-			return 2;
+					return 2;
+				}
 			}
 			
 			++multipler;
@@ -1932,20 +1935,25 @@ namespace ttmath
 
 		one.SetOne();
 		uint carry = 0;
+		uint iter = 1; // only for testing the stop object
 
 		while( !carry && multipler < x )
 		{
-			// !! the test here we don't have to make in all iterations (performance)
-			if( stop && stop->WasStopSignal() )
+			if( stop && (iter & 31)==0 ) // it means 'stop && (iter % 32)==0'
 			{
-				if( err )
-					*err = err_interrupt;
+				// after each 32 iterations we make a test
+				if( stop->WasStopSignal() )
+				{
+					if( err )
+						*err = err_interrupt;
 
-			return 2;
+					return 2;
+				}
 			}
 			
 			carry += multipler.Add(one);
 			carry += result.Mul(multipler);
+			++iter;
 		}
 
 		if( err )

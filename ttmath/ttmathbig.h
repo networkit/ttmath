@@ -1399,19 +1399,17 @@ public:
 		denominator.SetOne();
 		denominator_i.SetOne();
 
-		// every 'step_test' times we make a test
-		const uint step_test = 5;
 		uint i;
 		old_value = *this;
 
-		// we begin from 1 in order to not testing at the beginning
+		// we begin from 1 in order to not test at the beginning
 	#ifdef TTMATH_CONSTANTSGENERATOR
 		for(i=1 ; true ; ++i)
 	#else
 		for(i=1 ; i<=TTMATH_ARITHMETIC_MAX_LOOP ; ++i)
 	#endif
 		{
-			bool testing = ((i % step_test) == 0);
+			bool testing = ((i & 3) == 0); // it means '(i % 4) == 0'
 
 			next_part = numerator;
 
@@ -1567,20 +1565,17 @@ public:
 		SetZero();
 
 		old_value = *this;
-		
-		// every 'step_test' times we make a test
-		const uint step_test = 5;
 		uint i;
 
 
 	#ifdef TTMATH_CONSTANTSGENERATOR
 		for(i=1 ; true ; ++i)
 	#else
-		// we begin from 1 in order to not testing at the beginning
+		// we begin from 1 in order to not test at the beginning
 		for(i=1 ; i<=TTMATH_ARITHMETIC_MAX_LOOP ; ++i)
 	#endif
 		{
-			bool testing = ((i % step_test) == 0);
+			bool testing = ((i & 3) == 0); // it means '(i % 4) == 0'
 
 			next_part = x1;
 
