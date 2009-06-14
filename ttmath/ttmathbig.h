@@ -1424,13 +1424,15 @@ public:
 			// there shouldn't be a carry here
 			Add( next_part );
 
-			if( testing && old_value==*this )
-				// we've added next few parts of the formula but the result
-				// is still the same then we break the loop
-				break;
-			else
-				old_value = *this;
-
+			if( testing )
+			{
+				if( old_value == *this )
+					// we've added next few parts of the formula but the result
+					// is still the same then we break the loop
+					break;
+				else
+					old_value = *this;
+			}
 
 			// we set the denominator and the numerator for a next part of the formula
 			if( denominator_i.Add(one) )
@@ -1591,12 +1593,15 @@ public:
 			// there shouldn't be a carry here
 			Add(next_part);
 
-			if( testing && old_value == *this )
-				// we've added next (step_test) parts of the formula but the result
-				// is still the same then we break the loop
-				break;
-			else
-				old_value = *this;
+			if( testing )
+			{
+				if( old_value == *this )
+					// we've added next (step_test) parts of the formula but the result
+					// is still the same then we break the loop
+					break;
+				else
+					old_value = *this;
+			}
 
 			if( x1.Mul(x2) )
 				// if there is a carry here the result we return as good
