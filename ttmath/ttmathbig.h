@@ -139,9 +139,8 @@ public:
 			return 0;
 
 		uint comp = mantissa.CompensationToLeft();
-		uint c    = exponent.Sub( comp );
 
-	return CheckCarry(c);
+	return exponent.Sub( comp );
 	}
 
 
@@ -536,6 +535,7 @@ public:
 		/*
 			we only have to test the mantissa
 			also we don't check the NaN flag
+			(maybe this method should return false if there is NaN flag set?)
 		*/
 		return mantissa.IsZero();
 	}
@@ -583,6 +583,7 @@ public:
 	*/
 	void Sgn()
 	{
+		// we have to check the NaN flag, because the next SetOne() method would clear it
 		if( IsNan() )
 			return;
 
@@ -618,6 +619,7 @@ public:
 
 	/*!
 		this method changes the sign
+		when there is a value of zero then the sign is not changed
 
 			e.g.
 			-1 -> 1
@@ -625,6 +627,8 @@ public:
 	*/
 	void ChangeSign()
 	{
+		// we don't have to check the NaN flag here
+
 		if( info & TTMATH_BIG_SIGN )
 		{
 			info &= ~TTMATH_BIG_SIGN;
@@ -2627,7 +2631,12 @@ public:
 	*/
 	Big()
 	{
-		SetNan();
+		info = TTMATH_BIG_NAN;
+
+		/*
+			we're directly setting 'info' (instead of calling SetNan())
+			in order to get rid of a warning saying that 'info' is uninitialized
+		*/
 	}
 
 
@@ -2697,7 +2706,8 @@ public:
 		output:
 			return value:
 			0 - ok and 'result' will be an object of type std::string which holds the value
-			1 - if there was a carry 
+			1 - if there was a carry (shoudn't be in a normal situation - if is that means there
+			    is somewhere an error in the library)
 	*/
 	uint ToString(	std::string & result,
 					uint base                  = 10,
