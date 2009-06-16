@@ -1,4 +1,4 @@
-Version 0.8.5 prerelease (2009.06.11):
+Version 0.8.5 (2009.06.16):
     * fixed:   Big::Mod(x) didn't correctly return a carry
                and the result was sometimes very big (even greater than x)
     * fixed:   global function Mod(x) didn't set an ErrorCode object
