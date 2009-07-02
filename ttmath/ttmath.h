@@ -1,7 +1,7 @@
 /*
  * This file is a part of TTMath Bignum Library
  * and is distributed under the (new) BSD licence.
- * Author: Tomasz Sowa <t.sowa@slimaczek.pl>
+ * Author: Tomasz Sowa <t.sowa@ttmath.org>
  */
 
 /* 
@@ -50,11 +50,8 @@
 #pragma warning( disable: 4127 )
 #endif
 
-
 #include "ttmathbig.h"
 #include "ttmathobjects.h"
-
-#include <string>
 
 
 namespace ttmath
@@ -2280,7 +2277,6 @@ namespace ttmath
 
 	return a;
 	}
-
 
 
 } // namespace

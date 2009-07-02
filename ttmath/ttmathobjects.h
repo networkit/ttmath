@@ -1,7 +1,7 @@
 /*
  * This file is a part of TTMath Mathematical Library
  * and is distributed under the (new) BSD licence.
- * Author: Tomasz Sowa <t.sowa@slimaczek.pl>
+ * Author: Tomasz Sowa <t.sowa@ttmath.org>
  */
 
 /* 
@@ -73,18 +73,19 @@ public:
 	struct Item
 	{
 		// name of a variable of a function
-		std::string value;
+		// (either std::string or std::wstring)
+		tt_string value;
 
 		// number of parameters required by the function
 		// (if there's a variable this 'param' is ignored)
 		int param;
 
 		Item() {}
-		Item(const std::string & v, int p) : value(v), param(p) {}
+		Item(const tt_string & v, int p) : value(v), param(p) {}
 	};
 
 	// 'Table' is the type of our table
-	typedef std::map<std::string, Item> Table;
+	typedef std::map<tt_string, Item> Table;
 	typedef	Table::iterator Iterator;
 	typedef	Table::const_iterator CIterator;
 
@@ -112,7 +113,7 @@ public:
 	/*!
 		this method returns true if the name can be as a name of an object
 	*/
-	static bool IsNameCorrect(const std::string & name)
+	static bool IsNameCorrect(const tt_string & name)
 	{
 		if( name.empty() )
 			return false;
@@ -120,7 +121,7 @@ public:
 		if( !CorrectCharacter(name[0], false) )
 			return false;
 
-		std::string::const_iterator i=name.begin();
+		tt_string::const_iterator i=name.begin();
 
 		for(++i ; i!=name.end() ; ++i)
 			if( !CorrectCharacter(*i, true) )
@@ -133,7 +134,7 @@ public:
 	/*!
 		this method returns true if such an object is defined (name exists)
 	*/
-	bool IsDefined(const std::string & name)
+	bool IsDefined(const tt_string & name)
 	{
 		Iterator i = table.find(name);
 
@@ -148,7 +149,7 @@ public:
 	/*!
 		this method adds one object (variable of function) into the table
 	*/
-	ErrorCode Add(const std::string & name, const std::string & value, int param = 0)
+	ErrorCode Add(const tt_string & name, const tt_string & value, int param = 0)
 	{
 		if( !IsNameCorrect(name) )
 			return err_incorrect_name;
@@ -205,7 +206,7 @@ public:
 	/*!
 		this method changes the value and the number of parameters for a specific object
 	*/
-	ErrorCode EditValue(const std::string & name, const std::string & value, int param = 0)
+	ErrorCode EditValue(const tt_string & name, const tt_string & value, int param = 0)
 	{
 		if( !IsNameCorrect(name) )
 			return err_incorrect_name;
@@ -225,7 +226,7 @@ public:
 	/*!
 		this method changes the name of a specific object
 	*/
-	ErrorCode EditName(const std::string & old_name, const std::string & new_name)
+	ErrorCode EditName(const tt_string & old_name, const tt_string & new_name)
 	{
 		if( !IsNameCorrect(old_name) || !IsNameCorrect(new_name) )
 			return err_incorrect_name;
@@ -256,7 +257,7 @@ public:
 	/*!
 		this method deletes an object
 	*/
-	ErrorCode Delete(const std::string & name)
+	ErrorCode Delete(const tt_string & name)
 	{
 		if( !IsNameCorrect(name) )
 			return err_incorrect_name;
@@ -275,7 +276,7 @@ public:
 	/*!
 		this method gets the value of a specific object
 	*/
-	ErrorCode GetValue(const std::string & name, std::string & value) const
+	ErrorCode GetValue(const tt_string & name, tt_string & value) const
 	{
 		if( !IsNameCorrect(name) )
 			return err_incorrect_name;
@@ -298,7 +299,7 @@ public:
 		this method gets the value of a specific object
 		(this version is used for not copying the whole string)
 	*/
-	ErrorCode GetValue(const std::string & name, const char ** value) const
+	ErrorCode GetValue(const tt_string & name, const tt_char ** value) const
 	{
 		if( !IsNameCorrect(name) )
 			return err_incorrect_name;
@@ -321,7 +322,7 @@ public:
 		this method gets the value and the number of parameters
 		of a specific object
 	*/
-	ErrorCode GetValueAndParam(const std::string & name, std::string & value, int * param) const
+	ErrorCode GetValueAndParam(const tt_string & name, tt_string & value, int * param) const
 	{
 		if( !IsNameCorrect(name) )
 			return err_incorrect_name;
@@ -347,7 +348,7 @@ public:
 		of a specific object
 		(this version is used for not copying the whole string)
 	*/
-	ErrorCode GetValueAndParam(const std::string & name, const char ** value, int * param) const
+	ErrorCode GetValueAndParam(const tt_string & name, const tt_char ** value, int * param) const
 	{
 		if( !IsNameCorrect(name) )
 			return err_incorrect_name;

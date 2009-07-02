@@ -1,7 +1,7 @@
 /*
  * This file is a part of TTMath Bignum Library
  * and is distributed under the (new) BSD licence.
- * Author: Tomasz Sowa <t.sowa@slimaczek.pl>
+ * Author: Tomasz Sowa <t.sowa@ttmath.org>
  */
 
 /* 
@@ -86,7 +86,10 @@ public:
 
 		it prints the table in a nice form of several columns
 	*/
-	void PrintTable(std::ostream & output) const
+	#ifndef TTMATH_USE_WCHAR
+	// gcc has a problem with std::setfill when wchar_t is used
+
+	void PrintTable(tt_ostream & output) const
 	{
 		// how many columns there'll be
 		const int columns = 8;
@@ -94,7 +97,7 @@ public:
 		int c = 1;
 		for(int i=value_size-1 ; i>=0 ; --i)
 		{
-			output	<< "0x" << std::setfill('0');
+			output << TTMATH_TEXT("0x") << std::setfill('0');
 			
 			#ifdef TTMATH_PLATFORM32
 				output << std::setw(8);
@@ -106,7 +109,7 @@ public:
 			
 			if( i>0 )
 			{
-				output << ", ";		
+				output << TTMATH_TEXT(", ");		
 			
 				if( ++c > columns )
 				{
@@ -118,14 +121,14 @@ public:
 		
 		output << std::dec << std::endl;
 	}
+	#endif
 
-
-	void PrintLog(const char * msg, std::ostream & output) const
+	void PrintLog(const tt_char * msg, tt_ostream & output) const
 	{
 		output << msg << std::endl;
 
 		for(uint i=0 ; i<value_size ; ++i)
-			output << " table[" << i << "]: " << table[i] << std::endl;
+			output << TTMATH_TEXT(" table[") << i << TTMATH_TEXT("]: ") << table[i] << std::endl;
 	}
 
 
@@ -2503,7 +2506,7 @@ public:
 		this constant 10 has the int type (signed int), if we don't give such
 		operators and constructors the compiler will not compile the program,
 		because it has to make a conversion and doesn't know into which type
-		(the UInt class has operator=(const char*), operator=(uint) etc.)
+		(the UInt class has operator=(const tt_char*), operator=(uint) etc.)
 	*/
 	UInt<value_size> & operator=(sint i)
 	{
@@ -2618,18 +2621,18 @@ public:
 	/*!
 		a constructor for converting a string to this class (with the base=10)
 	*/
-	UInt(const char * s)
+	UInt(const tt_char * s)
 	{
 		FromString(s);
 
-		TTMATH_LOG("UInt::UInt(const char *)")
+		TTMATH_LOG("UInt::UInt(const tt_char *)")
 	}
 
 
 	/*!
 		a constructor for converting a string to this class (with the base=10)
 	*/
-	UInt(const std::string & s)
+	UInt(const tt_string & s)
 	{
 		FromString( s.c_str() );
 	}
@@ -2643,6 +2646,7 @@ public:
 	UInt()
 	{
 	}
+
 
 	/*!
 		a copy constructor
@@ -2694,10 +2698,10 @@ public:
 	/*!	
 		this method converts the value to a string with a base equal 'b'
 	*/
-	void ToString(std::string & result, uint b = 10) const
+	void ToString(tt_string & result, uint b = 10) const
 	{
 	UInt<value_size> temp( *this );
-	char character;
+	tt_char character;
 	uint rem;
 
 		result.clear();
@@ -2708,7 +2712,7 @@ public:
 		do
 		{
 			temp.DivInt(b, &rem);
-			character = static_cast<char>( DigitToChar(rem) );
+			character = static_cast<tt_char>( DigitToChar(rem) );
 			result.insert(result.begin(), character);
 		}
 		while( !temp.IsZero() );
@@ -2722,7 +2726,7 @@ public:
 	/*
 		this method's ommiting any white characters from the string
 	*/
-	static void SkipWhiteCharacters(const char * & c)
+	static void SkipWhiteCharacters(const tt_char * & c)
 	{
 		while( (*c==' ' ) || (*c=='\t') || (*c==13 ) || (*c=='\n') )
 			++c;
@@ -2746,7 +2750,7 @@ public:
 
 		value_read (if exists) tells whether something has actually been read (at least one digit)
 	*/
-	uint FromString(const char * s, uint b = 10, const char ** after_source = 0, bool * value_read = 0)
+	uint FromString(const tt_char * s, uint b = 10, const tt_char ** after_source = 0, bool * value_read = 0)
 	{
 	UInt<value_size> base( b );
 	UInt<value_size> temp;
@@ -2796,7 +2800,7 @@ public:
 
 		(it returns carry=1 if the value will be too big or an incorrect base 'b' is given)
 	*/
-	uint FromString(const std::string & s, uint b = 10)
+	uint FromString(const tt_string & s, uint b = 10)
 	{
 		return FromString( s.c_str(), b );
 	}
@@ -2806,11 +2810,11 @@ public:
 	/*!
 		this operator converts a string into its value (with base = 10)
 	*/
-	UInt<value_size> & operator=(const char * s)
+	UInt<value_size> & operator=(const tt_char * s)
 	{
 		FromString(s);
 
-		TTMATH_LOG("UInt::operator=(const char *)")
+		TTMATH_LOG("UInt::operator=(const tt_char *)")
 
 	return *this;
 	}
@@ -2819,7 +2823,7 @@ public:
 	/*!
 		this operator converts a string into its value (with base = 10)
 	*/
-	UInt<value_size> & operator=(const std::string & s)
+	UInt<value_size> & operator=(const tt_string & s)
 	{
 		FromString( s.c_str() );
 
@@ -3187,9 +3191,15 @@ public:
 	*
 	*/
 
-	friend std::ostream & operator<<(std::ostream & s, const UInt<value_size> & l)
+
+	/*!
+		output for standard streams
+
+		tt_ostream is either std::ostream or std::wostream
+	*/
+	friend tt_ostream & operator<<(tt_ostream & s, const UInt<value_size> & l)
 	{
-	std::string ss;
+	tt_string ss;
 
 		l.ToString(ss);
 		s << ss;
@@ -3199,12 +3209,17 @@ public:
 
 
 
-	friend std::istream & operator>>(std::istream & s, UInt<value_size> & l)
+	/*!
+		input from standard streams
+
+		tt_istream is either std::istream or std::wistream
+	*/
+	friend tt_istream & operator>>(tt_istream & s, UInt<value_size> & l)
 	{
-	std::string ss;
+	tt_string ss;
 	
-	// char for operator>>
-	unsigned char z;
+	// tt_char for operator>>
+	tt_char z;
 	
 		// operator>> omits white characters if they're set for ommiting
 		s >> z;
@@ -3213,10 +3228,10 @@ public:
 		while( s.good() && CharToDigit(z, 10)>=0 )
 		{
 			ss += z;
-			z = s.get();
+			z = static_cast<tt_char>(s.get());
 		}
 
-		// we're leaving the last readed character
+		// we're leaving the last read character
 		// (it's not belonging to the value)
 		s.unget();
 

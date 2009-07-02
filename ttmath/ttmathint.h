@@ -1,7 +1,7 @@
 /*
  * This file is a part of TTMath Bignum Library
  * and is distributed under the (new) BSD licence.
- * Author: Tomasz Sowa <t.sowa@slimaczek.pl>
+ * Author: Tomasz Sowa <t.sowa@ttmath.org>
  */
 
 /* 
@@ -821,7 +821,7 @@ public:
 	/*!
 		a constructor for converting string to this class (with the base=10)
 	*/
-	Int(const char * s)
+	Int(const tt_char * s)
 	{
 		FromString(s);
 	}
@@ -830,7 +830,7 @@ public:
 	/*!
 		a constructor for converting a string to this class (with the base=10)
 	*/
-	Int(const std::string & s)
+	Int(const tt_string & s)
 	{
 		FromString( s.c_str() );
 	}
@@ -869,7 +869,7 @@ public:
 	/*!	
 		this method converts the value to a string with a base equal 'b'
 	*/
-	void ToString(std::string & result, uint b = 10) const
+	void ToString(tt_string & result, uint b = 10) const
 	{
 		if( IsSign() )
 		{
@@ -890,12 +890,14 @@ public:
 
 	/*!
 		this method converts a string into its value
+		string is given either as 'const char *' or 'const wchar_t *'
+
 		it returns carry=1 if the value will be too big or an incorrect base 'b' is given
 
 		string is ended with a non-digit value, for example:
 			"-12" will be translated to -12
 			as well as:
-			"- 12foo" will be translated to 12 too
+			"- 12foo" will be translated to -12 too
 
 		existing first white characters will be ommited
 		(between '-' and a first digit can be white characters too)
@@ -904,7 +906,7 @@ public:
 
 		value_read (if exists) tells whether something has actually been read (at least one digit)
 	*/
-	uint FromString(const char * s, uint b = 10, const char ** after_source = 0, bool * value_read = 0)
+	uint FromString(const tt_char * s, uint b = 10, const tt_char ** after_source = 0, bool * value_read = 0)
 	{
 	bool is_sign = false;
 	
@@ -961,16 +963,16 @@ public:
 		this method converts a string into its value
 		it returns carry=1 if the value will be too big or an incorrect base 'b' is given
 	*/
-	uint FromString(const std::string & s, uint b = 10)
+	uint FromString(const tt_string & s, uint b = 10)
 	{
-		return FromString( s.c_str() );
+		return FromString( s.c_str(), b );
 	}
 
 
 	/*!
 		this operator converts a string into its value (with base = 10)
 	*/
-	Int<value_size> & operator=(const char * s)
+	Int<value_size> & operator=(const tt_char * s)
 	{
 		FromString(s);
 
@@ -981,7 +983,7 @@ public:
 	/*!
 		this operator converts a string into its value (with base = 10)
 	*/
-	Int<value_size> & operator=(const std::string & s)
+	Int<value_size> & operator=(const tt_string & s)
 	{
 		FromString( s.c_str() );
 
@@ -1268,9 +1270,14 @@ public:
 	*
 	*/
 
-	friend std::ostream & operator<<(std::ostream & s, const Int<value_size> & l)
+	/*!
+		output for standard streams
+
+		tt_ostream is either std::ostream or std::wostream
+	*/
+	friend tt_ostream & operator<<(tt_ostream & s, const Int<value_size> & l)
 	{
-	std::string ss;
+	tt_string ss;
 
 		l.ToString(ss);
 		s << ss;
@@ -1279,13 +1286,17 @@ public:
 	}
 
 
+	/*!
+		input from standard streams
 
-	friend std::istream & operator>>(std::istream & s, Int<value_size> & l)
+		tt_istream is either std::istream or std::wistream
+	*/
+	friend tt_istream & operator>>(tt_istream & s, Int<value_size> & l)
 	{
-	std::string ss;
+	tt_string ss;
 	
-	// char for operator>>
-	unsigned char z;
+	// tt_char for operator>>
+	tt_char z;
 	
 		// operator>> omits white characters if they're set for ommiting
 		s >> z;
@@ -1300,7 +1311,7 @@ public:
 		while( s.good() && UInt<value_size>::CharToDigit(z, 10)>=0 )
 		{
 			ss += z;
-			z = s.get();
+			z = static_cast<tt_char>(s.get());
 		}
 
 		// we're leaving the last readed character

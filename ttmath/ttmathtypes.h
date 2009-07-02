@@ -1,7 +1,7 @@
 /*
  * This file is a part of TTMath Bignum Library
  * and is distributed under the (new) BSD licence.
- * Author: Tomasz Sowa <t.sowa@slimaczek.pl>
+ * Author: Tomasz Sowa <t.sowa@ttmath.org>
  */
 
 /* 
@@ -63,9 +63,9 @@
 	if zero that means this is the release version of the library
 */
 #define TTMATH_MAJOR_VER		0
-#define TTMATH_MINOR_VER		8
-#define TTMATH_REVISION_VER		5
-#define TTMATH_PRERELEASE_VER	0
+#define TTMATH_MINOR_VER		9
+#define TTMATH_REVISION_VER		0
+#define TTMATH_PRERELEASE_VER	1
 
 
 /*!
@@ -201,6 +201,36 @@ namespace ttmath
 }
 
 
+#if defined(UNICODE) || defined(_UNICODE)
+#define TTMATH_USE_WCHAR
+#endif
+
+
+#ifdef TTMATH_USE_WCHAR
+
+	typedef	wchar_t					tt_char;
+	typedef	std::wstring			tt_string;
+	typedef std::wostringstream		tt_ostringstream;
+	typedef std::wostream			tt_ostream;
+	typedef std::wistream			tt_istream;
+	#define TTMATH_TEXT_HELPER(txt)	L##txt
+
+#else
+
+	typedef	char					tt_char;
+	typedef	std::string				tt_string;
+	typedef std::ostringstream		tt_ostringstream;
+	typedef std::ostream			tt_ostream;
+	typedef std::istream			tt_istream;
+	#define TTMATH_TEXT_HELPER(txt)	txt
+
+#endif
+
+#define TTMATH_TEXT(txt) 	TTMATH_TEXT_HELPER(txt)
+
+
+
+
 
 /*!
 	characters which represent the comma operator
@@ -313,20 +343,20 @@ namespace ttmath
 	*/
 	class ExceptionInfo
 	{
-	const char * file;
+	const tt_char * file;
 	int line;
 
 	public:
 		ExceptionInfo() : file(0), line(0) {}
-		ExceptionInfo(const char * f, int l) : file(f), line(l) {}
+		ExceptionInfo(const tt_char * f, int l) : file(f), line(l) {}
 
-		std::string Where() const
+		tt_string Where() const
 		{
 			if( !file )
-				return "unknown";
+				return TTMATH_TEXT("unknown");
 
-			std::ostringstream result;
-			result << file << ":" << line;
+			tt_ostringstream result;
+			result << file << TTMATH_TEXT(":") << line;
 
 		return result.str();
 		}
@@ -340,7 +370,7 @@ namespace ttmath
 		can throw an exception of this type
 
 		If you compile with gcc you can get a small benefit 
-		from using method Where() (it returns std::string with
+		from using method Where() (it returns std::string (or std::wstring) with
 		the name and the line of a file where the macro TTMATH_REFERENCE_ASSERT
 		was used)
 
@@ -364,16 +394,16 @@ namespace ttmath
 	{
 	public:
 
-		ReferenceError() : std::logic_error ("reference error")
+		ReferenceError() : std::logic_error("reference error")
 		{
 		}
 
-		ReferenceError(const char * f, int l) :
-							std::logic_error ("reference error"), ExceptionInfo(f,l)
+		ReferenceError(const tt_char * f, int l) :
+							std::logic_error("reference error"), ExceptionInfo(f,l)
 		{
 		}
 
-		std::string Where() const
+		tt_string Where() const
 		{
 			return ExceptionInfo::Where();
 		}
@@ -388,7 +418,7 @@ namespace ttmath
 		of this type
 
 		if you compile with gcc you can get a small benefit 
-		from using method Where() (it returns std::string with
+		from using method Where() (it returns std::string (or std::wstring) with
 		the name and the line of a file where the macro TTMATH_ASSERT
 		was used)
 	*/
@@ -396,16 +426,16 @@ namespace ttmath
 	{
 	public:
 
-		RuntimeError() : std::runtime_error ("internal error")
+		RuntimeError() : std::runtime_error("internal error")
 		{
 		}
 
-		RuntimeError(const char * f, int l) :
-						std::runtime_error ("internal error"), ExceptionInfo(f,l)
+		RuntimeError(const tt_char * f, int l) :
+						std::runtime_error("internal error"), ExceptionInfo(f,l)
 		{
 		}
 
-		std::string Where() const
+		tt_string Where() const
 		{
 			return ExceptionInfo::Where();
 		}
@@ -420,11 +450,19 @@ namespace ttmath
 
 		#if defined(__FILE__) && defined(__LINE__)
 
+			#ifdef TTMATH_USE_WCHAR
+				#define TTMATH_FILE_HELPER2(arg)  L##arg
+				#define TTMATH_FILE_HELPER(x)     TTMATH_FILE_HELPER2(x)
+				#define TTMATH_FILE               TTMATH_FILE_HELPER(__FILE__)
+			#else
+				#define TTMATH_FILE               __FILE__
+			#endif
+
 			#define TTMATH_REFERENCE_ASSERT(expression) \
-				if( &(expression) == this ) throw ttmath::ReferenceError(__FILE__, __LINE__);
+				if( &(expression) == this ) throw ttmath::ReferenceError(TTMATH_FILE, __LINE__);
 
 			#define TTMATH_ASSERT(expression) \
-				if( !(expression) ) throw ttmath::RuntimeError(__FILE__, __LINE__);
+				if( !(expression) ) throw ttmath::RuntimeError(TTMATH_FILE, __LINE__);
 
 		#else
 
@@ -444,8 +482,15 @@ namespace ttmath
 
 	#ifdef TTMATH_DEBUG_LOG
 
-		#define TTMATH_LOG(msg) \
-			PrintLog(msg, std::cout);		
+		#ifdef TTMATH_USE_WCHAR
+			#define TTMATH_LOG_HELPER(msg) \
+				PrintLog(L##msg, std::wcout);
+		#else
+			#define TTMATH_LOG_HELPER(msg) \
+				PrintLog(msg, std::cout);
+		#endif
+
+		#define TTMATH_LOG(quote) TTMATH_LOG_HELPER(quote)
 
 	#else
 
@@ -453,8 +498,10 @@ namespace ttmath
 
 	#endif
 
+	
 
 } // namespace
 
 
 #endif
+

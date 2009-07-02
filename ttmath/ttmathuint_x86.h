@@ -1,7 +1,7 @@
 /*
  * This file is a part of TTMath Bignum Library
  * and is distributed under the (new) BSD licence.
- * Author: Tomasz Sowa <t.sowa@slimaczek.pl>
+ * Author: Tomasz Sowa <t.sowa@ttmath.org>
  */
 
 /* 
@@ -506,8 +506,6 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt::AddVector")
-
 	return c;
 	}
 
@@ -833,8 +831,6 @@ namespace ttmath
 				: "cc", "memory" );
 
 		#endif
-
-		TTMATH_LOG("UInt::SubVector")
 
 	return c;
 	}
