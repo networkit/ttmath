@@ -47,6 +47,7 @@
 #include "ttmathtypes.h"
 
 #include <string>
+#include <vector>
 #include <list>
 #include <map>
 
@@ -431,7 +432,7 @@ public:
 	*/
 	History()
 	{
-		buffer_max_size = 10;
+		buffer_max_size = 15;
 	}
 
 
@@ -488,8 +489,116 @@ public:
 	return false;
 	}
 
+
+	/*!
+		this methods deletes an item
+
+		we assume that there is only one item with the 'key'
+		(this methods removes the first one)
+	*/
+	bool Remove(const ValueType & key)
+	{
+		typename buffer_type::iterator i = buffer.begin();
+
+		for( ; i != buffer.end() ; ++i )
+		{
+			if( i->key == key )
+			{
+				buffer.erase(i);
+				return true;
+			}
+		}
+
+	return false;
+	}
+
+
 }; // end of class History
 
+
+
+/*!
+	this is an auxiliary class used when calculating Gamma() or Factorial()
+
+	in multithreaded environment you can provide an object of this class to
+	the Gamma() or Factorial() function, e.g;
+		typedef Big<1, 3> MyBig;
+		MyBig x = 123456;
+		CGamma<MyBig> cgamma;
+		std::cout << Gamma(x, cgamma);
+	each thread should have its own CGamma<> object
+
+	in a single-thread environment a CGamma<> object is a static variable
+	in a second version of Gamma() and you don't have to explicitly use it, e.g.
+		typedef Big<1, 3> MyBig;
+		MyBig x = 123456;
+		std::cout << Gamma(x);
+*/
+template<class ValueType>
+struct CGamma
+{
+	/*!
+		this table holds factorials
+			1
+			1
+			2
+			6
+			24
+			120
+			720
+			.......
+	*/
+	std::vector<ValueType> fact;
+
+
+	/*!
+		this table holds Bernoulli numbers
+			1
+			-0.5
+			0.166666666666666666666666667
+			0
+			-0.0333333333333333333333333333
+			0
+			0.0238095238095238095238095238
+			0
+			-0.0333333333333333333333333333
+			0
+			0.075757575757575757575757576
+			.....
+	*/
+	std::vector<ValueType> bern;
+
+
+	/*!
+		here we store some calculated values
+		(this is for speeding up, if the next argument of Gamma() or Factorial()
+		is in the 'history' then the result we are not calculating but simply
+		return from the 'history' object)
+	*/
+	History<ValueType> history;
+
+
+	/*!
+		this method prepares some coefficients: factorials and Bernoulli numbers
+		stored in 'fact' and 'bern' objects
+		
+		how many values should be depends on the size of the mantissa - if
+		the mantissa is larger then we must calculate more values
+		    for a mantissa which consists of 256 bits (8 words on a 32bit platform)
+			we have to calculate about 30 values (the size of fact and bern will be 30),
+			and for a 2048 bits mantissa we have to calculate 306 coefficients
+
+		you don't have to call this method, these coefficients will be automatically calculated
+		when they are needed
+
+		you must note that calculating of the coefficients is a little time-consuming operation,
+		(especially when the mantissa is large) and first called to Gamma() or Factorial()
+		can take more time than next calls, and in the end this is the point when InitAll()
+		comes in handy: you can call this method somewhere at the beginning of your program
+	*/
+	void InitAll();
+	// definition is in ttmath.h
+};
 
 
 

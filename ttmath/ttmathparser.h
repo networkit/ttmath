@@ -137,7 +137,6 @@ namespace ttmath
 template<class ValueType>
 class Parser
 {
-
 private:
 
 /*!
@@ -427,10 +426,9 @@ VariablesTable variables_table;
 
 
 /*!
-	you can't calculate the factorial if the argument is greater than 'factorial_max'
-	default value is zero which means there are not any limitations
+	some coefficients used when calculating the gamma (or factorial) function
 */
-ValueType factorial_max;
+CGamma<ValueType> cgamma;
 
 
 /*!
@@ -676,6 +674,20 @@ return result;
 }
 
 
+void Gamma(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 1 )
+		Error( err_improper_amount_of_arguments );
+
+	ErrorCode err;
+	
+	result = ttmath::Gamma(stack[sindex].value, cgamma, &err, pstop_calculating);
+
+	if(err != err_ok)
+		Error( err );
+}
+
+
 /*!
 	factorial
 	result = 1 * 2 * 3 * 4 * .... * x
@@ -686,11 +698,8 @@ void Factorial(int sindex, int amount_of_args, ValueType & result)
 		Error( err_improper_amount_of_arguments );
 
 	ErrorCode err;
-	
-	if( !factorial_max.IsZero() && stack[sindex].value > factorial_max )
-		Error( err_too_big_factorial );
 
-	result = ttmath::Factorial(stack[sindex].value, &err, pstop_calculating);
+	result = ttmath::Factorial(stack[sindex].value, cgamma, &err, pstop_calculating);
 
 	if(err != err_ok)
 		Error( err );
@@ -1471,6 +1480,7 @@ void InsertVariableToTable(const tt_char * variable_name, pfunction_var pf)
 */
 void CreateFunctionsTable()
 {
+	InsertFunctionToTable(TTMATH_TEXT("gamma"),		&Parser<ValueType>::Gamma);
 	InsertFunctionToTable(TTMATH_TEXT("factorial"),	&Parser<ValueType>::Factorial);
 	InsertFunctionToTable(TTMATH_TEXT("abs"),   	&Parser<ValueType>::Abs);
 	InsertFunctionToTable(TTMATH_TEXT("sin"),   	&Parser<ValueType>::Sin);
@@ -2419,7 +2429,6 @@ Parser(): default_stack_size(100)
 	base = 10;
 	deg_rad_grad = 1;
 	error = err_ok;
-	factorial_max.SetZero();
 
 	CreateFunctionsTable();
 	CreateVariablesTable();
@@ -2439,7 +2448,6 @@ Parser<ValueType> & operator=(const Parser<ValueType> & p)
 	base              = p.base;
 	deg_rad_grad      = p.deg_rad_grad;
 	error             = err_ok;
-	factorial_max     = p.factorial_max;
 
 	/*
 		we don't have to call 'CreateFunctionsTable()' etc.
@@ -2521,17 +2529,6 @@ void SetFunctions(const Objects * pf)
 }
 
 
-/*!
-	you will not be allowed to calculate the factorial 
-	if its argument is greater than 'm'
-	there'll be: ErrorCode::err_too_big_factorial
-	default 'factorial_max' is zero which means you can calculate what you want to
-*/
-void SetFactorialMax(const ValueType & m)
-{
-	factorial_max = m;
-}
-
 
 /*!
 	the main method using for parsing string
@@ -2559,10 +2556,10 @@ return error;
 }
 
 
-
-
-
 };
+
+
+
 
 } // namespace
 

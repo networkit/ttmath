@@ -1368,10 +1368,7 @@ public:
 
 		if( pow.exponent>-int(man*TTMATH_BITS_PER_UINT) && pow.exponent<=0 )
 		{
-			Big<exp, man> pow_frac( pow );
-			pow_frac.RemainFraction();
-
-			if( pow_frac.IsZero() )
+			if( pow.IsInteger() )
 				return PowInt( pow );
 		}
 
@@ -4097,6 +4094,47 @@ public:
 	}
 
 
+
+	/*!
+		this method returns true if the value is integer
+		(there is no a fraction)
+
+		(we don't check nan)
+	*/
+	bool IsInteger() const
+	{
+		if( IsZero() )
+			return true;
+
+		if( !exponent.IsSign() )
+			// exponent >=0 -- the value don't have any fractions
+			return true;
+
+		if( exponent <= -sint(man*TTMATH_BITS_PER_UINT) )
+			// the value is from (-1,1)
+			return false;
+
+		// exponent is in range (-man*TTMATH_BITS_PER_UINT, 0)
+		sint e = exponent.ToInt();
+		e = -e; // e means how many bits we must check
+
+		uint len  = e / TTMATH_BITS_PER_UINT;
+		uint rest = e % TTMATH_BITS_PER_UINT;
+		uint i    = 0;
+
+		for( ; i<len ; ++i )
+			if( mantissa.table[i] != 0 )
+				return false;
+
+		if( rest > 0 )
+		{
+			uint rest_mask = TTMATH_UINT_MAX_VALUE >> (TTMATH_BITS_PER_UINT - rest);
+			if( (mantissa.table[i] & rest_mask) != 0 )
+				return false;
+		}
+
+	return true;
+	}
 
 
 	/*!

@@ -73,7 +73,7 @@ namespace ttmath
 
 
 	/*!
-		this method skips the fraction from x
+		this function skips the fraction from x
 		e.g  2.2  = 2
 		     2.7  = 2
 			 -2.2 = 2
@@ -90,7 +90,7 @@ namespace ttmath
 
 
 	/*!
-		this method rounds to the nearest integer value
+		this function rounds to the nearest integer value
 		e.g  2.2  = 2
 		     2.7  = 3
 			 -2.2 = -2
@@ -222,7 +222,7 @@ namespace ttmath
 
 	
 	/*!
-		this method calculates the natural logarithm (logarithm with the base 'e')
+		this function calculates the natural logarithm (logarithm with the base 'e')
 	*/
 	template<class ValueType>
 	ValueType Ln(const ValueType & x, ErrorCode * err = 0)
@@ -263,7 +263,7 @@ namespace ttmath
 
 
 	/*!
-		this method calculates the logarithm
+		this function calculates the logarithm
 	*/
 	template<class ValueType>
 	ValueType Log(const ValueType & x, const ValueType & base, ErrorCode * err = 0)
@@ -304,7 +304,7 @@ namespace ttmath
 
 
 	/*!
-		this method calculates the expression e^x
+		this function calculates the expression e^x
 	*/
 	template<class ValueType>
 	ValueType Exp(const ValueType & x, ErrorCode * err = 0)
@@ -1937,10 +1937,7 @@ namespace ttmath
 		template<class ValueType>
 		bool RootCheckIndexFrac(ValueType & x, const ValueType & index, ErrorCode * err)
 		{
-			ValueType indexfrac(index);
-			indexfrac.RemainFraction();
-
-			if( !indexfrac.IsZero() )
+			if( !index.IsInteger() )
 			{
 				// index must be integer
 				if( err )
@@ -2072,154 +2069,6 @@ namespace ttmath
 
 
 
-
-	namespace auxiliaryfunctions
-	{
-	
-	template<class ValueType>
-	uint FactorialInt(	const ValueType & x, ErrorCode * err,
-						const volatile StopCalculating * stop,
-						ValueType & result)
-	{
-		uint maxvalue = TTMATH_UINT_MAX_VALUE;
-
-		if( x < TTMATH_UINT_MAX_VALUE )
-			x.ToUInt(maxvalue);
-
-		uint multipler = 1;
-		uint carry     = 0;
-
-		while( !carry && multipler<maxvalue  )
-		{
-			if( stop && (multipler & 127)==0 ) // it means 'stop && (multipler % 128)==0'
-			{
-				// after each 128 iterations we make a test
-				if( stop->WasStopSignal() )
-				{
-					if( err )
-						*err = err_interrupt;
-
-					return 2;
-				}
-			}
-			
-			++multipler;
-			carry += result.MulUInt(multipler);
-		}
-
-		if( err )
-			*err = carry ? err_overflow : err_ok;
-
-	return carry ? 1 : 0;
-	}
-
-
-	template<class ValueType>
-	int FactorialMore(	const ValueType & x, ErrorCode * err,
-						const volatile StopCalculating * stop,
-						ValueType & result)
-	{
-		ValueType multipler(TTMATH_UINT_MAX_VALUE);
-		ValueType one;
-
-		one.SetOne();
-		uint carry = 0;
-		uint iter = 1; // only for testing the stop object
-
-		while( !carry && multipler < x )
-		{
-			if( stop && (iter & 31)==0 ) // it means 'stop && (iter % 32)==0'
-			{
-				// after each 32 iterations we make a test
-				if( stop->WasStopSignal() )
-				{
-					if( err )
-						*err = err_interrupt;
-
-					return 2;
-				}
-			}
-			
-			carry += multipler.Add(one);
-			carry += result.Mul(multipler);
-			++iter;
-		}
-
-		if( err )
-			*err = carry ? err_overflow : err_ok;
-
-	return carry ? 1 : 0;
-	}
-
-
-	} // namespace
-	
-
-
-	/*!
-		the factorial from given 'x'
-		e.g.
-		Factorial(4) = 4! = 1*2*3*4
-	*/
-	template<class ValueType>
-	ValueType Factorial(const ValueType & x, ErrorCode * err = 0, const volatile StopCalculating * stop = 0)
-	{
-	using namespace auxiliaryfunctions;
-
-	static History<ValueType> history;
-	ValueType result;
-
-		if( x.IsNan() || x.IsSign() )
-		{
-			if( err )
-				*err = err_improper_argument;
-
-		return result; // NaN set by default
-		}
-
-		result.SetOne();
-
-		if( !x.exponent.IsSign() && !x.exponent.IsZero() )
-		{
-			// when x.exponent>0 there's no sense to calculate the formula
-			// (we can't add one into the x bacause
-			// we don't have enough bits in the mantissa)
-			if( err )
-				*err = err_overflow;
-
-			result.SetNan();
-
-		return result;
-		}
-
-		ErrorCode err_tmp;
-
-		if( history.Get(x, result, err_tmp) )
-		{
-			if( err )
-				*err = err_tmp;
-		
-			return result;
-		}
-
-		uint status = FactorialInt(x, err, stop, result);
-		if( status == 0 )
-			status = FactorialMore(x, err, stop, result);
-
-		if( status == 2 )
-		{
-			// the calculation has been interrupted
-			result.SetNan();
-			return result;
-		}
-
-		err_tmp = status==1 ? err_overflow : err_ok;
-		history.Add(x, result, err_tmp);
-
-	return result;
-	}
-
-
 	/*!
 		absolute value of x
 		e.g.  -2 = 2 
@@ -2277,6 +2126,651 @@ namespace ttmath
 
 	return a;
 	}
+
+
+
+	namespace auxiliaryfunctions
+	{
+
+	/*!
+		this function is used to store factorials in a given container
+		'more' means how many values should be added at the end
+
+			e.g.
+			std::vector<ValueType> fact;
+			SetFactorialSequence(fact, 3);
+			// now the container has three values: 1  1  2
+
+			SetFactorialSequence(fact, 2);
+			// now the container has five values:  1  1  2  6  24
+	*/
+	template<class ValueType>
+	void SetFactorialSequence(std::vector<ValueType> & fact, uint more = 20)
+	{
+		if( more == 0 )
+			more = 1;
+
+		uint start = static_cast<uint>(fact.size());
+		fact.resize(fact.size() + more);
+
+		if( start == 0 )
+		{
+			fact[0] = 1;
+			++start;
+		}
+
+		for(uint i=start ; i<fact.size() ; ++i)
+		{
+			fact[i] = fact[i-1];
+			fact[i].MulInt(i);
+		}
+	}
+
+
+	/*!
+		an auxiliary function used to calculate Bernoulli numbers
+
+		this function returns a sum:
+		sum(m) = sum_{k=0}^{m-1} {2^k * (m k) * B(k)}    k in [0, m-1]   (m k) means binomial coefficient = (m! / (k! * (m-k)!))
+
+		you should have sufficient factorials in cgamma.fact
+		(cgamma.fact should have at least m items)
+
+		n_ should be equal 2
+	*/
+	template<class ValueType>
+	ValueType SetBernoulliNumbersSum(CGamma<ValueType> & cgamma, const ValueType & n_, uint m,
+									  const volatile StopCalculating * stop = 0)
+	{
+	ValueType k_, temp, temp2, temp3, sum;
+
+		sum.SetZero();
+		
+		for(uint k=0 ; k<m ; ++k)			// k<m means k<=m-1
+		{
+			if( stop && (k & 15)==0 )		// means: k % 16 == 0
+				if( stop->WasStopSignal() )
+					return ValueType();		// NaN
+
+			if( k>1 && (k & 1) == 1 )		// for that k the Bernoulli number is zero
+				continue;
+
+			k_ = k;
+
+			temp = n_;				// n_ is equal 2
+			temp.Pow(k_);
+			// temp = 2^k
+
+			temp2 = cgamma.fact[m];
+			temp3 = cgamma.fact[k];
+			temp3.Mul(cgamma.fact[m-k]);
+			temp2.Div(temp3);
+			// temp2 = (m k) = m! / ( k! * (m-k)! )
+
+			temp.Mul(temp2);
+			temp.Mul(cgamma.bern[k]);
+
+			sum.Add(temp);
+			// sum += 2^k * (m k) * B(k)
+
+			if( sum.IsNan() )
+				break;
+		}
+
+	return sum;
+	}
+
+
+	/*!
+		an auxiliary function used to calculate Bernoulli numbers
+		start is >= 2
+
+		we use the recurrence formula: 
+		   B(m) = 1 / (2*(1 - 2^m)) * sum(m)
+		   where sum(m) is calculated by SetBernoulliNumbersSum()
+	*/
+	template<class ValueType>
+	bool SetBernoulliNumbersMore(CGamma<ValueType> & cgamma, uint start, const volatile StopCalculating * stop = 0)
+	{
+	ValueType denominator, temp, temp2, temp3, m_, sum, sum2, n_, k_;
+
+		const uint n = 2;
+		n_ = n;
+
+		// start is >= 2
+		for(uint m=start ; m<cgamma.bern.size() ; ++m)
+		{
+			if( (m & 1) == 1 )
+			{
+				cgamma.bern[m].SetZero();
+			}
+			else
+			{
+				m_ = m;
+
+				temp = n_;				// n_ = 2
+				temp.Pow(m_);
+				// temp = 2^m
+
+				denominator.SetOne();
+				denominator.Sub(temp);
+				if( denominator.exponent.AddOne() ) // it means: denominator.MulInt(2)
+					denominator.SetNan();
+
+				// denominator = 2 * (1 - 2^m)
+
+				cgamma.bern[m] = SetBernoulliNumbersSum(cgamma, n_, m, stop);
+
+				if( stop && stop->WasStopSignal() )
+				{
+					cgamma.bern.resize(m);		// valid numbers are in [0, m-1]
+					return false;
+				}
+
+				cgamma.bern[m].Div(denominator);
+			}
+		}
+
+	return true;
+	}
+
+
+	/*!
+		this function is used to calculate Bernoulli numbers,
+		returns false if there was a stop signal,
+		'more' means how many values should be added at the end
+
+			e.g.
+			typedef Big<1,2> MyBig;
+			CGamma<MyBig> cgamma;
+			SetBernoulliNumbers(cgamma, 3);
+			// now we have three first Bernoulli numbers:  1  -0.5  0.16667
+			
+			SetBernoulliNumbers(cgamma, 4);
+			// now we have 7 Bernoulli numbers:  1  -0.5  0.16667   0   -0.0333   0   0.0238
+	*/
+	template<class ValueType>
+	bool SetBernoulliNumbers(CGamma<ValueType> & cgamma, uint more = 20, const volatile StopCalculating * stop = 0)
+	{
+		if( more == 0 )
+			more = 1;
+
+		uint start = static_cast<uint>(cgamma.bern.size());
+		cgamma.bern.resize(cgamma.bern.size() + more);
+
+		if( start == 0 )
+		{
+			cgamma.bern[0].SetOne();
+			++start;
+		}
+
+		if( cgamma.bern.size() == 1 )
+			return true;
+
+		if( start == 1 )
+		{
+			cgamma.bern[1].Set05();
+			cgamma.bern[1].ChangeSign();
+			++start;
+		}
+
+		// we should have sufficient factorials in cgamma.fact
+		if( cgamma.fact.size() < cgamma.bern.size() )
+			SetFactorialSequence(cgamma.fact, static_cast<uint>(cgamma.bern.size() - cgamma.fact.size()));
+
+
+	return SetBernoulliNumbersMore(cgamma, start, stop);
+	}
+
+
+	/*!
+		an auxiliary function used to calculate the Gamma() function
+
+		we calculate a sum:
+		   sum(n) = sum_{m=2} { B(m) / ( (m^2 - m) * n^(m-1) )  } = 1/(12*n) - 1/(360*n^3) + 1/(1260*n^5) + ...
+	       B(m) means a mth Bernoulli number
+		   the sum starts from m=2, we calculate as long as the value will not change after adding a next part
+	*/
+	template<class ValueType>
+	ValueType GammaFactorialHighSum(const ValueType & n, CGamma<ValueType> & cgamma, ErrorCode & err,
+									const volatile StopCalculating * stop)
+	{
+	ValueType temp, temp2, denominator, sum, oldsum;
+
+		sum.SetZero();
+
+		for(uint m=2 ; m<TTMATH_ARITHMETIC_MAX_LOOP ; m+=2)
+		{
+			if( stop && (m & 3)==0 ) // (m & 3)==0 means: (m % 4)==0
+				if( stop->WasStopSignal() )
+				{
+					err = err_interrupt;
+					return ValueType(); // NaN
+				}
+
+			temp = (m-1);
+			denominator = n;
+			denominator.Pow(temp);
+			// denominator = n ^ (m-1)
+
+			temp = m;
+			temp2 = temp;
+			temp.Mul(temp2);
+			temp.Sub(temp2);
+			// temp = m^2 - m
+
+			denominator.Mul(temp);
+			// denominator = (m^2 - m) * n ^ (m-1)
+
+			if( m >= cgamma.bern.size() )
+			{
+				if( !SetBernoulliNumbers(cgamma, m - cgamma.bern.size() + 1 + 3, stop) ) // 3 more than needed
+				{
+					// there was the stop signal
+					err = err_interrupt;
+					return ValueType(); // NaN
+				}
+			}
+
+			temp = cgamma.bern[m];
+			temp.Div(denominator);
+
+			oldsum = sum;
+			sum.Add(temp);
+
+			if( sum.IsNan() || oldsum==sum )
+				break;
+		}
+
+	return sum;
+	}
+
+
+	/*!
+		an auxiliary function used to calculate the Gamma() function
+
+		we calculate a helper function GammaFactorialHigh() by using Stirling's series:
+		   n! = (n/e)^n * sqrt(2*pi*n) * exp( sum(n) )
+		   where n is a real number (not only an integer) and is sufficient large (greater than TTMATH_GAMMA_BOUNDARY)
+		   and sum(n) is calculated by GammaFactorialHighSum()
+	*/
+	template<class ValueType>
+	ValueType GammaFactorialHigh(const ValueType & n, CGamma<ValueType> & cgamma, ErrorCode & err,
+								 const volatile StopCalculating * stop)
+	{
+	ValueType temp, temp2, temp3, denominator, sum;
+
+		temp.Set2Pi();
+		temp.Mul(n);
+		temp2 = Sqrt(temp);
+		// temp2 = sqrt(2*pi*n)
+
+		temp = n;
+		temp3.SetE();
+		temp.Div(temp3);
+		temp.Pow(n);
+		// temp = (n/e)^n
+
+		sum = GammaFactorialHighSum(n, cgamma, err, stop);
+		temp3.Exp(sum);
+		// temp3 = exp(sum)
+
+		temp.Mul(temp2);
+		temp.Mul(temp3);
+
+	return temp;
+	}
+
+
+	/*!
+		an auxiliary function used to calculate the Gamma() function
+
+		Gamma(x) = GammaFactorialHigh(x-1)
+	*/
+	template<class ValueType>
+	ValueType GammaPlusHigh(ValueType n, CGamma<ValueType> & cgamma, ErrorCode & err, const volatile StopCalculating * stop)
+	{
+	ValueType one;
+
+		one.SetOne();
+		n.Sub(one);
+
+	return GammaFactorialHigh(n, cgamma, err, stop);
+	}
+
+
+	/*!
+		an auxiliary function used to calculate the Gamma() function
+	
+		we use this function when n is integer and a small value (from 0 to TTMATH_GAMMA_BOUNDARY]
+		we use the formula:
+		   gamma(n) = (n-1)! = 1 * 2 * 3 * ... * (n-1) 
+	*/
+	template<class ValueType>
+	ValueType GammaPlusLowIntegerInt(uint n, CGamma<ValueType> & cgamma)
+	{
+		TTMATH_ASSERT( n > 0 )
+
+		if( n - 1 < static_cast<uint>(cgamma.fact.size()) )
+			return cgamma.fact[n - 1];
+
+		ValueType res;
+		uint start = 2;
+
+		if( cgamma.fact.size() < 2 )
+		{
+			res.SetOne();
+		}
+		else
+		{
+			start = static_cast<uint>(cgamma.fact.size());
+			res   = cgamma.fact[start-1];
+		}
+
+		for(uint i=start ; i<n ; ++i)
+			res.MulInt(i);
+
+	return res;
+	}
+	
+
+	/*!
+		an auxiliary function used to calculate the Gamma() function
+
+		we use this function when n is integer and a small value (from 0 to TTMATH_GAMMA_BOUNDARY]
+	*/
+	template<class ValueType>
+	ValueType GammaPlusLowInteger(const ValueType & n, CGamma<ValueType> & cgamma)
+	{
+	sint n_;
+
+		n.ToInt(n_);
+
+	return GammaPlusLowIntegerInt(n_, cgamma);
+	}
+
+
+	/*!
+		an auxiliary function used to calculate the Gamma() function
+
+		we use this function when n is a small value (from 0 to TTMATH_GAMMA_BOUNDARY]
+		we use a recurrence formula:
+		   gamma(z+1) = z * gamma(z)
+		   then: gamma(z) = gamma(z+1) / z
+
+		   e.g.
+		   gamma(3.89) = gamma(2001.89) / ( 3.89 * 4.89 * 5.89 * ... * 1999.89 * 2000.89 )
+	*/
+	template<class ValueType>
+	ValueType GammaPlusLow(ValueType n, CGamma<ValueType> & cgamma, ErrorCode & err, const volatile StopCalculating * stop)
+	{
+	ValueType one, denominator, temp, boundary;
+
+		if( n.IsInteger() )
+			return GammaPlusLowInteger(n, cgamma);
+
+		one.SetOne();
+		denominator = n;
+		boundary    = TTMATH_GAMMA_BOUNDARY;
+
+		while( n < boundary )
+		{
+			n.Add(one);
+			denominator.Mul(n);
+		}
+
+		n.Add(one);
+
+		// now n is sufficient big
+		temp = GammaPlusHigh(n, cgamma, err, stop);
+		temp.Div(denominator);
+
+	return temp;
+	}
+
+
+	/*!
+		an auxiliary function used to calculate the Gamma() function
+	*/
+	template<class ValueType>
+	ValueType GammaPlus(const ValueType & n, CGamma<ValueType> & cgamma, ErrorCode & err, const volatile StopCalculating * stop)
+	{
+		if( n > TTMATH_GAMMA_BOUNDARY )
+			return GammaPlusHigh(n, cgamma, err, stop);
+
+	return GammaPlusLow(n, cgamma, err, stop);
+	}
+
+
+	/*!
+		an auxiliary function used to calculate the Gamma() function
+
+		this function is used when n is negative
+		we use the reflection formula:
+		   gamma(1-z) * gamma(z) = pi / sin(pi*z)
+		   then: gamma(z) = pi / (sin(pi*z) * gamma(1-z))
+
+	*/
+	template<class ValueType>
+	ValueType GammaMinus(const ValueType & n, CGamma<ValueType> & cgamma, ErrorCode & err, const volatile StopCalculating * stop)
+	{
+	ValueType pi, denominator, temp, temp2;
+
+		if( n.IsInteger() )
+		{
+			// gamma function is not defined when n is negative and integer
+			err = err_improper_argument;
+			return temp; // NaN
+		}
+
+		pi.SetPi();
+
+		temp = pi;
+		temp.Mul(n);
+		temp2 = Sin(temp);
+		// temp2 = sin(pi * n)
+
+		temp.SetOne();
+		temp.Sub(n);
+		temp = GammaPlus(temp, cgamma, err, stop);
+		// temp = gamma(1 - n)
+
+		temp.Mul(temp2);
+		pi.Div(temp);
+
+	return pi;
+	}
+
+	} // namespace auxiliaryfunctions
+
+
+
+	/*!
+		this function calculates the Gamma function
+
+		it's multithread safe, you should create a CGamma<> object and use it whenever you call the Gamma()
+		e.g.
+			typedef Big<1,2> MyBig;
+			MyBig x=234, y=345.53;
+			CGamma<MyBig> cgamma;
+			std::cout << Gamma(x, cgamma) << std::endl;
+			std::cout << Gamma(y, cgamma) << std::endl;
+		in the CGamma<> object the function stores some coefficients (factorials, Bernoulli numbers),
+		and they will be reused in next calls to the function
+
+		each thread should have its own CGamma<> object, and you can use these objects with Factorial() function too
+	*/
+	template<class ValueType>
+	ValueType Gamma(const ValueType & n, CGamma<ValueType> & cgamma, ErrorCode * err = 0,
+					const volatile StopCalculating * stop = 0)
+	{
+	using namespace auxiliaryfunctions;
+
+	ValueType result;
+	ErrorCode err_tmp;
+
+		if( n.IsNan() )
+		{
+			if( err )
+				*err = err_improper_argument;
+
+		return result; // NaN is set by default
+		}
+
+		if( cgamma.history.Get(n, result, err_tmp) )
+		{
+			if( err )
+				*err = err_tmp;
+
+			return result;
+		}
+
+		err_tmp = err_ok;
+
+		if( n.IsSign() )
+		{
+			result = GammaMinus(n, cgamma, err_tmp, stop);
+		}
+		else
+		if( n.IsZero() )
+		{
+			err_tmp = err_improper_argument;
+			result.SetNan();
+		}
+		else
+		{
+			result = GammaPlus(n, cgamma, err_tmp, stop);
+		}
+
+		if( result.IsNan() && err_tmp==err_ok )
+			err_tmp = err_overflow;
+
+		if( err )
+			*err = err_tmp;
+
+		if( stop && !stop->WasStopSignal() )
+			cgamma.history.Add(n, result, err_tmp);
+
+	return result;
+	}
+
+
+	/*!
+		this function calculates the Gamma function
+
+		note: this function should be used only in a single-thread environment
+	*/
+	template<class ValueType>
+	ValueType Gamma(const ValueType & n, ErrorCode * err = 0)
+	{
+	// warning: this static object is not thread safe
+	static CGamma<ValueType> cgamma;
+
+	return Gamma(n, cgamma, err);
+	}
+
+
+
+	namespace auxiliaryfunctions
+	{
+
+	/*!
+		an auxiliary function for calculating the factorial function
+
+		we use the formula:
+		   x! = gamma(x+1)
+	*/
+	template<class ValueType>
+	ValueType Factorial2(ValueType x, CGamma<ValueType> * cgamma = 0, ErrorCode * err = 0,
+						 const volatile StopCalculating * stop = 0)
+	{
+	ValueType result, one;
+
+		if( x.IsNan() || x.IsSign() || !x.IsInteger() )
+		{
+			if( err )
+				*err = err_improper_argument;
+
+		return result; // NaN set by default
+		}
+
+		one.SetOne();
+		x.Add(one);
+
+		if( cgamma )
+			return Gamma(x, *cgamma, err, stop);
+
+	return Gamma(x, err);
+	}
+	
+	} // namespace auxiliaryfunctions
+
+
+
+	/*!
+		the factorial from given 'x'
+		e.g.
+		Factorial(4) = 4! = 1*2*3*4
+
+		it's multithread safe, you should create a CGamma<> object and use it whenever you call the Factorial()
+		e.g.
+			typedef Big<1,2> MyBig;
+			MyBig x=234, y=345.53;
+			CGamma<MyBig> cgamma;
+			std::cout << Factorial(x, cgamma) << std::endl;
+			std::cout << Factorial(y, cgamma) << std::endl;
+		in the CGamma<> object the function stores some coefficients (factorials, Bernoulli numbers),
+		and they will be reused in next calls to the function
+
+		each thread should have its own CGamma<> object, and you can use these objects with Gamma() function too
+	*/
+	template<class ValueType>
+	ValueType Factorial(const ValueType & x, CGamma<ValueType> & cgamma, ErrorCode * err = 0,
+						const volatile StopCalculating * stop = 0)
+	{
+		return auxiliaryfunctions::Factorial2(x, &cgamma, err, stop);
+	}
+
+
+	/*!
+		the factorial from given 'x'
+		e.g.
+		Factorial(4) = 4! = 1*2*3*4
+
+		note: this function should be used only in a single-thread environment
+	*/
+	template<class ValueType>
+	ValueType Factorial(const ValueType & x, ErrorCode * err = 0)
+	{
+		return auxiliaryfunctions::Factorial2(x, 0, err, 0);
+	}
+
+
+	/*!
+		this method prepares some coefficients: factorials and Bernoulli numbers
+		stored in 'fact' and 'bern' objects
+
+		we're defining the method here because we're using Gamma() function which
+		is not available in ttmathobjects.h
+
+		read the doc info in ttmathobjects.h file where CGamma<> struct is declared
+	*/
+	template<class ValueType>
+	void CGamma<ValueType>::InitAll()
+	{
+		ValueType x = TTMATH_GAMMA_BOUNDARY + 1;
+		
+		// history.Remove(x) removes only one object
+		// we must be sure that there are not others objects with the key 'x'
+		while( history.Remove(x) )
+		{
+		}
+
+		// the simplest way to initialize is to call the Gamma function with (TTMATH_GAMMA_BOUNDARY + 1)
+		// when x is larger then less coefficients we need
+		Gamma(x, *this);
+	}
+
 
 
 } // namespace

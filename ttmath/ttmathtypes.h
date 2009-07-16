@@ -54,7 +54,7 @@
 
 #include <stdexcept>
 #include <sstream>
-
+#include <vector>
 
 /*!
 	the version of the library
@@ -279,6 +279,19 @@ namespace ttmath
 #endif
 
 
+
+/*!
+	this is a special value used when calculating the Gamma(x) function
+	if x is greater than this value then the Gamma(x) will be calculated using
+	some kind of series
+
+	don't use smaller values than about 100
+*/
+#define TTMATH_GAMMA_BOUNDARY 2000
+
+
+
+
 namespace ttmath
 {
 
@@ -312,7 +325,6 @@ namespace ttmath
 		err_object_exists,
 		err_unknown_object,
 		err_still_calculating,
-		err_too_big_factorial,
 		err_in_short_form_used_function
 	};
 
@@ -490,7 +502,7 @@ namespace ttmath
 				PrintLog(msg, std::cout);
 		#endif
 
-		#define TTMATH_LOG(quote) TTMATH_LOG_HELPER(quote)
+		#define TTMATH_LOG(msg) TTMATH_LOG_HELPER(msg)
 
 	#else
 

@@ -1,3 +1,28 @@
+Version 0.9.0 prerelease (2009.07.16):
+    * added:   support for wide characters (wchar_t)
+               wide characters are used when macro TTMATH_USE_WCHAR is defined
+               this macro is defined automatically when there is macro UNICODE or _UNICODE defined
+               some types have been changed
+                 char               -> tt_char
+                 std::string        -> tt_string
+                 std::ostringstream -> tt_ostringstream
+                 std::ostream       -> tt_ostream
+                 std::istream       -> tt_istream
+               normally tt_char is equal char but when you are using wide characters then tt_char will be wchar_t (and so on)
+               (all typedef's are in ttmathtypes.h)
+    * added:   Big::IsInteger()
+               returns true if the value is integer (without fraction)
+               (NaN flag is not checked)
+    * added:   global Gamma() function
+    * added:   gamma() function to the parser
+    * added:   CGamma<ValueType> class
+               is used with Gamma() and Factorial() in multithreaded environment
+    * changed: Factorial() is using the Gamma() function now
+    * removed: Parser<>::SetFactorialMax() method
+               the factorial() is such a fast now that we don't need the method longer
+    * removed: ErrorCode::err_too_big_factorial
+
+
 Version 0.8.5 (2009.06.16):
     * fixed:   Big::Mod(x) didn't correctly return a carry
                and the result was sometimes very big (even greater than x)
