@@ -229,8 +229,17 @@ namespace ttmath
 #define TTMATH_TEXT(txt) 	TTMATH_TEXT_HELPER(txt)
 
 
+#if defined(TTMATH_MULTITHREADS) && !defined(TTMATH_MULTITHREADS_NOSYNC)
+	#if !defined(TTMATH_POSIX_THREADS) && !defined(TTMATH_WIN32_THREADS)
 
+		#if defined(_WIN32)
+			#define TTMATH_WIN32_THREADS
+		#elif defined(unix) || defined(__unix__) || defined(__unix)
+			#define TTMATH_POSIX_THREADS
+		#endif
 
+	#endif
+#endif
 
 /*!
 	characters which represent the comma operator
@@ -510,7 +519,8 @@ namespace ttmath
 
 	#endif
 
-	
+
+
 
 } // namespace
 

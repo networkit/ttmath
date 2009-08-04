@@ -2715,7 +2715,7 @@ namespace ttmath
 		it's multithread safe, you should create a CGamma<> object and use it whenever you call the Factorial()
 		e.g.
 			typedef Big<1,2> MyBig;
-			MyBig x=234, y=345.53;
+			MyBig x=234, y=54345;
 			CGamma<MyBig> cgamma;
 			std::cout << Factorial(x, cgamma) << std::endl;
 			std::cout << Factorial(y, cgamma) << std::endl;

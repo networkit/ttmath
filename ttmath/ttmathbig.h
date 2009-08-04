@@ -44,8 +44,10 @@
 */
 
 #include "ttmathint.h"
+#include "ttmaththreads.h"
 
 #include <iostream>
+#include <signal.h>
 
 namespace ttmath
 {
@@ -2961,41 +2963,69 @@ private:
 		// (LnSurrounding1() will return one immediately)
 		uint c = Ln(x);
 
-		// warning! this 'static' is not thread safe
-		static Big<exp,man> log_history[15] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-		uint index = base - 2;
-
-		if( log_history[index].IsZero() )
-		{	
-			// we don't have 'base' in 'log_history' then we calculate it now
-
-			if( base==10 && man<=TTMATH_BUILTIN_VARIABLES_SIZE )
-			{
-				// for the base equal 10 we're using SelLn10() instead of calculating it
-				// (only if we have the constant sufficient big)
-				temp.SetLn10();
-			}
-			else
-			{
-				Big<exp,man> base_(base);
-				c += temp.Ln(base_);
-			}
-
-			// the next time we'll get the 'Ln(base)' from the history,
-			// this 'log_history' can have (16-2+1) items max
-			log_history[index] = temp;
-
-			c += Div(temp);
+		if( base==10 && man<=TTMATH_BUILTIN_VARIABLES_SIZE )
+		{
+			// for the base equal 10 we're using SelLn10() instead of calculating it
+			// (only if we have the constant sufficient big)
+			temp.SetLn10();
 		}
 		else
 		{
-			// we've calculated the 'Ln(base)' beforehand and we're getting it now
-			c += Div( log_history[index] );
+			c += ToString_LogBase(base, temp);
 		}
+
+		c += Div( temp );
 
 	return (c==0)? 0 : 1;
 	}
 
+
+
+	uint ToString_LogBase(uint base, Big<exp,man> & result)
+	{
+		TTMATH_ASSERT( base>=2 && base<=16 )
+
+		// this guardians are initialized before the program runs (static POD types)
+		volatile static sig_atomic_t guardians[15] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+		static Big<exp,man> * plog_history;
+		uint index = base - 2;
+		uint c = 0;
+	
+		// double-checked locking
+		if( guardians[index] == 0 )
+		{
+			ThreadLock thread_lock;
+
+			// locking
+			if( thread_lock.Lock() )
+			{
+				static Big<exp,man> log_history[15];
+
+				if( guardians[index] == 0 )
+				{
+					plog_history = log_history;
+				
+					Big<exp,man> base_(base);
+					c += log_history[index].Ln(base_);
+					guardians[index] = 1;
+				}
+			}
+			else
+			{
+				// there was a problem with locking, we store the result directly in 'result' object
+				Big<exp,man> base_(base);
+				c += result.Ln(base_);
+				
+			return (c==0)? 0 : 1;
+			}
+
+			// automatically unlocking
+		}
+
+		result = plog_history[index];
+
+	return (c==0)? 0 : 1;
+	}
 
 
 	/*!

@@ -428,7 +428,7 @@ public:
 	
 	/*!
 		default constructor
-		default max size of the History's container is 10 items
+		default max size of the History's container is 15 items
 	*/
 	History()
 	{
@@ -591,8 +591,8 @@ struct CGamma
 		you don't have to call this method, these coefficients will be automatically calculated
 		when they are needed
 
-		you must note that calculating of the coefficients is a little time-consuming operation,
-		(especially when the mantissa is large) and first called to Gamma() or Factorial()
+		you must note that calculating these coefficients is a little time-consuming operation,
+		(especially when the mantissa is large) and first call to Gamma() or Factorial()
 		can take more time than next calls, and in the end this is the point when InitAll()
 		comes in handy: you can call this method somewhere at the beginning of your program
 	*/

@@ -1,4 +1,4 @@
-Version 0.9.0 prerelease (2009.07.16):
+Version 0.9.0 prerelease (2009.08.04):
     * added:   support for wide characters (wchar_t)
                wide characters are used when macro TTMATH_USE_WCHAR is defined
                this macro is defined automatically when there is macro UNICODE or _UNICODE defined
@@ -17,6 +17,9 @@ Version 0.9.0 prerelease (2009.07.16):
     * added:   gamma() function to the parser
     * added:   CGamma<ValueType> class
                is used with Gamma() and Factorial() in multithreaded environment
+    * added:   multithread support for Big<> class
+               you should compile with TTMATH_MULTITHREADS
+               and use TTMATH_MULTITHREADS_HELPER macro somewhere in your *.cpp file
     * changed: Factorial() is using the Gamma() function now
     * removed: Parser<>::SetFactorialMax() method
                the factorial() is such a fast now that we don't need the method longer
