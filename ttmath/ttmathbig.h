@@ -47,7 +47,10 @@
 #include "ttmaththreads.h"
 
 #include <iostream>
+
+#ifdef TTMATH_MULTITHREADS
 #include <signal.h>
+#endif
 
 namespace ttmath
 {
@@ -2980,7 +2983,40 @@ private:
 	}
 
 
+#ifndef TTMATH_MULTITHREADS
 
+	/*!
+		this method calculates the logarithm of 'base'
+		it's used in single thread environment
+	*/
+	uint ToString_LogBase(uint base, Big<exp,man> & result)
+	{
+		TTMATH_ASSERT( base>=2 && base<=16 )
+
+		// this guardians are initialized before the program runs (static POD types)
+		static int guardians[15] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+		static Big<exp,man> log_history[15];
+		uint index = base - 2;
+		uint c = 0;
+	
+		if( guardians[index] == 0 )
+		{
+			Big<exp,man> base_(base);
+			c += log_history[index].Ln(base_);
+			guardians[index] = 1;
+		}
+
+		result = log_history[index];
+
+	return (c==0)? 0 : 1;
+	}
+
+#else
+
+	/*!
+		this method calculates the logarithm of 'base'
+		it's used in multi-thread environment
+	*/
 	uint ToString_LogBase(uint base, Big<exp,man> & result)
 	{
 		TTMATH_ASSERT( base>=2 && base<=16 )
@@ -3027,6 +3063,7 @@ private:
 	return (c==0)? 0 : 1;
 	}
 
+#endif
 
 	/*!
 		an auxiliary method for converting into the string (private)
