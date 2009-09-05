@@ -1,4 +1,4 @@
-Version 0.9.0 prerelease (2009.08.04):
+Version 0.9.0 prerelease (2009.09.05):
     * added:   support for wide characters (wchar_t)
                wide characters are used when macro TTMATH_USE_WCHAR is defined
                this macro is defined automatically when there is macro UNICODE or _UNICODE defined
@@ -20,6 +20,8 @@ Version 0.9.0 prerelease (2009.08.04):
     * added:   multithread support for Big<> class
                you should compile with TTMATH_MULTITHREADS
                and use TTMATH_MULTITHREADS_HELPER macro somewhere in your *.cpp file
+    * added:   Big::AboutEqual(const Big<exp,man> & ss2, int nBitsToIgnore = 4)
+               the last nBitsToIgnore bits from mantissas will be skipped when comparing
     * changed: Factorial() is using the Gamma() function now
     * removed: Parser<>::SetFactorialMax() method
                the factorial() is such a fast now that we don't need the method longer

@@ -3916,6 +3916,77 @@ public:
 	}
 
 
+	bool AboutEqual(const Big<exp,man> & ss2, int nBitsToIgnore = 4) const
+	{
+		// we should check the mantissas beforehand because sometimes we can have
+		// a mantissa set to zero but in the exponent something another value
+		// (maybe we've forgotten about calling CorrectZero() ?)
+		if( mantissa.IsZero() )
+		{
+			if( ss2.mantissa.IsZero() )
+				return true;
+
+			return(ss2.AboutEqual(*this,nBitsToIgnore));
+		}
+
+		if( ss2.mantissa.IsZero() )
+		{
+			return(this->exponent <= uint(2*(-sint(man*TTMATH_BITS_PER_UINT))+nBitsToIgnore));
+		}
+
+		// exponents may not differ much!
+		ttmath::Int<exp> expdiff(this->exponent - ss2.exponent);
+
+		// they may differ one if for example mantissa1=0x80000000, mantissa2=0xffffffff
+		if( ttmath::Abs(expdiff) > 1 )
+			return(false);		
+
+		// calculate the 'difference' mantissa		
+		ttmath::UInt<man> man1(this->mantissa);
+		ttmath::UInt<man> man2(ss2.mantissa);
+		ttmath::UInt<man> mandiff;
+
+		switch( expdiff.ToInt() )
+		{
+			case +1:
+				man2.Rcr(1,0);
+				mandiff = man1;
+				mandiff.Sub(man2);
+				break;
+			case -1:
+				man1.Rcr(1,0);
+				mandiff = man2;
+				mandiff.Sub(man1);
+				break;
+			default:
+				if( man2 > man1 )
+				{
+					mandiff = man2;
+					mandiff.Sub(man1);
+				}
+				else
+				{
+					mandiff = man1;
+					mandiff.Sub(man2);
+				}
+			break;
+		}
+
+		// faster to mask the bits!
+		TTMATH_ASSERT( nBitsToIgnore < TTMATH_BITS_PER_UINT );
+
+		for( int n = man-1; n > 0; --n )
+		{
+			if( mandiff.table[n] != 0 )
+				return(false);
+		}
+
+		uint nMask = ~((1 << nBitsToIgnore) - 1);
+
+	return((mandiff.table[0] & nMask) == 0);
+	}
+
+
 	bool operator<(const Big<exp,man> & ss2) const
 	{
 		if( IsSign() && !ss2.IsSign() )
