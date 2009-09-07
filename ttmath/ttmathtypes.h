@@ -162,8 +162,14 @@ namespace ttmath
 	/*!
 		on 64bit platforms one word (uint, sint) will be equal 64bits
 	*/
-	typedef unsigned long uint;
-	typedef signed   long sint;
+	#ifdef _MSC_VER
+		/* in VC 'long' type has 32 bits, __int64 is VC extension */
+		typedef unsigned __int64 uint;
+		typedef signed   __int64 sint;
+	#else
+		typedef unsigned long uint;
+		typedef signed   long sint;
+	#endif 
 
 	/*!
 		on 64bit platform we do not define ulint

@@ -51,9 +51,32 @@
 	this file is included at the end of ttmathuint.h
 */
 
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
+
 
 namespace ttmath
 {
+
+	#ifdef _MSC_VER
+
+		extern "C"
+			{
+			uint __fastcall adc_x64(uint* p1, const uint* p2, uint nSize, uint c);
+			uint __fastcall addindexed_x64(uint* p1, uint nSize, uint nPos, uint nValue);
+			uint __fastcall addindexed2_x64(uint* p1, uint nSize, uint nPos, uint nValue1, uint nValue2);
+			uint __fastcall sbb_x64(uint* p1, const uint* p2, uint nSize, uint c);
+			uint __fastcall subindexed_x64(uint* p1, uint nSize, uint nPos, uint nValue);
+			uint __fastcall rcl_x64(uint* p1, uint nSize, uint nLowestBit);
+			uint __fastcall rcr_x64(uint* p1, uint nSize, uint nLowestBit);
+			uint __fastcall div_x64(uint* pnValHi, uint* pnValLo, uint nDiv);
+			uint __fastcall rcl2_x64(uint* p1, uint nSize, uint nBits, uint c);
+			uint __fastcall rcr2_x64(uint* p1, uint nSize, uint nBits, uint c);
+			};
+	#endif
+
+
 
 	/*!
 	*
@@ -82,8 +105,12 @@ namespace ttmath
 		// we don't have to use TTMATH_REFERENCE_ASSERT here
 		// this algorithm doesn't require it
 
-		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+		#if !defined(__GNUC__) && !defined(_MSC_VER)
+			#error "another compiler than GCC or Microsoft VC is currently not supported in 64bit mode, you can compile with TTMATH_NOASM macro"
+		#endif
+
+		#ifdef _MSC_VER
+			c = adc_x64(p1,p2,b,c);
 		#endif
 
 		#ifdef __GNUC__
@@ -149,9 +176,15 @@ namespace ttmath
 
 		TTMATH_ASSERT( index < value_size )
 
-		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+		#if !defined(__GNUC__) && !defined(_MSC_VER)
+			#error "another compiler than GCC or Microsoft VC is currently not supported in 64bit mode, you can compile with TTMATH_NOASM macro"
 		#endif
+
+
+		#ifdef _MSC_VER
+			c = addindexed_x64(p1,b,index,value);
+		#endif
+
 
 		#ifdef __GNUC__
 		uint dummy, dummy2;
@@ -227,9 +260,15 @@ namespace ttmath
 
 		TTMATH_ASSERT( index < value_size - 1 )
 
-		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+		#if !defined(__GNUC__) && !defined(_MSC_VER)
+			#error "another compiler than GCC or Microsoft VC is currently not supported in 64bit mode, you can compile with TTMATH_NOASM macro"
 		#endif
+
+
+		#ifdef _MSC_VER
+			c = addindexed2_x64(p1,b,index,x1,x2);
+		#endif
+
 
 		#ifdef __GNUC__
 		uint dummy, dummy2;
@@ -288,6 +327,9 @@ namespace ttmath
 	  of course the carry is propagated and will be returned from the last item
 	  (this method is used by the Karatsuba multiplication algorithm)
 	*/
+
+#ifndef _MSC_VER
+
 	template<uint value_size>
 	uint UInt<value_size>::AddVector(const uint * ss1, const uint * ss2, uint ss1_size, uint ss2_size, uint * result)
 	{
@@ -296,9 +338,15 @@ namespace ttmath
 		uint rest = ss1_size - ss2_size;
 		uint c;
 
-		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+		#if !defined(__GNUC__) && !defined(_MSC_VER)
+			#error "another compiler than GCC or Microsoft VC is currently not supported in 64bit mode, you can compile with TTMATH_NOASM macro"
 		#endif
+
+
+		#ifdef _MSC_VER
+			
+		#endif
+
 
 		#ifdef __GNUC__
 		uint dummy1, dummy2, dummy3;	
@@ -348,8 +396,27 @@ namespace ttmath
 	return c;
 	}
 
+#else
+	/* temporarily */
+	template<uint value_size>
+	uint UInt<value_size>::AddVector(const uint * ss1, const uint * ss2, uint ss1_size, uint ss2_size, uint * result)
+	{
+	uint i, c = 0;
 
+		TTMATH_ASSERT( ss1_size >= ss2_size )
 
+		for(i=0 ; i<ss2_size ; ++i)
+			c = AddTwoWords(ss1[i], ss2[i], c, &result[i]);
+
+		for( ; i<ss1_size ; ++i)
+			c = AddTwoWords(ss1[i], 0, c, &result[i]);
+
+		TTMATH_LOG("UInt::AddVector")
+
+	return c;
+	}
+
+#endif
 
 
 	/*!
@@ -373,9 +440,15 @@ namespace ttmath
 		// we don't have to use TTMATH_REFERENCE_ASSERT here
 		// this algorithm doesn't require it
 
-		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+		#if !defined(__GNUC__) && !defined(_MSC_VER)
+			#error "another compiler than GCC or Microsoft VC is currently not supported in 64bit mode, you can compile with TTMATH_NOASM macro"
 		#endif
+
+
+		#ifdef _MSC_VER
+			c = sbb_x64(p1,p2,b,c);
+		#endif
+
 
 		#ifdef __GNUC__
 		uint dummy, dummy2;
@@ -432,15 +505,22 @@ namespace ttmath
 	uint b = value_size;
 	uint * p1 = table;
 	uint c;
-	uint dummy, dummy2;
 
 		TTMATH_ASSERT( index < value_size )
 
-		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+		#if !defined(__GNUC__) && !defined(_MSC_VER)
+			#error "another compiler than GCC or Microsoft VC is currently not supported in 64bit mode, you can compile with TTMATH_NOASM macro"
 		#endif
 
+
+		#ifdef _MSC_VER
+			c = subindexed_x64(p1,b,index,value);
+		#endif
+
+
 		#ifdef __GNUC__
+			uint dummy, dummy2;
+
 			__asm__ __volatile__(
 			
 				"subq %%rdx, %%rcx 				\n"
@@ -493,6 +573,9 @@ namespace ttmath
 	  of course the carry (borrow) is propagated and will be returned from the last item
 	  (this method is used by the Karatsuba multiplication algorithm)
 	*/
+
+#ifndef _MSC_VER
+
 	template<uint value_size>
 	uint UInt<value_size>::SubVector(const uint * ss1, const uint * ss2, uint ss1_size, uint ss2_size, uint * result)
 	{
@@ -501,16 +584,22 @@ namespace ttmath
 		uint rest = ss1_size - ss2_size;
 		uint c;
 
-		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+		#if !defined(__GNUC__) && !defined(_MSC_VER)
+			#error "another compiler than GCC or Microsoft VC is currently not supported in 64bit mode, you can compile with TTMATH_NOASM macro"
 		#endif
+
+
+		#ifdef _MSC_VER
+			
+		#endif
+
 
 		#ifdef __GNUC__
 
-		/*
-			the asm code is nearly the same as in AddVector
-			only two instructions 'adc' are changed to 'sbb'
-		*/
+		
+		//	the asm code is nearly the same as in AddVector
+		//	only two instructions 'adc' are changed to 'sbb'
+		
 		uint dummy1, dummy2, dummy3;
 
 			__asm__ __volatile__(
@@ -556,6 +645,27 @@ namespace ttmath
 	return c;
 	}
 
+#else
+	/* temporarily */
+	template<uint value_size>
+	uint UInt<value_size>::SubVector(const uint * ss1, const uint * ss2, uint ss1_size, uint ss2_size, uint * result)
+	{
+	uint i, c = 0;
+
+		TTMATH_ASSERT( ss1_size >= ss2_size )
+
+		for(i=0 ; i<ss2_size ; ++i)
+			c = SubTwoWords(ss1[i], ss2[i], c, &result[i]);
+
+		for( ; i<ss1_size ; ++i)
+			c = SubTwoWords(ss1[i], 0, c, &result[i]);
+
+		TTMATH_LOG("UInt::SubVector")
+
+	return c;
+	}
+
+#endif
 
 
 	/*!
@@ -579,9 +689,15 @@ namespace ttmath
 	uint * p1 = table;
 	
 
-		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+		#if !defined(__GNUC__) && !defined(_MSC_VER)
+			#error "another compiler than GCC or Microsoft VC is currently not supported in 64bit mode, you can compile with TTMATH_NOASM macro"
 		#endif
+
+
+		#ifdef _MSC_VER
+			c = rcl_x64(p1,b,c);
+		#endif
+
 
 		#ifdef __GNUC__
 		uint dummy, dummy2;
@@ -633,9 +749,15 @@ namespace ttmath
 	uint * p1 = table;
 	
 
-		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+		#if !defined(__GNUC__) && !defined(_MSC_VER)
+			#error "another compiler than GCC or Microsoft VC is currently not supported in 64bit mode, you can compile with TTMATH_NOASM macro"
 		#endif
+
+
+		#ifdef _MSC_VER
+			c = rcr_x64(p1,b,c);
+		#endif
+
 
 		#ifdef __GNUC__
 		uint dummy;
@@ -688,9 +810,15 @@ namespace ttmath
 	uint * p1 = table;
 
 
-		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+		#if !defined(__GNUC__) && !defined(_MSC_VER)
+			#error "another compiler than GCC or Microsoft VC is currently not supported in 64bit mode, you can compile with TTMATH_NOASM macro"
 		#endif
+
+
+		#ifdef _MSC_VER
+			c = rcl2_x64(p1,b,bits,c);
+		#endif
+
 
 		#ifdef __GNUC__
 		uint dummy, dummy2, dummy3;
@@ -758,14 +886,20 @@ namespace ttmath
 
 	sint b = value_size;
 	uint * p1 = table;
-	uint dummy, dummy2, dummy3;
 
-		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+		#if !defined(__GNUC__) && !defined(_MSC_VER)
+			#error "another compiler than GCC or Microsoft VC is currently not supported in 64bit mode, you can compile with TTMATH_NOASM macro"
+		#endif
+
+
+		#ifdef _MSC_VER
+			c = rcr2_x64(p1,b,bits,c);
 		#endif
 
 
 		#ifdef __GNUC__
+			uint dummy, dummy2, dummy3;
+
 			__asm__  __volatile__(
 
 			"movq %%rcx, %%rsi				\n"
@@ -823,9 +957,22 @@ namespace ttmath
 	sint result;
 
 
-		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+		#if !defined(__GNUC__) && !defined(_MSC_VER)
+			#error "another compiler than GCC or Microsoft VC is currently not supported in 64bit mode, you can compile with TTMATH_NOASM macro"
 		#endif
+
+		
+		#ifdef _MSC_VER
+
+			unsigned long nIndex = 0;
+
+			if( _BitScanReverse64(&nIndex,x) == 0 )
+				result = -1;
+			else
+				result = nIndex;
+
+		#endif
+
 
 		#ifdef __GNUC__
 		uint dummy;
@@ -868,10 +1015,15 @@ namespace ttmath
 		uint old_bit;
 		uint v = value;
 
-
-		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+		#if !defined(__GNUC__) && !defined(_MSC_VER)
+			#error "another compiler than GCC or Microsoft VC is currently not supported in 64bit mode, you can compile with TTMATH_NOASM macro"
 		#endif
+
+
+		#ifdef _MSC_VER
+			old_bit = _bittestandset64((__int64*)&value,bit) != 0;
+		#endif
+
 
 		#ifdef __GNUC__
 
@@ -924,9 +1076,15 @@ namespace ttmath
 	uint result1_;
 	uint result2_;
 
-		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+		#if !defined(__GNUC__) && !defined(_MSC_VER)
+			#error "another compiler than GCC or Microsoft VC is currently not supported in 64bit mode, you can compile with TTMATH_NOASM macro"
 		#endif
+
+
+		#ifdef _MSC_VER
+			result1_ = _umul128(a,b,&result2_);
+		#endif
+
 
 		#ifdef __GNUC__
 
@@ -981,9 +1139,19 @@ namespace ttmath
 
 		TTMATH_ASSERT( c != 0 )
 
-		#ifndef __GNUC__
-			#error "another compiler than GCC is currently not supported in 64bit mode"
+		#if !defined(__GNUC__) && !defined(_MSC_VER)
+			#error "another compiler than GCC or Microsoft VC is currently not supported in 64bit mode, you can compile with TTMATH_NOASM macro"
 		#endif
+
+
+		#ifdef _MSC_VER
+
+			div_x64(&a,&b,c);
+			r_    = a;
+			rest_ = b;
+			
+		#endif
+
 
 		#ifdef __GNUC__
 		
@@ -1001,6 +1169,59 @@ namespace ttmath
 		*r = r_;
 		*rest = rest_;
 	}
+
+
+	/* temporarily */
+	template<uint value_size>
+	uint UInt<value_size>::AddTwoWords(uint a, uint b, uint carry, uint * result)
+	{
+	uint temp;
+
+		if( carry == 0 )
+		{
+			temp = a + b;
+
+			if( temp < a )
+				carry = 1;
+		}
+		else
+		{
+			carry = 1;
+			temp  = a + b + carry;
+
+			if( temp > a ) // !(temp<=a)
+				carry = 0;
+		}
+
+		*result = temp;
+
+	return carry;
+	}
+
+
+	/* temporarily */
+	template<uint value_size>
+	uint UInt<value_size>::SubTwoWords(uint a, uint b, uint carry, uint * result)
+	{
+		if( carry == 0 )
+		{
+			*result = a - b;
+
+			if( a < b )
+				carry = 1;
+		}
+		else
+		{
+			carry   = 1;
+			*result = a - b - carry;
+
+			if( a > b ) // !(a <= b )
+				carry = 0;
+		}
+
+	return carry;
+	}
+
 
 
 } //namespace
