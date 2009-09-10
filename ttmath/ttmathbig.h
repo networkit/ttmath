@@ -3916,74 +3916,78 @@ public:
 	}
 
 
-	bool AboutEqual(const Big<exp,man> & ss2, int nBitsToIgnore = 4) const
+	/*!
+		this method compares this and ss2 by ingoring some nBitsToIgnore last bits from mantissas
+		if nBitsToIgnore is 0 then the method is equivalent to EqualWithoutSign() method
+		(signs are not checked, we don't check the NaN flag too)
+
+		sample:
+			Big<1,1> a, b;
+			a = " 1234.5678";
+			b = "-1234.5677999";
+			// binary a:  10011010010.100100010101101101010
+			// binary b: -10011010010.100100010101101101000
+			// two last bits are different
+			if( a.AboutEqualWithoutSign(b, 2) ) // the result is true
+				std::cout << "true" << std::endl;
+	*/
+	bool AboutEqualWithoutSign(const Big<exp,man> & ss2, uint nBitsToIgnore) const
 	{
-		// we should check the mantissas beforehand because sometimes we can have
-		// a mantissa set to zero but in the exponent something another value
-		// (maybe we've forgotten about calling CorrectZero() ?)
-		if( mantissa.IsZero() )
-		{
-			if( ss2.mantissa.IsZero() )
-				return true;
+		// there is no sense to ignore the whole mantissas
+		TTMATH_ASSERT( nBitsToIgnore < man*TTMATH_BITS_PER_UINT )
 
-			return(ss2.AboutEqual(*this,nBitsToIgnore));
+		uint words = nBitsToIgnore / TTMATH_BITS_PER_UINT;
+		uint bits  = nBitsToIgnore % TTMATH_BITS_PER_UINT;
+		uint i;
+
+		if( bits == 0 )
+		{
+			i = words;
+		}
+		else
+		{
+			i = words + 1;
+			uint mask = TTMATH_UINT_MAX_VALUE << bits;
+
+			if( (mantissa.table[words] & mask) != (ss2.mantissa.table[words] & mask) )
+				return false;
 		}
 
-		if( ss2.mantissa.IsZero() )
+		for( ; i<man ; ++i )
 		{
-			return(this->exponent <= uint(2*(-sint(man*TTMATH_BITS_PER_UINT))+nBitsToIgnore));
+			if( mantissa.table[i] != ss2.mantissa.table[i] )
+				return false;
 		}
 
-		// exponents may not differ much!
-		ttmath::Int<exp> expdiff(this->exponent - ss2.exponent);
+		if( exponent != ss2.exponent )
+			return false;
 
-		// they may differ one if for example mantissa1=0x80000000, mantissa2=0xffffffff
-		if( ttmath::Abs(expdiff) > 1 )
-			return(false);		
+	return true;
+	}
 
-		// calculate the 'difference' mantissa		
-		ttmath::UInt<man> man1(this->mantissa);
-		ttmath::UInt<man> man2(ss2.mantissa);
-		ttmath::UInt<man> mandiff;
 
-		switch( expdiff.ToInt() )
-		{
-			case +1:
-				man2.Rcr(1,0);
-				mandiff = man1;
-				mandiff.Sub(man2);
-				break;
-			case -1:
-				man1.Rcr(1,0);
-				mandiff = man2;
-				mandiff.Sub(man1);
-				break;
-			default:
-				if( man2 > man1 )
-				{
-					mandiff = man2;
-					mandiff.Sub(man1);
-				}
-				else
-				{
-					mandiff = man1;
-					mandiff.Sub(man2);
-				}
-			break;
-		}
+	/*!
+		this method compares this and ss2 by ingoring some nBitsToIgnore last bits from mantissas
+		if nBitsToIgnore is 0 then the method is equivalent to operator==() operator
+		(we don't check the NaN flag)
 
-		// faster to mask the bits!
-		TTMATH_ASSERT( nBitsToIgnore < TTMATH_BITS_PER_UINT );
+		this method is similar to AboutEqualWithoutSign but the signs are checked now
+		sample:
+			Big<1,1> a, b;
+			a = "456.6789";
+			b = "456.678901";
+			// binary a: 111001000.10101101110011000101111
+			// binary b: 111001000.10101101110011000110111
+			// five last bits are different
+			if( a.AboutEqual(b, 5) ) // the result is true
+				std::cout << "true" << std::endl;
+	*/
+	bool AboutEqual(const Big<exp,man> & ss2, uint nBitsToIgnore) const
+	{
+		if( IsSign() != ss2.IsSign() )
+			return false;
 
-		for( int n = man-1; n > 0; --n )
-		{
-			if( mandiff.table[n] != 0 )
-				return(false);
-		}
-
-		uint nMask = ~((1 << nBitsToIgnore) - 1);
-
-	return((mandiff.table[0] & nMask) == 0);
+	return AboutEqualWithoutSign(ss2, nBitsToIgnore);
 	}
 
 
@@ -4006,8 +4010,6 @@ public:
 	}
 
 
-
-
 	bool operator==(const Big<exp,man> & ss2) const
 	{
 		if( IsSign() != ss2.IsSign() )
@@ -4015,8 +4017,6 @@ public:
 
 	return EqualWithoutSign( ss2 );
 	}
-
-
 
 
 	bool operator>(const Big<exp,man> & ss2) const
@@ -4036,7 +4036,6 @@ public:
 
 	return GreaterWithoutSignThan( ss2 );
 	}
-
 
 
 	bool operator>=(const Big<exp,man> & ss2) const
