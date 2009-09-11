@@ -59,7 +59,7 @@ namespace ttmath
 /*!
 	\brief Big implements the floating point numbers
 */
-template <uint exp,uint man>
+template <uint exp, uint man>
 class Big
 {
 
@@ -90,7 +90,8 @@ unsigned char info;
 
 
 /*!
-	the number of a bit from 'info' which means that a value is with a sign
+	Sign
+	the mask of a bit from 'info' which means that there is a sign
 	(when the bit is set)
 */
 #define TTMATH_BIG_SIGN 128
@@ -98,11 +99,18 @@ unsigned char info;
 
 /*!
 	Not a number
-	if this bit is set that there is no a valid number
+	if this bit is set that there is not a valid number
 */
 #define TTMATH_BIG_NAN  64
 
 
+/*!
+	Zero
+	if this bit is set that there is value zero
+	mantissa should be zero and exponent should be zero too
+	(the Standardizing() method does this)
+*/
+#define TTMATH_BIG_ZERO  32
 
 
 	/*!
@@ -127,7 +135,8 @@ public:
 	/*!
 		this method moves all bits from mantissa into its left side
 		(suitably changes the exponent) or if the mantissa is zero
-		it sets the exponent to zero as well (and clears the sign bit)
+		it sets the exponent to zero as well
+		(and clears the sign bit and sets the zero bit)
 
 		it can return a carry
 		the carry will be when we don't have enough space in the exponent
@@ -138,7 +147,10 @@ public:
 	uint Standardizing()
 	{
 		if( mantissa.IsTheHighestBitSet() )
+		{
+			ClearInfoBit(TTMATH_BIG_ZERO);
 			return 0;
+		}
 
 		if( CorrectZero() )
 			return 0;
@@ -161,19 +173,55 @@ private:
 	{
 		if( mantissa.IsZero() )
 		{
-			Abs();
+			SetInfoBit(TTMATH_BIG_ZERO);
+			ClearInfoBit(TTMATH_BIG_SIGN);
 			exponent.SetZero();
 
-		return true;
+			return true;
+		}
+		else
+		{
+			ClearInfoBit(TTMATH_BIG_ZERO);
 		}
 
 	return false;
 	}
 
 
-
-
 public:
+
+	/*!
+		this method clears a specific bit in the 'info' variable
+
+		bit is one of: TTMATH_BIG_SIGN, TTMATH_BIG_NAN etc.
+	*/
+	void ClearInfoBit(unsigned char bit)
+	{
+		info = info & (~bit);
+	}
+
+
+	/*!
+		this method sets a specific bit in the 'info' variable
+
+		bit is one of: TTMATH_BIG_SIGN, TTMATH_BIG_NAN etc.
+
+	*/
+	void SetInfoBit(unsigned char bit)
+	{
+		info = info | bit;
+	}
+
+
+	/*!
+		this method returns true if a specific bit in the 'info' variable is set
+
+		bit is one of: TTMATH_BIG_SIGN, TTMATH_BIG_NAN etc.
+	*/
+	bool IsInfoBit(unsigned char bit) const
+	{
+		return (info & bit) != 0;
+	}
 
 
 	/*!
@@ -181,7 +229,7 @@ public:
 	*/
 	void SetZero()
 	{
-		info = 0;
+		info = TTMATH_BIG_ZERO;
 		exponent.SetZero();
 		mantissa.SetZero();
 
@@ -216,7 +264,7 @@ public:
 	*/
 	void SetNan()
 	{
-		info |= TTMATH_BIG_NAN;	
+		SetInfoBit(TTMATH_BIG_NAN);
 	}
 
 
@@ -537,12 +585,7 @@ public:
 	*/
 	bool IsZero() const
 	{
-		/*
-			we only have to test the mantissa
-			also we don't check the NaN flag
-			(maybe this method should return false if there is NaN flag set?)
-		*/
-		return mantissa.IsZero();
+		return IsInfoBit(TTMATH_BIG_ZERO);
 	}
 
 
@@ -552,7 +595,7 @@ public:
 	*/
 	bool IsSign() const
 	{
-		return (info & TTMATH_BIG_SIGN) == TTMATH_BIG_SIGN;
+		return IsInfoBit(TTMATH_BIG_SIGN);
 	}
 
 
@@ -561,7 +604,7 @@ public:
 	*/
 	bool IsNan() const
 	{
-		return (info & TTMATH_BIG_NAN) == TTMATH_BIG_NAN;
+		return IsInfoBit(TTMATH_BIG_NAN);
 	}
 
 
@@ -576,7 +619,7 @@ public:
 	*/
 	void Abs()
 	{
-		info &= ~TTMATH_BIG_SIGN;
+		ClearInfoBit(TTMATH_BIG_SIGN);
 	}
 
 
@@ -618,7 +661,7 @@ public:
 	*/
 	void SetSign()
 	{
-		info |= TTMATH_BIG_SIGN;
+		SetInfoBit(TTMATH_BIG_SIGN);
 	}
 
 
@@ -634,16 +677,13 @@ public:
 	{
 		// we don't have to check the NaN flag here
 
-		if( info & TTMATH_BIG_SIGN )
-		{
-			info &= ~TTMATH_BIG_SIGN;
-			return;
-		}
-
 		if( IsZero() )
 			return;
 
-		info |= TTMATH_BIG_SIGN;
+		if( IsSign() )
+			ClearInfoBit(TTMATH_BIG_SIGN);
+		else
+			SetInfoBit(TTMATH_BIG_SIGN);
 	}
 
 
@@ -671,6 +711,9 @@ public:
 
 		if( IsNan() || ss2.IsNan() )
 			return CheckCarry(1);
+
+		if( ss2.IsZero() )
+			return 0;
 
 		exp_offset.Sub( ss2.exponent );
 		exp_offset.Abs();
@@ -759,6 +802,15 @@ public:
 		if( IsSign() || ss2.IsSign() )
 			return 2;
 
+		if( IsZero() )
+			return 0;
+
+		if( ss2.IsZero() )
+		{
+			SetZero();
+			return 0;
+		}
+
 		Int<exp> exp_offset( exponent );
 		Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
 
@@ -810,6 +862,15 @@ public:
 		if( IsSign() || ss2.IsSign() )
 			return 2;
 		
+		if( IsZero() )
+		{
+			*this = ss2;
+			return 0;
+		}
+
+		if( ss2.IsZero() )
+			return 0;
+
 		Int<exp> exp_offset( exponent );
 		Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
 
@@ -858,6 +919,15 @@ public:
 		if( IsSign() || ss2.IsSign() )
 			return 2;
 		
+		if( ss2.IsZero() )
+			return 0;
+
+		if( IsZero() )
+		{
+			*this = ss2;
+			return 0;
+		}
+
 		Int<exp> exp_offset( exponent );
 		Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
 
@@ -902,6 +972,15 @@ public:
 
 		if( IsNan() )
 			return 1;
+
+		if( IsZero() )
+			return 0;
+
+		if( ss2 == 0 )
+		{
+			SetZero();
+			return 0;
+		}
 
 		// man_result = mantissa * ss2.mantissa
 		mantissa.MulInt(ss2, man_result);
@@ -987,6 +1066,15 @@ public:
 		if( IsNan() || ss2.IsNan() )
 			return CheckCarry(1);
 
+		if( IsZero() )
+			return 0;
+
+		if( ss2.IsZero() )
+		{
+			SetZero();
+			return 0;
+		}
+
 		// man_result = mantissa * ss2.mantissa
 		mantissa.MulBig(ss2.mantissa, man_result);
 
@@ -1023,9 +1111,11 @@ public:
 
 	/*!
 		division this = this / ss2
-		this method returns carry (in a division carry can be as well)
 
-		(it also returns 0 if ss2 is zero)
+		return value:
+		0 - ok
+		1 - carry (in a division carry can be as well)
+		2 - improper argument (ss2 is zero)
 	*/
 	uint Div(const Big<exp, man> & ss2)
 	{
@@ -1035,8 +1125,17 @@ public:
 	UInt<man*2> man2;
 	uint i,c = 0;
 		
-		if( IsNan() || ss2.IsNan() || ss2.IsZero() )
+		if( IsNan() || ss2.IsNan() )
 			return CheckCarry(1);
+
+		if( ss2.IsZero() )
+		{
+			SetNan();
+			return 2;
+		}
+
+		if( IsZero() )
+			return 0;
 
 		for(i=0 ; i<man ; ++i)
 		{
@@ -1084,6 +1183,11 @@ public:
 
 		it means:
 		in other words: this(old) = ss2 * q + this(new)
+
+		return value:
+		0 - ok
+		1 - carry
+		2 - improper argument (ss2 is zero)
 	*/
 	uint Mod(const Big<exp, man> & ss2)
 	{
@@ -1093,6 +1197,12 @@ public:
 
 		if( IsNan() || ss2.IsNan() )
 			return CheckCarry(1);
+
+		if( ss2.IsZero() )
+		{
+			SetNan();
+			return 2;
+		}
 
 		if( !SmallerWithoutSignThan(ss2) )
 		{
@@ -1130,11 +1240,17 @@ public:
 		if( IsNan() )
 			return 1;
 
-		if( pow.IsZero() && IsZero() )
+		if( IsZero() )
 		{
-			// we don't define zero^zero
-			SetNan();
-			return 2;
+			if( pow.IsZero() )
+			{
+				// we don't define zero^zero
+				SetNan();
+				return 2;
+			}
+
+			// 0^(+something) is zero
+			return 0;
 		}
 
 		Big<exp, man> start(*this), start_temp;
@@ -1233,10 +1349,16 @@ public:
 		if( IsNan() || pow.IsNan() )
 			return CheckCarry(1);
 
-		if( pow.IsZero() && IsZero() )
+		if( IsZero() )
 		{
-			SetNan();
-			return 2;
+			if( pow.IsZero() )
+			{
+				SetNan();
+				return 2;
+			}
+
+			// 0^(+something) is zero
+			return 0;
 		}
 
 		if( pow.IsSign() )
@@ -2517,6 +2639,10 @@ private:
 		// setting the rest of mantissa.table into zero (if some has left)
 		for( ; i<=man ; ++i)
 			mantissa.table[man-i] = 0;
+
+		// the highest bit is either one or zero (when the whole mantissa is zero)
+		// we can only call CorrectZero()
+		CorrectZero();
 	}
 
 
@@ -3822,12 +3948,9 @@ public:
 	*/
 	bool SmallerWithoutSignThan(const Big<exp,man> & ss2) const
 	{
-		// we should check the mantissas beforehand because sometimes we can have
-		// a mantissa set to zero but in the exponent something another value
-		// (maybe we've forgotten about calling CorrectZero() ?)
-		if( mantissa.IsZero() )
+		if( IsZero() )
 		{
-			if( ss2.mantissa.IsZero() )
+			if( ss2.IsZero() )
 				// we've got two zeroes
 				return false;
 			else
@@ -3835,7 +3958,7 @@ public:
 				return true;
 		}
 
-		if( ss2.mantissa.IsZero() )
+		if( ss2.IsZero() )
 			// this!=0 and ss2==0
 			return false;
 
@@ -3857,12 +3980,9 @@ public:
 	*/
 	bool GreaterWithoutSignThan(const Big<exp,man> & ss2) const
 	{
-		// we should check the mantissas beforehand because sometimes we can have
-		// a mantissa set to zero but in the exponent something another value
-		// (maybe we've forgotten about calling CorrectZero() ?)
-		if( mantissa.IsZero() )
+		if( IsZero() )
 		{
-			if( ss2.mantissa.IsZero() )
+			if( ss2.IsZero() )
 				// we've got two zeroes
 				return false;
 			else
@@ -3870,7 +3990,7 @@ public:
 				return false;
 		}
 
-		if( ss2.mantissa.IsZero() )
+		if( ss2.IsZero() )
 			// this!=0 and ss2==0
 			return true;
 
@@ -3892,12 +4012,9 @@ public:
 	*/
 	bool EqualWithoutSign(const Big<exp,man> & ss2) const
 	{
-		// we should check the mantissas beforehand because sometimes we can have
-		// a mantissa set to zero but in the exponent something another value
-		// (maybe we've forgotten about calling CorrectZero() ?)
-		if( mantissa.IsZero() )
+		if( IsZero() )
 		{
-			if( ss2.mantissa.IsZero() )
+			if( ss2.IsZero() )
 				// we've got two zeroes
 				return true;
 			else
@@ -3905,7 +4022,7 @@ public:
 				return false;
 		}
 
-		if( ss2.mantissa.IsZero() )
+		if( ss2.IsZero() )
 			// this!=0 and ss2==0
 			return false;
 
@@ -3935,6 +4052,9 @@ public:
 	{
 		// there is no sense to ignore the whole mantissas
 		TTMATH_ASSERT( nBitsToIgnore < man*TTMATH_BITS_PER_UINT )
+
+		if( IsZero() && ss2.IsZero() )
+			return true;
 
 		uint words = nBitsToIgnore / TTMATH_BITS_PER_UINT;
 		uint bits  = nBitsToIgnore % TTMATH_BITS_PER_UINT;
@@ -4069,7 +4189,7 @@ public:
 	/*!
 		an operator for changing the sign
 
-		it's not changing 'this' but the changed value will be returned
+		this method is not changing 'this' but the changed value is returned
 	*/
 	Big<exp,man> operator-() const
 	{
@@ -4293,6 +4413,9 @@ public:
 		if( IsNan() )
 			return 1;
 
+		if( IsZero() )
+			return 0;
+
 		half.Set05();
 
 		if( IsSign() )
@@ -4302,7 +4425,7 @@ public:
 		}
 		else
 		{
-			// 'this' is >= 0
+			// 'this' is > 0
 			c = Add( half );
 		}
 

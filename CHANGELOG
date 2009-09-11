@@ -1,4 +1,4 @@
-Version 0.9.0 prerelease (2009.09.10):
+Version 0.9.0 prerelease (2009.09.11):
     * added:   support for wide characters (wchar_t)
                wide characters are used when macro TTMATH_USE_WCHAR is defined
                this macro is defined automatically when there is macro UNICODE or _UNICODE defined
@@ -26,7 +26,18 @@ Version 0.9.0 prerelease (2009.09.10):
     * added:   x86_64 asm code for Microsoft Visual compiler
                file: ttmathuint_x86_64_msvc.asm
                (this file should be compiled first because MS VC doesn't support inline assembler in x86_64 mode) 
+    * added:   flag TTMATH_BIG_ZERO to Big<> class
+               if this flag is set then there is a value zero
+               Big::IsZero() is faster now
+    * added:   Big::ClearInfoBit(unsigned char)
+               Big::SetInfoBit(unsigned char)
+               Big::IsInfoBit(unsigned char)
+               some methods for manipulating the info flags
     * changed: Factorial() is using the Gamma() function now
+    * changed: Big::Div(ss2)
+               Big::Mod(ss2)
+               they return 2 when ss2 is zero
+               previously returned 1
     * removed: Parser<>::SetFactorialMax() method
                the factorial() is such a fast now that we don't need the method longer
     * removed: ErrorCode::err_too_big_factorial
