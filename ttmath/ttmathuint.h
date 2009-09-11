@@ -3298,16 +3298,6 @@ public:
 	static void MulTwoWords(uint a, uint b, uint * result_high, uint * result_low);
 	static void DivTwoWords(uint a,uint b, uint c, uint * r, uint * rest);
 
-
-	/* temporarily */
-	#ifndef TTMATH_NOASM
-	#ifdef TTMATH_PLATFORM64
-	#ifdef _MSC_VER
-		static uint AddTwoWords(uint a, uint b, uint carry, uint * result);
-		static uint SubTwoWords(uint a, uint b, uint carry, uint * result);
-	#endif
-	#endif
-	#endif
 };
 
 

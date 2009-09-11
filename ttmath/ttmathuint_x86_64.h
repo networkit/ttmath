@@ -63,16 +63,18 @@ namespace ttmath
 
 		extern "C"
 			{
-			uint __fastcall adc_x64(uint* p1, const uint* p2, uint nSize, uint c);
-			uint __fastcall addindexed_x64(uint* p1, uint nSize, uint nPos, uint nValue);
-			uint __fastcall addindexed2_x64(uint* p1, uint nSize, uint nPos, uint nValue1, uint nValue2);
-			uint __fastcall sbb_x64(uint* p1, const uint* p2, uint nSize, uint c);
-			uint __fastcall subindexed_x64(uint* p1, uint nSize, uint nPos, uint nValue);
-			uint __fastcall rcl_x64(uint* p1, uint nSize, uint nLowestBit);
-			uint __fastcall rcr_x64(uint* p1, uint nSize, uint nLowestBit);
-			uint __fastcall div_x64(uint* pnValHi, uint* pnValLo, uint nDiv);
-			uint __fastcall rcl2_x64(uint* p1, uint nSize, uint nBits, uint c);
-			uint __fastcall rcr2_x64(uint* p1, uint nSize, uint nBits, uint c);
+			uint __fastcall ttmath_adc_x64(uint* p1, const uint* p2, uint nSize, uint c);
+			uint __fastcall ttmath_addindexed_x64(uint* p1, uint nSize, uint nPos, uint nValue);
+			uint __fastcall ttmath_addindexed2_x64(uint* p1, uint nSize, uint nPos, uint nValue1, uint nValue2);
+			uint __fastcall ttmath_addvector_x64(const uint * ss1, const uint * ss2, uint ss1_size, uint ss2_size, uint * result);
+			uint __fastcall ttmath_sbb_x64(uint* p1, const uint* p2, uint nSize, uint c);
+			uint __fastcall ttmath_subindexed_x64(uint* p1, uint nSize, uint nPos, uint nValue);
+			uint __fastcall ttmath_subvector_x64(const uint * ss1, const uint * ss2, uint ss1_size, uint ss2_size, uint * result);
+			uint __fastcall ttmath_rcl_x64(uint* p1, uint nSize, uint nLowestBit);
+			uint __fastcall ttmath_rcr_x64(uint* p1, uint nSize, uint nLowestBit);
+			uint __fastcall ttmath_div_x64(uint* pnValHi, uint* pnValLo, uint nDiv);
+			uint __fastcall ttmath_rcl2_x64(uint* p1, uint nSize, uint nBits, uint c);
+			uint __fastcall ttmath_rcr2_x64(uint* p1, uint nSize, uint nBits, uint c);
 			};
 	#endif
 
@@ -110,7 +112,7 @@ namespace ttmath
 		#endif
 
 		#ifdef _MSC_VER
-			c = adc_x64(p1,p2,b,c);
+			c = ttmath_adc_x64(p1,p2,b,c);
 		#endif
 
 		#ifdef __GNUC__
@@ -182,7 +184,7 @@ namespace ttmath
 
 
 		#ifdef _MSC_VER
-			c = addindexed_x64(p1,b,index,value);
+			c = ttmath_addindexed_x64(p1,b,index,value);
 		#endif
 
 
@@ -266,7 +268,7 @@ namespace ttmath
 
 
 		#ifdef _MSC_VER
-			c = addindexed2_x64(p1,b,index,x1,x2);
+			c = ttmath_addindexed2_x64(p1,b,index,x1,x2);
 		#endif
 
 
@@ -327,15 +329,11 @@ namespace ttmath
 	  of course the carry is propagated and will be returned from the last item
 	  (this method is used by the Karatsuba multiplication algorithm)
 	*/
-
-#ifndef _MSC_VER
-
 	template<uint value_size>
 	uint UInt<value_size>::AddVector(const uint * ss1, const uint * ss2, uint ss1_size, uint ss2_size, uint * result)
 	{
 		TTMATH_ASSERT( ss1_size >= ss2_size )
 
-		uint rest = ss1_size - ss2_size;
 		uint c;
 
 		#if !defined(__GNUC__) && !defined(_MSC_VER)
@@ -344,12 +342,13 @@ namespace ttmath
 
 
 		#ifdef _MSC_VER
-			
+			 c = ttmath_addvector_x64(ss1, ss2, ss1_size, ss2_size, result);
 		#endif
 
 
 		#ifdef __GNUC__
 		uint dummy1, dummy2, dummy3;	
+		uint rest = ss1_size - ss2_size;
 			
 			//	this part should be compiled with gcc
 		
@@ -396,27 +395,6 @@ namespace ttmath
 	return c;
 	}
 
-#else
-	/* temporarily */
-	template<uint value_size>
-	uint UInt<value_size>::AddVector(const uint * ss1, const uint * ss2, uint ss1_size, uint ss2_size, uint * result)
-	{
-	uint i, c = 0;
-
-		TTMATH_ASSERT( ss1_size >= ss2_size )
-
-		for(i=0 ; i<ss2_size ; ++i)
-			c = AddTwoWords(ss1[i], ss2[i], c, &result[i]);
-
-		for( ; i<ss1_size ; ++i)
-			c = AddTwoWords(ss1[i], 0, c, &result[i]);
-
-		TTMATH_LOG("UInt::AddVector")
-
-	return c;
-	}
-
-#endif
 
 
 	/*!
@@ -446,7 +424,7 @@ namespace ttmath
 
 
 		#ifdef _MSC_VER
-			c = sbb_x64(p1,p2,b,c);
+			c = ttmath_sbb_x64(p1,p2,b,c);
 		#endif
 
 
@@ -478,6 +456,7 @@ namespace ttmath
 
 	return c;
 	}
+
 
 
 	/*!
@@ -514,7 +493,7 @@ namespace ttmath
 
 
 		#ifdef _MSC_VER
-			c = subindexed_x64(p1,b,index,value);
+			c = ttmath_subindexed_x64(p1,b,index,value);
 		#endif
 
 
@@ -550,8 +529,6 @@ namespace ttmath
 	}
 
 
-
-
 	/*!
 		this static method subtractes one vector from the other
 		'ss1' is larger in size or equal to 'ss2'
@@ -573,15 +550,11 @@ namespace ttmath
 	  of course the carry (borrow) is propagated and will be returned from the last item
 	  (this method is used by the Karatsuba multiplication algorithm)
 	*/
-
-#ifndef _MSC_VER
-
 	template<uint value_size>
 	uint UInt<value_size>::SubVector(const uint * ss1, const uint * ss2, uint ss1_size, uint ss2_size, uint * result)
 	{
 		TTMATH_ASSERT( ss1_size >= ss2_size )
 
-		uint rest = ss1_size - ss2_size;
 		uint c;
 
 		#if !defined(__GNUC__) && !defined(_MSC_VER)
@@ -590,17 +563,17 @@ namespace ttmath
 
 
 		#ifdef _MSC_VER
-			
+			c = ttmath_subvector_x64(ss1, ss2, ss1_size, ss2_size, result);
 		#endif
 
 
 		#ifdef __GNUC__
-
 		
 		//	the asm code is nearly the same as in AddVector
 		//	only two instructions 'adc' are changed to 'sbb'
 		
 		uint dummy1, dummy2, dummy3;
+		uint rest = ss1_size - ss2_size;
 
 			__asm__ __volatile__(
 				"mov %%rdx, %%r8					\n"
@@ -645,28 +618,6 @@ namespace ttmath
 	return c;
 	}
 
-#else
-	/* temporarily */
-	template<uint value_size>
-	uint UInt<value_size>::SubVector(const uint * ss1, const uint * ss2, uint ss1_size, uint ss2_size, uint * result)
-	{
-	uint i, c = 0;
-
-		TTMATH_ASSERT( ss1_size >= ss2_size )
-
-		for(i=0 ; i<ss2_size ; ++i)
-			c = SubTwoWords(ss1[i], ss2[i], c, &result[i]);
-
-		for( ; i<ss1_size ; ++i)
-			c = SubTwoWords(ss1[i], 0, c, &result[i]);
-
-		TTMATH_LOG("UInt::SubVector")
-
-	return c;
-	}
-
-#endif
-
 
 	/*!
 		this method moves all bits into the left hand side
@@ -695,7 +646,7 @@ namespace ttmath
 
 
 		#ifdef _MSC_VER
-			c = rcl_x64(p1,b,c);
+			c = ttmath_rcl_x64(p1,b,c);
 		#endif
 
 
@@ -755,7 +706,7 @@ namespace ttmath
 
 
 		#ifdef _MSC_VER
-			c = rcr_x64(p1,b,c);
+			c = ttmath_rcr_x64(p1,b,c);
 		#endif
 
 
@@ -816,7 +767,7 @@ namespace ttmath
 
 
 		#ifdef _MSC_VER
-			c = rcl2_x64(p1,b,bits,c);
+			c = ttmath_rcl2_x64(p1,b,bits,c);
 		#endif
 
 
@@ -893,7 +844,7 @@ namespace ttmath
 
 
 		#ifdef _MSC_VER
-			c = rcr2_x64(p1,b,bits,c);
+			c = ttmath_rcr2_x64(p1,b,bits,c);
 		#endif
 
 
@@ -1146,7 +1097,7 @@ namespace ttmath
 
 		#ifdef _MSC_VER
 
-			div_x64(&a,&b,c);
+			ttmath_div_x64(&a,&b,c);
 			r_    = a;
 			rest_ = b;
 			
@@ -1169,60 +1120,6 @@ namespace ttmath
 		*r = r_;
 		*rest = rest_;
 	}
-
-
-	/* temporarily */
-	template<uint value_size>
-	uint UInt<value_size>::AddTwoWords(uint a, uint b, uint carry, uint * result)
-	{
-	uint temp;
-
-		if( carry == 0 )
-		{
-			temp = a + b;
-
-			if( temp < a )
-				carry = 1;
-		}
-		else
-		{
-			carry = 1;
-			temp  = a + b + carry;
-
-			if( temp > a ) // !(temp<=a)
-				carry = 0;
-		}
-
-		*result = temp;
-
-	return carry;
-	}
-
-
-	/* temporarily */
-	template<uint value_size>
-	uint UInt<value_size>::SubTwoWords(uint a, uint b, uint carry, uint * result)
-	{
-		if( carry == 0 )
-		{
-			*result = a - b;
-
-			if( a < b )
-				carry = 1;
-		}
-		else
-		{
-			carry   = 1;
-			*result = a - b - carry;
-
-			if( a > b ) // !(a <= b )
-				carry = 0;
-		}
-
-	return carry;
-	}
-
-
 
 } //namespace
 

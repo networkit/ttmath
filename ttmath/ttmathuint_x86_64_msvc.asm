@@ -41,20 +41,22 @@
 ; this create ttmathuint_x86_64_msvc.obj file which can be linked with your program
 ;
 
-PUBLIC	adc_x64
-PUBLIC	addindexed_x64
-PUBLIC	addindexed2_x64
+PUBLIC	ttmath_adc_x64
+PUBLIC	ttmath_addindexed_x64
+PUBLIC	ttmath_addindexed2_x64
+PUBLIC  ttmath_addvector_x64
 
-PUBLIC	sbb_x64
-PUBLIC	subindexed_x64
+PUBLIC	ttmath_sbb_x64
+PUBLIC	ttmath_subindexed_x64
+PUBLIC  ttmath_subvector_x64
 
-PUBLIC	rcl_x64
-PUBLIC	rcr_x64
+PUBLIC	ttmath_rcl_x64
+PUBLIC	ttmath_rcr_x64
 
-PUBLIC	rcl2_x64
-PUBLIC	rcr2_x64
+PUBLIC	ttmath_rcl2_x64
+PUBLIC	ttmath_rcr2_x64
 
-PUBLIC	div_x64
+PUBLIC	ttmath_div_x64
 
 ;
 ;	"rax, rcx, rdx, r8-r11 are volatile."
@@ -64,11 +66,12 @@ PUBLIC	div_x64
 
 .CODE
 
+
         ALIGN       8
 
 ;----------------------------------------
 
-adc_x64				PROC
+ttmath_adc_x64				PROC
         ; rcx = p1
         ; rdx = p2
         ; r8 = nSize
@@ -91,7 +94,7 @@ adc_x64				PROC
 
 		ret
 
-adc_x64				ENDP
+ttmath_adc_x64				ENDP
 
 ;----------------------------------------
 
@@ -99,7 +102,7 @@ adc_x64				ENDP
 
 ;----------------------------------------
 
-addindexed_x64	PROC
+ttmath_addindexed_x64	PROC
 
         ; rcx = p1
         ; rdx = nSize
@@ -132,7 +135,7 @@ done_with_cy:
 
 		ret
 
-addindexed_x64	ENDP
+ttmath_addindexed_x64	ENDP
 
 ;----------------------------------------
 
@@ -140,7 +143,7 @@ addindexed_x64	ENDP
 
 ;----------------------------------------
 
-addindexed2_x64	PROC
+ttmath_addindexed2_x64	PROC
 
         ; rcx = p1 (pointer)
         ; rdx = b  (value size)
@@ -173,7 +176,9 @@ next:
 		lea		rax, [rax+1]
 		ret
 
-addindexed2_x64	ENDP
+ttmath_addindexed2_x64	ENDP
+
+
 
 ;----------------------------------------
 
@@ -181,7 +186,61 @@ addindexed2_x64	ENDP
 
 ;----------------------------------------
 
-sbb_x64				PROC
+
+ttmath_addvector_x64				PROC
+        ; rcx = ss1
+        ; rdx = ss2
+        ; r8 = ss1_size
+        ; r9 = ss2_size
+        ; [esp+0x28] = result
+
+		mov		r10, [esp+028h]
+		sub		r8, r9
+        xor		r11, r11				; r11=0, cf=0
+
+		ALIGN 16
+ loop1:
+		mov		rax, qword ptr [rcx + r11 * 8]
+		adc		rax, qword ptr [rdx + r11 * 8]
+		mov		qword ptr [r10 + r11 * 8], rax
+		inc		r11
+		dec		r9
+		jnz		loop1
+
+		adc		r9, r9					; r9 has the cf state
+
+		or		r8, r8
+		jz		done
+
+		neg		r9						; setting cf from r9
+		mov		r9, 0					; don't use xor here (cf is used)
+ loop2:
+		mov		rax, qword ptr [rcx + r11 * 8]
+		adc		rax, r9
+		mov		qword ptr [r10 + r11 * 8], rax
+		inc		r11
+		dec		r8
+		jnz		loop2
+
+		adc		r8, r8
+		mov		rax, r8
+		
+		ret
+
+done:
+		mov		rax, r9
+		ret
+
+ttmath_addvector_x64				ENDP
+
+
+;----------------------------------------
+
+        ALIGN       8
+
+;----------------------------------------
+
+ttmath_sbb_x64				PROC
 
         ; rcx = p1
         ; rdx = p2
@@ -205,7 +264,7 @@ sbb_x64				PROC
 
 		ret
 
-sbb_x64				ENDP
+ttmath_sbb_x64				ENDP
 
 ;----------------------------------------
 
@@ -213,7 +272,7 @@ sbb_x64				ENDP
 
 ;----------------------------------------
 
-subindexed_x64	PROC
+ttmath_subindexed_x64	PROC
         ; rcx = p1
         ; rdx = nSize
         ; r8 = nPos
@@ -240,7 +299,9 @@ done:
 		mov		rax, 1
 		ret
 
-subindexed_x64	ENDP
+ttmath_subindexed_x64	ENDP
+
+
 
 ;----------------------------------------
 
@@ -248,7 +309,64 @@ subindexed_x64	ENDP
 
 ;----------------------------------------
 
-rcl_x64	PROC
+;	the same asm code as in addvector_x64 only two instructions 'adc' changed to 'sbb'
+
+ttmath_subvector_x64				PROC
+        ; rcx = ss1
+        ; rdx = ss2
+        ; r8 = ss1_size
+        ; r9 = ss2_size
+        ; [esp+0x28] = result
+
+		mov		r10, [esp+028h]
+		sub		r8, r9
+        xor		r11, r11				; r11=0, cf=0
+
+		ALIGN 16
+ loop1:
+		mov		rax, qword ptr [rcx + r11 * 8]
+		sbb		rax, qword ptr [rdx + r11 * 8]
+		mov		qword ptr [r10 + r11 * 8], rax
+		inc		r11
+		dec		r9
+		jnz		loop1
+
+		adc		r9, r9					; r9 has the cf state
+
+		or		r8, r8
+		jz		done
+
+		neg		r9						; setting cf from r9
+		mov		r9, 0					; don't use xor here (cf is used)
+ loop2:
+		mov		rax, qword ptr [rcx + r11 * 8]
+		sbb		rax, r9
+		mov		qword ptr [r10 + r11 * 8], rax
+		inc		r11
+		dec		r8
+		jnz		loop2
+
+		adc		r8, r8
+		mov		rax, r8
+		
+		ret
+
+done:
+		mov		rax, r9
+		ret
+
+ttmath_subvector_x64				ENDP
+
+
+
+
+;----------------------------------------
+
+        ALIGN       8
+
+;----------------------------------------
+
+ttmath_rcl_x64	PROC
         ; rcx = p1
         ; rdx = b
         ; r8 = nLowestBit
@@ -269,7 +387,7 @@ loop1:
 
         ret
 
-rcl_x64	ENDP
+ttmath_rcl_x64	ENDP
 
 ;----------------------------------------
 
@@ -277,7 +395,7 @@ rcl_x64	ENDP
 
 ;----------------------------------------
 
-rcr_x64	PROC
+ttmath_rcr_x64	PROC
         ; rcx = p1
         ; rdx = nSize
         ; r8 = nLowestBit
@@ -296,7 +414,7 @@ loop1:
 
         ret
 
-rcr_x64	ENDP
+ttmath_rcr_x64	ENDP
 
 ;----------------------------------------
 
@@ -304,7 +422,7 @@ rcr_x64	ENDP
 
 ;----------------------------------------
 
-div_x64	PROC
+ttmath_div_x64	PROC
 
         ; rcx = &Hi
         ; rdx = &Lo
@@ -321,7 +439,7 @@ div_x64	PROC
 
         ret
 
-div_x64	ENDP
+ttmath_div_x64	ENDP
 
 ;----------------------------------------
 
@@ -329,7 +447,7 @@ div_x64	ENDP
 
 ;----------------------------------------
 
-rcl2_x64	PROC
+ttmath_rcl2_x64	PROC
         ; rcx = p1
         ; rdx = nSize
         ; r8 = bits
@@ -372,7 +490,7 @@ loop1:
 		pop		rbx
         ret
 
-rcl2_x64	ENDP
+ttmath_rcl2_x64	ENDP
 
 ;----------------------------------------
 
@@ -380,7 +498,7 @@ rcl2_x64	ENDP
 
 ;----------------------------------------
 
-rcr2_x64	PROC
+ttmath_rcr2_x64	PROC
         ; rcx = p1
         ; rdx = nSize
         ; r8 = bits
@@ -425,6 +543,6 @@ loop1:
 
         ret
 
-rcr2_x64	ENDP
+ttmath_rcr2_x64	ENDP
 
 END
