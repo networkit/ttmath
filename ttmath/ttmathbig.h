@@ -985,7 +985,7 @@ public:
 		// man_result = mantissa * ss2.mantissa
 		mantissa.MulInt(ss2, man_result);
 
-		int bit = UInt<man>::FindLeadingBitInWord(man_result.table[man]); // man - last word
+		sint bit = UInt<man>::FindLeadingBitInWord(man_result.table[man]); // man - last word
 		
 		if( bit!=-1 && uint(bit) > (TTMATH_BITS_PER_UINT/2) )
 		{

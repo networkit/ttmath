@@ -741,11 +741,11 @@ namespace ttmath
 			temp1.u_.high = a_.u_.low;
 			temp1.u_.low  = b_.u_.high;
 
-			res_.u_.high  = temp1.u / c;
-			temp2.u_.high = temp1.u % c;
+			res_.u_.high  = (unsigned int)(temp1.u / c);
+			temp2.u_.high = (unsigned int)(temp1.u % c);
 			temp2.u_.low  = b_.u_.low;
 			
-			res_.u_.low  = temp2.u / c;
+			res_.u_.low  = (unsigned int)(temp2.u / c);
 			*rest        = temp2.u % c;
 
 			*r = res_.u;

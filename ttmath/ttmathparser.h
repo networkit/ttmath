@@ -1356,6 +1356,8 @@ void Avg(int sindex, int amount_of_args, ValueType & result)
 
 
 
+
+
 /*!
 	we use such a method because 'wvsprintf' is not everywhere defined
 */
@@ -1364,12 +1366,23 @@ void Sprintf(tt_char * buffer, int par)
 char buf[30]; // char, not tt_char
 int i;
 
+	#ifdef _MSC_VER
+	#pragma warning( disable: 4996 )
+	//warning C4996: 'sprintf': This function or variable may be unsafe.
+	#endif
+
 	sprintf(buf, "%d", par);
 	for(i=0 ; buf[i] != 0 ; ++i)
 		buffer[i] = buf[i];
 
 	buffer[i] = 0;
+
+	#ifdef _MSC_VER
+	#pragma warning( default: 4996 )
+	#endif
 }
+
+
 
 
 /*!
@@ -1678,7 +1691,7 @@ void ReadValue(Item & result, int reading_base)
 const tt_char * new_stack_pointer;
 bool value_read;
 
-	int carry = result.value.FromString(pstring, reading_base, &new_stack_pointer, &value_read);
+	uint carry = result.value.FromString(pstring, reading_base, &new_stack_pointer, &value_read);
 	pstring   = new_stack_pointer;
 
 	if( carry )
@@ -1979,7 +1992,7 @@ return 0;
 void MakeStandardMathematicOperation(ValueType & value1, typename MatOperator::Type mat_operator,
 									const ValueType & value2)
 {
-int res;
+uint res;
 
 	switch( mat_operator )
 	{
