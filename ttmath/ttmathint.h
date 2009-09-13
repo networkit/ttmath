@@ -821,7 +821,16 @@ public:
 	/*!
 		a constructor for converting string to this class (with the base=10)
 	*/
-	Int(const tt_char * s)
+	Int(const char * s)
+	{
+		FromString(s);
+	}
+
+
+	/*!
+		a constructor for converting string to this class (with the base=10)
+	*/
+	Int(const wchar_t * s)
 	{
 		FromString(s);
 	}
@@ -830,7 +839,16 @@ public:
 	/*!
 		a constructor for converting a string to this class (with the base=10)
 	*/
-	Int(const tt_string & s)
+	Int(const std::string & s)
+	{
+		FromString( s.c_str() );
+	}
+
+
+	/*!
+		a constructor for converting a string to this class (with the base=10)
+	*/
+	Int(const std::wstring & s)
 	{
 		FromString( s.c_str() );
 	}
@@ -866,10 +884,13 @@ public:
 	}
 
 
+private:
+
 	/*!	
-		this method converts the value to a string with a base equal 'b'
+		an auxiliary method for converting to a string
 	*/
-	void ToString(tt_string & result, uint b = 10) const
+	template<class string_type>
+	void ToStringBase(string_type & result, uint b = 10) const
 	{
 		if( IsSign() )
 		{
@@ -885,28 +906,33 @@ public:
 		}
 	}
 
+public:
+
+	/*!	
+		this method converts the value to a string with a base equal 'b'
+	*/
+	void ToString(std::string & result, uint b = 10) const
+	{
+		return ToStringBase(result, b);
+	}
 
 
+	/*!	
+		this method converts the value to a string with a base equal 'b'
+	*/
+	void ToString(std::wstring & result, uint b = 10) const
+	{
+		return ToStringBase(result, b);
+	}
+
+
+private:
 
 	/*!
-		this method converts a string into its value
-		string is given either as 'const char *' or 'const wchar_t *'
-
-		it returns carry=1 if the value will be too big or an incorrect base 'b' is given
-
-		string is ended with a non-digit value, for example:
-			"-12" will be translated to -12
-			as well as:
-			"- 12foo" will be translated to -12 too
-
-		existing first white characters will be ommited
-		(between '-' and a first digit can be white characters too)
-
-		after_source (if exists) is pointing at the end of the parsed string
-
-		value_read (if exists) tells whether something has actually been read (at least one digit)
+		an auxiliary method for converting from a string
 	*/
-	uint FromString(const tt_char * s, uint b = 10, const tt_char ** after_source = 0, bool * value_read = 0)
+	template<class char_type>
+	uint FromStringBase(const char_type * s, uint b = 10, const char_type ** after_source = 0, bool * value_read = 0)
 	{
 	bool is_sign = false;
 	
@@ -959,11 +985,54 @@ public:
 	}
 
 
+public:
+
+	/*!
+		this method converts a string into its value
+		it returns carry=1 if the value will be too big or an incorrect base 'b' is given
+
+		string is ended with a non-digit value, for example:
+			"-12" will be translated to -12
+			as well as:
+			"- 12foo" will be translated to -12 too
+
+		existing first white characters will be ommited
+		(between '-' and a first digit can be white characters too)
+
+		after_source (if exists) is pointing at the end of the parsed string
+
+		value_read (if exists) tells whether something has actually been read (at least one digit)
+	*/
+	uint FromString(const char * s, uint b = 10, const char ** after_source = 0, bool * value_read = 0)
+	{
+		return FromStringBase(s, b, after_source, value_read);
+	}
+
+
+	/*!
+		this method converts a string into its value
+	*/
+	uint FromString(const wchar_t * s, uint b = 10, const wchar_t ** after_source = 0, bool * value_read = 0)
+	{
+		return FromStringBase(s, b, after_source, value_read);
+	}
+
+
 	/*!
 		this method converts a string into its value
 		it returns carry=1 if the value will be too big or an incorrect base 'b' is given
 	*/
-	uint FromString(const tt_string & s, uint b = 10)
+	uint FromString(const std::string & s, uint b = 10)
+	{
+		return FromString( s.c_str(), b );
+	}
+
+
+	/*!
+		this method converts a string into its value
+		it returns carry=1 if the value will be too big or an incorrect base 'b' is given
+	*/
+	uint FromString(const std::wstring & s, uint b = 10)
 	{
 		return FromString( s.c_str(), b );
 	}
@@ -972,7 +1041,7 @@ public:
 	/*!
 		this operator converts a string into its value (with base = 10)
 	*/
-	Int<value_size> & operator=(const tt_char * s)
+	Int<value_size> & operator=(const char * s)
 	{
 		FromString(s);
 
@@ -983,7 +1052,18 @@ public:
 	/*!
 		this operator converts a string into its value (with base = 10)
 	*/
-	Int<value_size> & operator=(const tt_string & s)
+	Int<value_size> & operator=(const wchar_t * s)
+	{
+		FromString(s);
+
+	return *this;
+	}
+
+
+	/*!
+		this operator converts a string into its value (with base = 10)
+	*/
+	Int<value_size> & operator=(const std::string & s)
 	{
 		FromString( s.c_str() );
 
@@ -991,6 +1071,15 @@ public:
 	}
 
 
+	/*!
+		this operator converts a string into its value (with base = 10)
+	*/
+	Int<value_size> & operator=(const std::wstring & s)
+	{
+		FromString( s.c_str() );
+
+	return *this;
+	}
 
 
 	/*!
@@ -1270,14 +1359,15 @@ public:
 	*
 	*/
 
-	/*!
-		output for standard streams
+private:
 
-		tt_ostream is either std::ostream or std::wostream
+	/*!
+		an auxiliary method for outputing to standard streams
 	*/
-	friend tt_ostream & operator<<(tt_ostream & s, const Int<value_size> & l)
+	template<class ostream_type, class string_type>
+	static ostream_type & OutputToStream(ostream_type & s, const Int<value_size> & l)
 	{
-	tt_string ss;
+	string_type ss;
 
 		l.ToString(ss);
 		s << ss;
@@ -1286,17 +1376,41 @@ public:
 	}
 
 
-	/*!
-		input from standard streams
 
-		tt_istream is either std::istream or std::wistream
+public:
+
+
+	/*!
+		output to standard streams
 	*/
-	friend tt_istream & operator>>(tt_istream & s, Int<value_size> & l)
+	friend std::ostream & operator<<(std::ostream & s, const Int<value_size> & l)
 	{
-	tt_string ss;
+		return OutputToStream<std::ostream, std::string>(s, l);
+	}
+
+
+	/*!
+		output to standard streams
+	*/
+	friend std::wostream & operator<<(std::wostream & s, const Int<value_size> & l)
+	{
+		return OutputToStream<std::wostream, std::wstring>(s, l);
+	}
+
+
+
+private:
+
+	/*!
+		an auxiliary method for converting from a string
+	*/
+	template<class istream_type, class string_type, class char_type>
+	static istream_type & InputFromStream(istream_type & s, Int<value_size> & l)
+	{
+	string_type ss;
 	
-	// tt_char for operator>>
-	tt_char z;
+	// char or wchar_t for operator>>
+	char_type z;
 	
 		// operator>> omits white characters if they're set for ommiting
 		s >> z;
@@ -1311,7 +1425,7 @@ public:
 		while( s.good() && UInt<value_size>::CharToDigit(z, 10)>=0 )
 		{
 			ss += z;
-			z = static_cast<tt_char>(s.get());
+			z = static_cast<char_type>(s.get());
 		}
 
 		// we're leaving the last readed character
@@ -1321,6 +1435,26 @@ public:
 		l.FromString(ss);
 
 	return s;
+	}
+
+
+public:
+
+	/*!
+		input from standard streams
+	*/
+	friend std::istream & operator>>(std::istream & s, Int<value_size> & l)
+	{
+		return InputFromStream<std::istream, std::string, char>(s, l);
+	}
+
+
+	/*!
+		input from standard streams
+	*/
+	friend std::wistream & operator>>(std::wistream & s, Int<value_size> & l)
+	{
+		return InputFromStream<std::wistream, std::wstring, wchar_t>(s, l);
 	}
 
 };

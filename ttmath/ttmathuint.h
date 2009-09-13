@@ -51,6 +51,7 @@
 
 
 #include "ttmathtypes.h"
+#include "ttmathmisc.h"
 
 
 
@@ -86,10 +87,8 @@ public:
 
 		it prints the table in a nice form of several columns
 	*/
-	#ifndef TTMATH_USE_WCHAR
-	// gcc has a problem with std::setfill when wchar_t is used
-
-	void PrintTable(tt_ostream & output) const
+	template<class ostream_type>
+	void PrintTable(ostream_type & output) const
 	{
 		// how many columns there'll be
 		const int columns = 8;
@@ -97,7 +96,7 @@ public:
 		int c = 1;
 		for(int i=value_size-1 ; i>=0 ; --i)
 		{
-			output << TTMATH_TEXT("0x") << std::setfill('0');
+			output << "0x" << std::setfill('0');
 			
 			#ifdef TTMATH_PLATFORM32
 				output << std::setw(8);
@@ -109,7 +108,7 @@ public:
 			
 			if( i>0 )
 			{
-				output << TTMATH_TEXT(", ");		
+				output << ", ";		
 			
 				if( ++c > columns )
 				{
@@ -121,14 +120,15 @@ public:
 		
 		output << std::dec << std::endl;
 	}
-	#endif
 
-	void PrintLog(const tt_char * msg, tt_ostream & output) const
+
+	template<class char_type, class ostream_type>
+	void PrintLog(const char_type * msg, ostream_type & output) const
 	{
 		output << msg << std::endl;
 
 		for(uint i=0 ; i<value_size ; ++i)
-			output << TTMATH_TEXT(" table[") << i << TTMATH_TEXT("]: ") << table[i] << std::endl;
+			output << " table[" << i << "]: " << table[i] << std::endl;
 	}
 
 
@@ -2503,10 +2503,10 @@ public:
 		the programmer do that:
 			UInt<..> type = 10;
 
-		this constant 10 has the int type (signed int), if we don't give such
+		above "10" constant has the int type (signed int), if we don't give such
 		operators and constructors the compiler will not compile the program,
 		because it has to make a conversion and doesn't know into which type
-		(the UInt class has operator=(const tt_char*), operator=(uint) etc.)
+		(the UInt class has operator=(const char*), operator=(uint) etc.)
 	*/
 	UInt<value_size> & operator=(sint i)
 	{
@@ -2621,18 +2621,38 @@ public:
 	/*!
 		a constructor for converting a string to this class (with the base=10)
 	*/
-	UInt(const tt_char * s)
+	UInt(const char * s)
 	{
 		FromString(s);
 
-		TTMATH_LOG("UInt::UInt(const tt_char *)")
+		TTMATH_LOG("UInt::UInt(const char *)")
 	}
 
 
 	/*!
 		a constructor for converting a string to this class (with the base=10)
 	*/
-	UInt(const tt_string & s)
+	UInt(const wchar_t * s)
+	{
+		FromString(s);
+
+		TTMATH_LOG("UInt::UInt(const wchar_t *)")
+	}
+
+
+	/*!
+		a constructor for converting a string to this class (with the base=10)
+	*/
+	UInt(const std::string & s)
+	{
+		FromString( s.c_str() );
+	}
+
+
+	/*!
+		a constructor for converting a string to this class (with the base=10)
+	*/
+	UInt(const std::wstring & s)
 	{
 		FromString( s.c_str() );
 	}
@@ -2695,13 +2715,16 @@ public:
 	}
 
 
+private:
+
 	/*!	
-		this method converts the value to a string with a base equal 'b'
+		an auxiliary method for converting to a string
 	*/
-	void ToString(tt_string & result, uint b = 10) const
+	template<class string_type>
+	void ToStringBase(string_type & result, uint b = 10) const
 	{
 	UInt<value_size> temp( *this );
-	tt_char character;
+	char character;
 	uint rem;
 
 		result.clear();
@@ -2712,7 +2735,7 @@ public:
 		do
 		{
 			temp.DivInt(b, &rem);
-			character = static_cast<tt_char>( DigitToChar(rem) );
+			character = static_cast<char>( DigitToChar(rem) );
 			result.insert(result.begin(), character);
 		}
 		while( !temp.IsZero() );
@@ -2721,36 +2744,42 @@ public:
 	}
 
 
+public:
+
+	/*!	
+		this method converts the value to a string with a base equal 'b'
+	*/
+	void ToString(std::string & result, uint b = 10) const
+	{
+		return ToStringBase(result, b);
+	}
+
+	void ToString(std::wstring & result, uint b = 10) const
+	{
+		return ToStringBase(result, b);
+	}
+
 
 
 	/*
 		this method's ommiting any white characters from the string
+		char_type is char or wchar_t
 	*/
-	static void SkipWhiteCharacters(const tt_char * & c)
+	template<class char_type>
+	static void SkipWhiteCharacters(const char_type * & c)
 	{
 		while( (*c==' ' ) || (*c=='\t') || (*c==13 ) || (*c=='\n') )
 			++c;
 	}
 
 
+private:
+
 	/*!
-		this method converts a string into its value
-		it returns carry=1 if the value will be too big or an incorrect base 'b' is given
-
-		string is ended with a non-digit value, for example:
-			"12" will be translated to 12
-			as well as:
-			"12foo" will be translated to 12 too
-
-		existing first white characters will be ommited
-
-		if the value from s is too large the rest digits will be skipped
-
-		after_source (if exists) is pointing at the end of the parsed string
-
-		value_read (if exists) tells whether something has actually been read (at least one digit)
+		an auxiliary method for converting from a string
 	*/
-	uint FromString(const tt_char * s, uint b = 10, const tt_char ** after_source = 0, bool * value_read = 0)
+	template<class char_type>
+	uint FromStringBase(const char_type * s, uint b = 10, const char_type ** after_source = 0, bool * value_read = 0)
 	{
 	UInt<value_size> base( b );
 	UInt<value_size> temp;
@@ -2794,27 +2823,69 @@ public:
 	}
 
 
+public:
+
+
+	/*!
+		this method converts a string into its value
+		it returns carry=1 if the value will be too big or an incorrect base 'b' is given
+
+		string is ended with a non-digit value, for example:
+			"12" will be translated to 12
+			as well as:
+			"12foo" will be translated to 12 too
+
+		existing first white characters will be ommited
+
+		if the value from s is too large the rest digits will be skipped
+
+		after_source (if exists) is pointing at the end of the parsed string
+
+		value_read (if exists) tells whether something has actually been read (at least one digit)
+	*/
+	uint FromString(const char * s, uint b = 10, const char ** after_source = 0, bool * value_read = 0)
+	{
+		return FromStringBase(s, b, after_source, value_read);
+	}
+
+
+	/*!
+		this method converts a string into its value
+	*/
+	uint FromString(const wchar_t * s, uint b = 10, const wchar_t ** after_source = 0, bool * value_read = 0)
+	{
+		return FromStringBase(s, b, after_source, value_read);
+	}
+
 
 	/*!
 		this method converts a string into its value
 
 		(it returns carry=1 if the value will be too big or an incorrect base 'b' is given)
 	*/
-	uint FromString(const tt_string & s, uint b = 10)
+	uint FromString(const std::string & s, uint b = 10)
 	{
 		return FromString( s.c_str(), b );
 	}
 
 
+	/*!
+		this method converts a string into its value
+
+		(it returns carry=1 if the value will be too big or an incorrect base 'b' is given)
+	*/
+	uint FromString(const std::wstring & s, uint b = 10)
+	{
+		return FromString( s.c_str(), b );
+	}
+
 
 	/*!
 		this operator converts a string into its value (with base = 10)
 	*/
-	UInt<value_size> & operator=(const tt_char * s)
+	UInt<value_size> & operator=(const char * s)
 	{
 		FromString(s);
-
-		TTMATH_LOG("UInt::operator=(const tt_char *)")
 
 	return *this;
 	}
@@ -2823,7 +2894,18 @@ public:
 	/*!
 		this operator converts a string into its value (with base = 10)
 	*/
-	UInt<value_size> & operator=(const tt_string & s)
+	UInt<value_size> & operator=(const wchar_t * s)
+	{
+		FromString(s);
+
+	return *this;
+	}
+
+
+	/*!
+		this operator converts a string into its value (with base = 10)
+	*/
+	UInt<value_size> & operator=(const std::string & s)
 	{
 		FromString( s.c_str() );
 
@@ -2831,6 +2913,15 @@ public:
 	}
 
 
+	/*!
+		this operator converts a string into its value (with base = 10)
+	*/
+	UInt<value_size> & operator=(const std::wstring & s)
+	{
+		FromString( s.c_str() );
+
+	return *this;
+	}
 
 
 	/*!
@@ -3192,14 +3283,16 @@ public:
 	*/
 
 
-	/*!
-		output for standard streams
+private:
 
-		tt_ostream is either std::ostream or std::wostream
+
+	/*!
+		an auxiliary method for outputing to standard streams
 	*/
-	friend tt_ostream & operator<<(tt_ostream & s, const UInt<value_size> & l)
+	template<class ostream_type, class string_type>
+	static ostream_type & OutputToStream(ostream_type & s, const UInt<value_size> & l)
 	{
-	tt_string ss;
+	string_type ss;
 
 		l.ToString(ss);
 		s << ss;
@@ -3208,18 +3301,39 @@ public:
 	}
 
 
+public:
+
 
 	/*!
-		input from standard streams
-
-		tt_istream is either std::istream or std::wistream
+		output to standard streams
 	*/
-	friend tt_istream & operator>>(tt_istream & s, UInt<value_size> & l)
+	friend std::ostream & operator<<(std::ostream & s, const UInt<value_size> & l)
 	{
-	tt_string ss;
+		return OutputToStream<std::ostream, std::string>(s, l);
+	}
+
+
+	/*!
+		output to standard streams
+	*/
+	friend std::wostream & operator<<(std::wostream & s, const UInt<value_size> & l)
+	{
+		return OutputToStream<std::wostream, std::wstring>(s, l);
+	}
+
+
+private:
+
+	/*!
+		an auxiliary method for reading from standard streams
+	*/
+	template<class istream_type, class string_type, class char_type>
+	static istream_type & InputFromStream(istream_type & s, UInt<value_size> & l)
+	{
+	string_type ss;
 	
-	// tt_char for operator>>
-	tt_char z;
+	// char or wchar_t for operator>>
+	char_type z;
 	
 		// operator>> omits white characters if they're set for ommiting
 		s >> z;
@@ -3228,7 +3342,7 @@ public:
 		while( s.good() && CharToDigit(z, 10)>=0 )
 		{
 			ss += z;
-			z = static_cast<tt_char>(s.get());
+			z = static_cast<char_type>(s.get());
 		}
 
 		// we're leaving the last read character
@@ -3237,11 +3351,28 @@ public:
 
 		l.FromString(ss);
 
-		TTMATH_LOG("UInt::operator>>")
-
 	return s;
 	}
 
+public:
+
+
+	/*!
+		input from standard streams
+	*/
+	friend std::istream & operator>>(std::istream & s, UInt<value_size> & l)
+	{
+		return InputFromStream<std::istream, std::string, char>(s, l);
+	}
+
+
+	/*!
+		input from standard streams
+	*/
+	friend std::wistream & operator>>(std::wistream & s, UInt<value_size> & l)
+	{
+		return InputFromStream<std::wistream, std::wstring, wchar_t>(s, l);
+	}
 
 
 	/*

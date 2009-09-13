@@ -44,13 +44,13 @@
     \brief Mathematic functions.
 */
 
-#include "ttmathtypes.h"
-
 #include <string>
 #include <vector>
 #include <list>
 #include <map>
 
+#include "ttmathtypes.h"
+#include "ttmathmisc.h"
 
 
 namespace ttmath
@@ -74,19 +74,19 @@ public:
 	struct Item
 	{
 		// name of a variable of a function
-		// (either std::string or std::wstring)
-		tt_string value;
+		// internally we store variables and funcions as std::string (not std::wstring even when wide characters are used)
+		std::string value;
 
 		// number of parameters required by the function
 		// (if there's a variable this 'param' is ignored)
 		int param;
 
 		Item() {}
-		Item(const tt_string & v, int p) : value(v), param(p) {}
+		Item(const std::string & v, int p) : value(v), param(p) {}
 	};
 
 	// 'Table' is the type of our table
-	typedef std::map<tt_string, Item> Table;
+	typedef std::map<std::string, Item> Table;
 	typedef	Table::iterator Iterator;
 	typedef	Table::const_iterator CIterator;
 
@@ -99,7 +99,7 @@ public:
 		if 'can_be_digit' is true that means when the 'c' is a digit this 
 		method returns true otherwise it returns false
 	*/
-	static bool CorrectCharacter(int c, bool can_be_digit)
+	static bool CorrectCharacter(wchar_t c, bool can_be_digit)
 	{
 		if( (c>='a' && c<='z') || (c>='A' && c<='Z') )
 			return true;
@@ -114,7 +114,8 @@ public:
 	/*!
 		this method returns true if the name can be as a name of an object
 	*/
-	static bool IsNameCorrect(const tt_string & name)
+	template<class string_type>
+	static bool IsNameCorrect(const string_type & name)
 	{
 		if( name.empty() )
 			return false;
@@ -122,7 +123,7 @@ public:
 		if( !CorrectCharacter(name[0], false) )
 			return false;
 
-		tt_string::const_iterator i=name.begin();
+		typename string_type::const_iterator i = name.begin();
 
 		for(++i ; i!=name.end() ; ++i)
 			if( !CorrectCharacter(*i, true) )
@@ -135,7 +136,7 @@ public:
 	/*!
 		this method returns true if such an object is defined (name exists)
 	*/
-	bool IsDefined(const tt_string & name)
+	bool IsDefined(const std::string & name)
 	{
 		Iterator i = table.find(name);
 
@@ -148,9 +149,25 @@ public:
 
 
 	/*!
+		this method returns true if such an object is defined (name exists)
+	*/
+	bool IsDefined(const std::wstring & name)
+	{
+		// we should check whether the name (in wide characters) are correct
+		// before calling AssignString() function
+		if( !IsNameCorrect(name) )
+			return false;
+
+		Misc::AssignString(str_tmp1, name);
+
+	return IsDefined(str_tmp1);
+	}
+
+
+	/*!
 		this method adds one object (variable of function) into the table
 	*/
-	ErrorCode Add(const tt_string & name, const tt_string & value, int param = 0)
+	ErrorCode Add(const std::string & name, const std::string & value, int param = 0)
 	{
 		if( !IsNameCorrect(name) )
 			return err_incorrect_name;
@@ -164,6 +181,23 @@ public:
 		table.insert( std::make_pair(name, Item(value, param)) );
 
 	return err_ok;
+	}
+
+
+	/*!
+		this method adds one object (variable of function) into the table
+	*/
+	ErrorCode Add(const std::wstring & name, const std::wstring & value, int param = 0)
+	{
+		// we should check whether the name (in wide characters) are correct
+		// before calling AssignString() function
+		if( !IsNameCorrect(name) )
+			return err_incorrect_name;
+
+		Misc::AssignString(str_tmp1, name);
+		Misc::AssignString(str_tmp2, value);
+		
+	return Add(str_tmp1, str_tmp2, param);
 	}
 
 
@@ -207,7 +241,7 @@ public:
 	/*!
 		this method changes the value and the number of parameters for a specific object
 	*/
-	ErrorCode EditValue(const tt_string & name, const tt_string & value, int param = 0)
+	ErrorCode EditValue(const std::string & name, const std::string & value, int param = 0)
 	{
 		if( !IsNameCorrect(name) )
 			return err_incorrect_name;
@@ -225,9 +259,26 @@ public:
 
 
 	/*!
+		this method changes the value and the number of parameters for a specific object
+	*/
+	ErrorCode EditValue(const std::wstring & name, const std::wstring & value, int param = 0)
+	{
+		// we should check whether the name (in wide characters) are correct
+		// before calling AssignString() function
+		if( !IsNameCorrect(name) )
+			return err_incorrect_name;
+
+		Misc::AssignString(str_tmp1, name);
+		Misc::AssignString(str_tmp2, value);
+		
+	return EditValue(str_tmp1, str_tmp2, param);
+	}
+
+
+	/*!
 		this method changes the name of a specific object
 	*/
-	ErrorCode EditName(const tt_string & old_name, const tt_string & new_name)
+	ErrorCode EditName(const std::string & old_name, const std::string & new_name)
 	{
 		if( !IsNameCorrect(old_name) || !IsNameCorrect(new_name) )
 			return err_incorrect_name;
@@ -256,9 +307,26 @@ public:
 
 
 	/*!
+		this method changes the name of a specific object
+	*/
+	ErrorCode EditName(const std::wstring & old_name, const std::wstring & new_name)
+	{
+		// we should check whether the name (in wide characters) are correct
+		// before calling AssignString() function
+		if( !IsNameCorrect(old_name) || !IsNameCorrect(new_name) )
+			return err_incorrect_name;
+
+		Misc::AssignString(str_tmp1, old_name);
+		Misc::AssignString(str_tmp2, new_name);
+
+	return EditName(str_tmp1, str_tmp2);
+	}
+
+
+	/*!
 		this method deletes an object
 	*/
-	ErrorCode Delete(const tt_string & name)
+	ErrorCode Delete(const std::string & name)
 	{
 		if( !IsNameCorrect(name) )
 			return err_incorrect_name;
@@ -275,9 +343,25 @@ public:
 
 
 	/*!
+		this method deletes an object
+	*/
+	ErrorCode Delete(const std::wstring & name)
+	{
+		// we should check whether the name (in wide characters) are correct
+		// before calling AssignString() function
+		if( !IsNameCorrect(name) )
+			return err_incorrect_name;
+
+		Misc::AssignString(str_tmp1, name);
+
+	return Delete(str_tmp1);
+	}	
+		
+		
+	/*!
 		this method gets the value of a specific object
 	*/
-	ErrorCode GetValue(const tt_string & name, tt_string & value) const
+	ErrorCode GetValue(const std::string & name, std::string & value) const
 	{
 		if( !IsNameCorrect(name) )
 			return err_incorrect_name;
@@ -298,9 +382,27 @@ public:
 
 	/*!
 		this method gets the value of a specific object
+	*/
+	ErrorCode GetValue(const std::wstring & name, std::wstring & value)
+	{
+		// we should check whether the name (in wide characters) are correct
+		// before calling AssignString() function
+		if( !IsNameCorrect(name) )
+			return err_incorrect_name;
+
+		Misc::AssignString(str_tmp1, name);
+		ErrorCode err = GetValue(str_tmp1, str_tmp2);
+		Misc::AssignString(value, str_tmp2);
+
+	return err;
+	}
+
+
+	/*!
+		this method gets the value of a specific object
 		(this version is used for not copying the whole string)
 	*/
-	ErrorCode GetValue(const tt_string & name, const tt_char ** value) const
+	ErrorCode GetValue(const std::string & name, const char ** value) const
 	{
 		if( !IsNameCorrect(name) )
 			return err_incorrect_name;
@@ -320,10 +422,27 @@ public:
 
 
 	/*!
+		this method gets the value of a specific object
+		(this version is used for not copying the whole string)
+	*/
+	ErrorCode GetValue(const std::wstring & name, const char ** value)
+	{
+		// we should check whether the name (in wide characters) are correct
+		// before calling AssignString() function
+		if( !IsNameCorrect(name) )
+			return err_incorrect_name;
+
+		Misc::AssignString(str_tmp1, name);
+
+	return GetValue(str_tmp1, value);
+	}
+
+
+	/*!
 		this method gets the value and the number of parameters
 		of a specific object
 	*/
-	ErrorCode GetValueAndParam(const tt_string & name, tt_string & value, int * param) const
+	ErrorCode GetValueAndParam(const std::string & name, std::string & value, int * param) const
 	{
 		if( !IsNameCorrect(name) )
 			return err_incorrect_name;
@@ -345,11 +464,30 @@ public:
 
 
 	/*!
+		this method gets the value and the number of parameters
+		of a specific object
+	*/
+	ErrorCode GetValueAndParam(const std::wstring & name, std::wstring & value, int * param)
+	{
+		// we should check whether the name (in wide characters) are correct
+		// before calling AssignString() function
+		if( !IsNameCorrect(name) )
+			return err_incorrect_name;
+
+		Misc::AssignString(str_tmp1, name);
+		ErrorCode err = GetValueAndParam(str_tmp1, str_tmp2, param);
+		Misc::AssignString(value, str_tmp2);
+
+	return err;
+	}
+
+
+	/*!
 		this method sets the value and the number of parameters
 		of a specific object
 		(this version is used for not copying the whole string)
 	*/
-	ErrorCode GetValueAndParam(const tt_string & name, const tt_char ** value, int * param) const
+	ErrorCode GetValueAndParam(const std::string & name, const char ** value, int * param) const
 	{
 		if( !IsNameCorrect(name) )
 			return err_incorrect_name;
@@ -371,6 +509,25 @@ public:
 
 
 	/*!
+		this method sets the value and the number of parameters
+		of a specific object
+		(this version is used for not copying the whole string
+		but in fact we make one copying during AssignString())
+	*/
+	ErrorCode GetValueAndParam(const std::wstring & name, const char ** value, int * param)
+	{
+		// we should check whether the name (in wide characters) are correct
+		// before calling AssignString() function
+		if( !IsNameCorrect(name) )
+			return err_incorrect_name;
+
+		Misc::AssignString(str_tmp1, name);
+
+	return GetValueAndParam(str_tmp1, value, param);
+	}
+
+
+	/*!
 		this method returns a pointer into the table
 	*/
 	Table * GetTable()
@@ -382,6 +539,7 @@ public:
 private:
 
 	Table table;
+	std::string str_tmp1, str_tmp2;
 
 }; // end of class Objects
 

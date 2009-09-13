@@ -52,6 +52,7 @@
 
 #include "ttmath.h"
 #include "ttmathobjects.h"
+#include "ttmathmisc.h"
 
 
 
@@ -255,7 +256,7 @@ public:
 		bool function;
 
 		// if function is true
-		tt_string function_name;
+		std::string function_name;
 
 		/*
 			the sign of value
@@ -314,7 +315,7 @@ ErrorCode error;
 
 	when an error has occured it may be used to count the index of the wrong character
 */
-const tt_char * pstring;
+const char * pstring;
 
 
 /*!
@@ -351,7 +352,7 @@ const Objects * puser_variables;
 const Objects * puser_functions;
 
 
-typedef std::map<tt_string, ValueType> FunctionLocalVariables;
+typedef std::map<std::string, ValueType> FunctionLocalVariables;
 
 /*!
 	a pointer to the local variables of a function
@@ -362,13 +363,13 @@ const FunctionLocalVariables * pfunction_local_variables;
 /*!
 	a temporary set using during parsing user defined variables
 */
-std::set<tt_string> visited_variables;
+std::set<std::string> visited_variables;
 
 
 /*!
 	a temporary set using during parsing user defined functions
 */
-std::set<tt_string> visited_functions;
+std::set<std::string> visited_functions;
 
 
 
@@ -396,10 +397,10 @@ typedef void (ValueType::*pfunction_var)();
 	table of mathematic functions
 
 	this map consists of:
-		tt_string - function's name
+		std::string - function's name
 		pfunction - pointer to specific function
 */
-typedef std::map<tt_string, pfunction> FunctionsTable;
+typedef std::map<std::string, pfunction> FunctionsTable;
 FunctionsTable functions_table;
 
 
@@ -407,10 +408,10 @@ FunctionsTable functions_table;
 	table of mathematic operators
 
 	this map consists of:
-		tt_string - operators's name
+		std::string - operators's name
 		MatOperator::Type - type of the operator
 */
-typedef std::map<tt_string, typename MatOperator::Type> OperatorsTable;
+typedef std::map<std::string, typename MatOperator::Type> OperatorsTable;
 OperatorsTable operators_table;
 
 
@@ -418,10 +419,10 @@ OperatorsTable operators_table;
 	table of mathematic variables
 
 	this map consists of:
-		tt_string     - variable's name
+		std::string     - variable's name
 		pfunction_var - pointer to specific function which returns value of variable
 */
-typedef std::map<tt_string, pfunction_var> VariablesTable;
+typedef std::map<std::string, pfunction_var> VariablesTable;
 VariablesTable variables_table;
 
 
@@ -455,7 +456,7 @@ void SkipWhiteCharacters()
 /*!
 	an auxiliary method for RecurrenceParsingVariablesOrFunction(...)
 */
-void RecurrenceParsingVariablesOrFunction_CheckStopCondition(bool variable, const tt_string & name)
+void RecurrenceParsingVariablesOrFunction_CheckStopCondition(bool variable, const std::string & name)
 {
 	if( variable )
 	{
@@ -473,7 +474,7 @@ void RecurrenceParsingVariablesOrFunction_CheckStopCondition(bool variable, cons
 /*!
 	an auxiliary method for RecurrenceParsingVariablesOrFunction(...)
 */
-void RecurrenceParsingVariablesOrFunction_AddName(bool variable, const tt_string & name)
+void RecurrenceParsingVariablesOrFunction_AddName(bool variable, const std::string & name)
 {
 	if( variable )
 		visited_variables.insert( name );
@@ -485,7 +486,7 @@ void RecurrenceParsingVariablesOrFunction_AddName(bool variable, const tt_string
 /*!
 	an auxiliary method for RecurrenceParsingVariablesOrFunction(...)
 */
-void RecurrenceParsingVariablesOrFunction_DeleteName(bool variable, const tt_string & name)
+void RecurrenceParsingVariablesOrFunction_DeleteName(bool variable, const std::string & name)
 {
 	if( variable )
 		visited_variables.erase( name );
@@ -504,7 +505,7 @@ void RecurrenceParsingVariablesOrFunction_DeleteName(bool variable, const tt_str
 	(there can be a recurrence here therefore we're using 'visited_variables'
 	and 'visited_functions' sets to make a stop condition)
 */
-ValueType RecurrenceParsingVariablesOrFunction(bool variable, const tt_string & name, const tt_char * new_string,
+ValueType RecurrenceParsingVariablesOrFunction(bool variable, const std::string & name, const char * new_string,
 											   FunctionLocalVariables * local_variables = 0)
 {
 	RecurrenceParsingVariablesOrFunction_CheckStopCondition(variable, name);
@@ -548,12 +549,12 @@ public:
 /*!
 	this method returns the user-defined value of a variable
 */
-bool GetValueOfUserDefinedVariable(const tt_string & variable_name,ValueType & result)
+bool GetValueOfUserDefinedVariable(const std::string & variable_name,ValueType & result)
 {
 	if( !puser_variables )
 		return false;
 
-	const tt_char * string_value;
+	const char * string_value;
 
 	if( puser_variables->GetValue(variable_name, &string_value) != err_ok )
 		return false;
@@ -567,7 +568,7 @@ return true;
 /*!
 	this method returns the value of a local variable of a function
 */
-bool GetValueOfFunctionLocalVariable(const tt_string & variable_name, ValueType & result)
+bool GetValueOfFunctionLocalVariable(const std::string & variable_name, ValueType & result)
 {
 	if( !pfunction_local_variables )
 		return false;
@@ -589,7 +590,7 @@ return true;
 	we make an object of type ValueType then call a method which 
 	sets the correct value in it and finally we'll return the object
 */
-ValueType GetValueOfVariable(const tt_string & variable_name)
+ValueType GetValueOfVariable(const std::string & variable_name)
 {
 ValueType result;
 
@@ -600,7 +601,7 @@ ValueType result;
 		return result;
 
 
-	typename std::map<tt_string, pfunction_var>::iterator i =
+	typename std::map<std::string, pfunction_var>::iterator i =
 													variables_table.find(variable_name);
 
 	if( i == variables_table.end() )
@@ -1361,9 +1362,9 @@ void Avg(int sindex, int amount_of_args, ValueType & result)
 /*!
 	we use such a method because 'wvsprintf' is not everywhere defined
 */
-void Sprintf(tt_char * buffer, int par)
+void Sprintf(char * buffer, int par)
 {
-char buf[30]; // char, not tt_char
+char buf[30]; // char, not wchar_t etc.
 int i;
 
 	#ifdef _MSC_VER
@@ -1390,12 +1391,12 @@ int i;
 
 	(look at the description in 'CallFunction(...)')
 */
-bool GetValueOfUserDefinedFunction(const tt_string & function_name, int amount_of_args, int sindex)
+bool GetValueOfUserDefinedFunction(const std::string & function_name, int amount_of_args, int sindex)
 {
 	if( !puser_functions )
 		return false;
 
-	const tt_char * string_value;
+	const char * string_value;
 	int param;
 
 	if( puser_functions->GetValueAndParam(function_name, &string_value, &param) != err_ok )
@@ -1409,7 +1410,7 @@ bool GetValueOfUserDefinedFunction(const tt_string & function_name, int amount_o
 
 	if( amount_of_args > 0 )
 	{
-		tt_char buffer[30];
+		char buffer[30];
 
 		// x = x1
 		buffer[0] = 'x';
@@ -1443,7 +1444,7 @@ return true;
 	result will be stored in 'stack[sindex-1].value'
 	(we don't have to set the correct type of this element, it'll be set later)
 */
-void CallFunction(const tt_string & function_name, int amount_of_args, int sindex)
+void CallFunction(const std::string & function_name, int amount_of_args, int sindex)
 {
 	if( GetValueOfUserDefinedFunction(function_name, amount_of_args, sindex) )
 		return;
@@ -1469,10 +1470,14 @@ void CallFunction(const tt_string & function_name, int amount_of_args, int sinde
 	function_name - name of the function
 	pf - pointer to the function (to the wrapper)
 */
-void InsertFunctionToTable(const tt_char * function_name, pfunction pf)
+void InsertFunctionToTable(const char * function_name, pfunction pf)
 {
-	functions_table.insert( std::make_pair(tt_string(function_name), pf));
+	std::string str;
+	Misc::AssignString(str, function_name);
+
+	functions_table.insert( std::make_pair(str, pf) );
 }
+
 
 
 /*!
@@ -1482,9 +1487,12 @@ void InsertFunctionToTable(const tt_char * function_name, pfunction pf)
 	variable_name - name of the function
 	pf - pointer to the function
 */
-void InsertVariableToTable(const tt_char * variable_name, pfunction_var pf)
+void InsertVariableToTable(const char * variable_name, pfunction_var pf)
 {
-	variables_table.insert( std::make_pair(tt_string(variable_name), pf));
+	std::string str;
+	Misc::AssignString(str, variable_name);
+
+	variables_table.insert( std::make_pair(str, pf) );
 }
 
 
@@ -1493,65 +1501,65 @@ void InsertVariableToTable(const tt_char * variable_name, pfunction_var pf)
 */
 void CreateFunctionsTable()
 {
-	InsertFunctionToTable(TTMATH_TEXT("gamma"),		&Parser<ValueType>::Gamma);
-	InsertFunctionToTable(TTMATH_TEXT("factorial"),	&Parser<ValueType>::Factorial);
-	InsertFunctionToTable(TTMATH_TEXT("abs"),   	&Parser<ValueType>::Abs);
-	InsertFunctionToTable(TTMATH_TEXT("sin"),   	&Parser<ValueType>::Sin);
-	InsertFunctionToTable(TTMATH_TEXT("cos"),   	&Parser<ValueType>::Cos);
-	InsertFunctionToTable(TTMATH_TEXT("tan"),   	&Parser<ValueType>::Tan);
-	InsertFunctionToTable(TTMATH_TEXT("tg"),		&Parser<ValueType>::Tan);
-	InsertFunctionToTable(TTMATH_TEXT("cot"),  		&Parser<ValueType>::Cot);
-	InsertFunctionToTable(TTMATH_TEXT("ctg"),  		&Parser<ValueType>::Cot);
-	InsertFunctionToTable(TTMATH_TEXT("int"),	   	&Parser<ValueType>::Int);
-	InsertFunctionToTable(TTMATH_TEXT("round"),	 	&Parser<ValueType>::Round);
-	InsertFunctionToTable(TTMATH_TEXT("ln"),	    &Parser<ValueType>::Ln);
-	InsertFunctionToTable(TTMATH_TEXT("log"),	   	&Parser<ValueType>::Log);
-	InsertFunctionToTable(TTMATH_TEXT("exp"),	   	&Parser<ValueType>::Exp);
-	InsertFunctionToTable(TTMATH_TEXT("max"),	   	&Parser<ValueType>::Max);
-	InsertFunctionToTable(TTMATH_TEXT("min"),	   	&Parser<ValueType>::Min);
-	InsertFunctionToTable(TTMATH_TEXT("asin"),   	&Parser<ValueType>::ASin);
-	InsertFunctionToTable(TTMATH_TEXT("acos"),   	&Parser<ValueType>::ACos);
-	InsertFunctionToTable(TTMATH_TEXT("atan"),   	&Parser<ValueType>::ATan);
-	InsertFunctionToTable(TTMATH_TEXT("atg"),	   	&Parser<ValueType>::ATan);
-	InsertFunctionToTable(TTMATH_TEXT("acot"),   	&Parser<ValueType>::ACot);
-	InsertFunctionToTable(TTMATH_TEXT("actg"),   	&Parser<ValueType>::ACot);
-	InsertFunctionToTable(TTMATH_TEXT("sgn"),   	&Parser<ValueType>::Sgn);
-	InsertFunctionToTable(TTMATH_TEXT("mod"),   	&Parser<ValueType>::Mod);
-	InsertFunctionToTable(TTMATH_TEXT("if"),   		&Parser<ValueType>::If);
-	InsertFunctionToTable(TTMATH_TEXT("or"),   		&Parser<ValueType>::Or);
-	InsertFunctionToTable(TTMATH_TEXT("and"),  		&Parser<ValueType>::And);
-	InsertFunctionToTable(TTMATH_TEXT("not"),  		&Parser<ValueType>::Not);
-	InsertFunctionToTable(TTMATH_TEXT("degtorad"),	&Parser<ValueType>::DegToRad);
-	InsertFunctionToTable(TTMATH_TEXT("radtodeg"),	&Parser<ValueType>::RadToDeg);
-	InsertFunctionToTable(TTMATH_TEXT("degtodeg"),	&Parser<ValueType>::DegToDeg);
-	InsertFunctionToTable(TTMATH_TEXT("gradtorad"),	&Parser<ValueType>::GradToRad);
-	InsertFunctionToTable(TTMATH_TEXT("radtograd"),	&Parser<ValueType>::RadToGrad);
-	InsertFunctionToTable(TTMATH_TEXT("degtograd"),	&Parser<ValueType>::DegToGrad);
-	InsertFunctionToTable(TTMATH_TEXT("gradtodeg"),	&Parser<ValueType>::GradToDeg);
-	InsertFunctionToTable(TTMATH_TEXT("ceil"),		&Parser<ValueType>::Ceil);
-	InsertFunctionToTable(TTMATH_TEXT("floor"),		&Parser<ValueType>::Floor);
-	InsertFunctionToTable(TTMATH_TEXT("sqrt"),		&Parser<ValueType>::Sqrt);
-	InsertFunctionToTable(TTMATH_TEXT("sinh"),		&Parser<ValueType>::Sinh);
-	InsertFunctionToTable(TTMATH_TEXT("cosh"),		&Parser<ValueType>::Cosh);
-	InsertFunctionToTable(TTMATH_TEXT("tanh"),		&Parser<ValueType>::Tanh);
-	InsertFunctionToTable(TTMATH_TEXT("tgh"),		&Parser<ValueType>::Tanh);
-	InsertFunctionToTable(TTMATH_TEXT("coth"),		&Parser<ValueType>::Coth);
-	InsertFunctionToTable(TTMATH_TEXT("ctgh"),		&Parser<ValueType>::Coth);
-	InsertFunctionToTable(TTMATH_TEXT("root"),		&Parser<ValueType>::Root);
-	InsertFunctionToTable(TTMATH_TEXT("asinh"),		&Parser<ValueType>::ASinh);
-	InsertFunctionToTable(TTMATH_TEXT("acosh"),		&Parser<ValueType>::ACosh);
-	InsertFunctionToTable(TTMATH_TEXT("atanh"),		&Parser<ValueType>::ATanh);
-	InsertFunctionToTable(TTMATH_TEXT("atgh"),		&Parser<ValueType>::ATanh);
-	InsertFunctionToTable(TTMATH_TEXT("acoth"),		&Parser<ValueType>::ACoth);
-	InsertFunctionToTable(TTMATH_TEXT("actgh"),		&Parser<ValueType>::ACoth);
-	InsertFunctionToTable(TTMATH_TEXT("bitand"),	&Parser<ValueType>::BitAnd);
-	InsertFunctionToTable(TTMATH_TEXT("bitor"),		&Parser<ValueType>::BitOr);
-	InsertFunctionToTable(TTMATH_TEXT("bitxor"),	&Parser<ValueType>::BitXor);
-	InsertFunctionToTable(TTMATH_TEXT("band"),		&Parser<ValueType>::BitAnd);
-	InsertFunctionToTable(TTMATH_TEXT("bor"),		&Parser<ValueType>::BitOr);
-	InsertFunctionToTable(TTMATH_TEXT("bxor"),		&Parser<ValueType>::BitXor);
-	InsertFunctionToTable(TTMATH_TEXT("sum"),		&Parser<ValueType>::Sum);
-	InsertFunctionToTable(TTMATH_TEXT("avg"),		&Parser<ValueType>::Avg);
+	InsertFunctionToTable("gamma",		&Parser<ValueType>::Gamma);
+	InsertFunctionToTable("factorial",	&Parser<ValueType>::Factorial);
+	InsertFunctionToTable("abs",   		&Parser<ValueType>::Abs);
+	InsertFunctionToTable("sin",   		&Parser<ValueType>::Sin);
+	InsertFunctionToTable("cos",   		&Parser<ValueType>::Cos);
+	InsertFunctionToTable("tan",   		&Parser<ValueType>::Tan);
+	InsertFunctionToTable("tg",			&Parser<ValueType>::Tan);
+	InsertFunctionToTable("cot",  		&Parser<ValueType>::Cot);
+	InsertFunctionToTable("ctg",  		&Parser<ValueType>::Cot);
+	InsertFunctionToTable("int",	   	&Parser<ValueType>::Int);
+	InsertFunctionToTable("round",	 	&Parser<ValueType>::Round);
+	InsertFunctionToTable("ln",			&Parser<ValueType>::Ln);
+	InsertFunctionToTable("log",	   	&Parser<ValueType>::Log);
+	InsertFunctionToTable("exp",	   	&Parser<ValueType>::Exp);
+	InsertFunctionToTable("max",	   	&Parser<ValueType>::Max);
+	InsertFunctionToTable("min",	   	&Parser<ValueType>::Min);
+	InsertFunctionToTable("asin",   	&Parser<ValueType>::ASin);
+	InsertFunctionToTable("acos",   	&Parser<ValueType>::ACos);
+	InsertFunctionToTable("atan",   	&Parser<ValueType>::ATan);
+	InsertFunctionToTable("atg",	   	&Parser<ValueType>::ATan);
+	InsertFunctionToTable("acot",   	&Parser<ValueType>::ACot);
+	InsertFunctionToTable("actg",   	&Parser<ValueType>::ACot);
+	InsertFunctionToTable("sgn",   		&Parser<ValueType>::Sgn);
+	InsertFunctionToTable("mod",   		&Parser<ValueType>::Mod);
+	InsertFunctionToTable("if",   		&Parser<ValueType>::If);
+	InsertFunctionToTable("or",   		&Parser<ValueType>::Or);
+	InsertFunctionToTable("and",  		&Parser<ValueType>::And);
+	InsertFunctionToTable("not",  		&Parser<ValueType>::Not);
+	InsertFunctionToTable("degtorad",	&Parser<ValueType>::DegToRad);
+	InsertFunctionToTable("radtodeg",	&Parser<ValueType>::RadToDeg);
+	InsertFunctionToTable("degtodeg",	&Parser<ValueType>::DegToDeg);
+	InsertFunctionToTable("gradtorad",	&Parser<ValueType>::GradToRad);
+	InsertFunctionToTable("radtograd",	&Parser<ValueType>::RadToGrad);
+	InsertFunctionToTable("degtograd",	&Parser<ValueType>::DegToGrad);
+	InsertFunctionToTable("gradtodeg",	&Parser<ValueType>::GradToDeg);
+	InsertFunctionToTable("ceil",		&Parser<ValueType>::Ceil);
+	InsertFunctionToTable("floor",		&Parser<ValueType>::Floor);
+	InsertFunctionToTable("sqrt",		&Parser<ValueType>::Sqrt);
+	InsertFunctionToTable("sinh",		&Parser<ValueType>::Sinh);
+	InsertFunctionToTable("cosh",		&Parser<ValueType>::Cosh);
+	InsertFunctionToTable("tanh",		&Parser<ValueType>::Tanh);
+	InsertFunctionToTable("tgh",		&Parser<ValueType>::Tanh);
+	InsertFunctionToTable("coth",		&Parser<ValueType>::Coth);
+	InsertFunctionToTable("ctgh",		&Parser<ValueType>::Coth);
+	InsertFunctionToTable("root",		&Parser<ValueType>::Root);
+	InsertFunctionToTable("asinh",		&Parser<ValueType>::ASinh);
+	InsertFunctionToTable("acosh",		&Parser<ValueType>::ACosh);
+	InsertFunctionToTable("atanh",		&Parser<ValueType>::ATanh);
+	InsertFunctionToTable("atgh",		&Parser<ValueType>::ATanh);
+	InsertFunctionToTable("acoth",		&Parser<ValueType>::ACoth);
+	InsertFunctionToTable("actgh",		&Parser<ValueType>::ACoth);
+	InsertFunctionToTable("bitand",		&Parser<ValueType>::BitAnd);
+	InsertFunctionToTable("bitor",		&Parser<ValueType>::BitOr);
+	InsertFunctionToTable("bitxor",		&Parser<ValueType>::BitXor);
+	InsertFunctionToTable("band",		&Parser<ValueType>::BitAnd);
+	InsertFunctionToTable("bor",		&Parser<ValueType>::BitOr);
+	InsertFunctionToTable("bxor",		&Parser<ValueType>::BitXor);
+	InsertFunctionToTable("sum",		&Parser<ValueType>::Sum);
+	InsertFunctionToTable("avg",		&Parser<ValueType>::Avg);
 }
 
 
@@ -1560,8 +1568,8 @@ void CreateFunctionsTable()
 */
 void CreateVariablesTable()
 {
-	InsertVariableToTable(TTMATH_TEXT("pi"), &ValueType::SetPi);
-	InsertVariableToTable(TTMATH_TEXT("e"),  &ValueType::SetE);
+	InsertVariableToTable("pi", &ValueType::SetPi);
+	InsertVariableToTable("e",  &ValueType::SetE);
 }
 
 
@@ -1587,7 +1595,7 @@ return c;
 	what should be returned is tested just by a '(' character that means if there's
 	a '(' character after a name that function returns 'true'
 */
-bool ReadName(tt_string & result)
+bool ReadName(std::string & result)
 {
 int character;
 
@@ -1604,7 +1612,7 @@ int character;
 
 	do
 	{
-		result   += static_cast<tt_char>( character );
+		result   += static_cast<char>( character );
 		character = * ++pstring;
 	}
 	while(	(character>='a' && character<='z') ||
@@ -1659,7 +1667,7 @@ return false;
 */
 bool ReadVariableOrFunction(Item & result)
 {
-tt_string name;
+std::string name;
 bool is_it_name_of_function = ReadName(name);
 
 	if( is_it_name_of_function )
@@ -1688,7 +1696,7 @@ return is_it_name_of_function;
 */
 void ReadValue(Item & result, int reading_base)
 {
-const tt_char * new_stack_pointer;
+const char * new_stack_pointer;
 bool value_read;
 
 	uint carry = result.value.FromString(pstring, reading_base, &new_stack_pointer, &value_read);
@@ -1861,9 +1869,9 @@ return 0;
 }
 
 
-void InsertOperatorToTable(const tt_char * name, typename MatOperator::Type type)
+void InsertOperatorToTable(const char * name, typename MatOperator::Type type)
 {
-	operators_table.insert( std::make_pair(tt_string(name), type) );
+	operators_table.insert( std::make_pair(std::string(name), type) );
 }
 
 
@@ -1872,19 +1880,19 @@ void InsertOperatorToTable(const tt_char * name, typename MatOperator::Type type
 */
 void CreateMathematicalOperatorsTable()
 {
-	InsertOperatorToTable(TTMATH_TEXT("||"), MatOperator::lor);
-	InsertOperatorToTable(TTMATH_TEXT("&&"), MatOperator::land);
-	InsertOperatorToTable(TTMATH_TEXT("!="), MatOperator::neq);
-	InsertOperatorToTable(TTMATH_TEXT("=="), MatOperator::eq);
-	InsertOperatorToTable(TTMATH_TEXT(">="), MatOperator::get);
-	InsertOperatorToTable(TTMATH_TEXT("<="), MatOperator::let);
-	InsertOperatorToTable(TTMATH_TEXT(">"),  MatOperator::gt);
-	InsertOperatorToTable(TTMATH_TEXT("<"),  MatOperator::lt);
-	InsertOperatorToTable(TTMATH_TEXT("-"),  MatOperator::sub);
-	InsertOperatorToTable(TTMATH_TEXT("+"),  MatOperator::add);
-	InsertOperatorToTable(TTMATH_TEXT("/"),  MatOperator::div);
-	InsertOperatorToTable(TTMATH_TEXT("*"),  MatOperator::mul);
-	InsertOperatorToTable(TTMATH_TEXT("^"),  MatOperator::pow);
+	InsertOperatorToTable("||", MatOperator::lor);
+	InsertOperatorToTable("&&", MatOperator::land);
+	InsertOperatorToTable("!=", MatOperator::neq);
+	InsertOperatorToTable("==", MatOperator::eq);
+	InsertOperatorToTable(">=", MatOperator::get);
+	InsertOperatorToTable("<=", MatOperator::let);
+	InsertOperatorToTable(">",  MatOperator::gt);
+	InsertOperatorToTable("<",  MatOperator::lt);
+	InsertOperatorToTable("-",  MatOperator::sub);
+	InsertOperatorToTable("+",  MatOperator::add);
+	InsertOperatorToTable("/",  MatOperator::div);
+	InsertOperatorToTable("*",  MatOperator::mul);
+	InsertOperatorToTable("^",  MatOperator::pow);
 }
 
 
@@ -1894,12 +1902,12 @@ void CreateMathematicalOperatorsTable()
 	e.g.
 	true when str1="test" and str2="te"
 */
-bool IsSubstring(const tt_string & str1, const tt_string & str2)
+bool IsSubstring(const std::string & str1, const std::string & str2)
 {
 	if( str2.length() > str1.length() )
 		return false;
 
-	for(tt_string::size_type i=0 ; i<str2.length() ; ++i)
+	for(typename std::string::size_type i=0 ; i<str2.length() ; ++i)
 		if( str1[i] != str2[i] )
 			return false;
 
@@ -1912,7 +1920,7 @@ return true;
 */
 void ReadMathematicalOperator(Item & result)
 {
-tt_string oper;
+std::string oper;
 typename OperatorsTable::iterator iter_old, iter_new;
 
 	iter_old = operators_table.end();
@@ -2546,7 +2554,7 @@ void SetFunctions(const Objects * pf)
 /*!
 	the main method using for parsing string
 */
-ErrorCode Parse(const tt_char * str)
+ErrorCode Parse(const char * str)
 {
 	stack_index  = 0;
 	pstring      = str;
@@ -2569,8 +2577,37 @@ return error;
 }
 
 
-};
+/*!
+	the main method using for parsing string
+*/
+ErrorCode Parse(const std::string & str)
+{
+	return Parse(str.c_str());
+}
 
+
+/*!
+	the main method using for parsing string
+*/
+ErrorCode Parse(const wchar_t * str)
+{
+	std::string temp;
+	Misc::AssignString(temp, str);
+
+return Parse(temp.c_str());	
+}
+
+
+/*!
+	the main method using for parsing string
+*/
+ErrorCode Parse(const std::wstring & str)
+{
+	return Parse(str.c_str());
+}
+
+
+};
 
 
 
