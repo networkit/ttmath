@@ -433,6 +433,12 @@ CGamma<ValueType> cgamma;
 
 
 /*!
+	temporary object for a whole string when Parse(std::wstring) is used
+*/
+std::string wide_to_ansi;
+
+
+/*!
 	we're using this method for reporting an error
 */
 static void Error(ErrorCode code)
@@ -2591,10 +2597,9 @@ ErrorCode Parse(const std::string & str)
 */
 ErrorCode Parse(const wchar_t * str)
 {
-	std::string temp;
-	Misc::AssignString(temp, str);
+	Misc::AssignString(wide_to_ansi, str);
 
-return Parse(temp.c_str());	
+return Parse(wide_to_ansi.c_str());	
 }
 
 
