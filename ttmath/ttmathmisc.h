@@ -145,6 +145,94 @@ static void AddString(std::wstring & result, const char * str)
 
 
 
+/*
+	this method omits any white characters from the string
+	char_type is char or wchar_t
+*/
+template<class char_type>
+static void SkipWhiteCharacters(const char_type * & c)
+{
+	// 13 is at the end in a DOS text file (\r\n)
+	while( (*c==' ' ) || (*c=='\t') || (*c==13 ) || (*c=='\n') )
+		++c;
+}
+
+
+
+
+/*!
+	this static method converts one character into its value
+
+	for example:
+		1 -> 1
+		8 -> 8
+		A -> 10
+		f -> 15
+
+	this method don't check whether c is correct or not
+*/
+static uint CharToDigit(uint c)
+{
+	if(c>='0' && c<='9')
+		return c-'0';
+
+	if(c>='a' && c<='z')
+		return c-'a'+10;
+
+return c-'A'+10;
+}
+
+
+/*!
+	this method changes a character 'c' into its value
+	(if there can't be a correct value it returns -1)
+
+	for example:
+	c=2, base=10 -> function returns 2
+	c=A, base=10 -> function returns -1
+	c=A, base=16 -> function returns 10
+*/
+static sint CharToDigit(uint c, uint base)
+{
+	if( c>='0' && c<='9' )
+		c=c-'0';
+	else
+	if( c>='a' && c<='z' )
+		c=c-'a'+10;
+	else
+	if( c>='A' && c<='Z' )
+		c=c-'A'+10;
+	else
+		return -1;
+
+
+	if( c >= base )
+		return -1;
+
+
+return sint(c);
+}
+
+
+
+/*!
+	this method converts a digit into a char
+	digit should be from <0,F>
+	(we don't have to get a base)
+	
+	for example:
+		1  -> 1
+		8  -> 8
+		10 -> A
+		15 -> F
+*/
+static uint DigitToChar(uint digit)
+{
+	if( digit < 10 )
+		return digit + '0';
+
+return digit - 10 + 'A';
+}
 
 
 }; // struct Misc

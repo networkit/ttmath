@@ -936,17 +936,17 @@ private:
 	{
 	bool is_sign = false;
 	
-		UInt<value_size>::SkipWhiteCharacters(s);
+		Misc::SkipWhiteCharacters(s);
 
 		if( *s == '-' )
 		{
 			is_sign = true;
-			UInt<value_size>::SkipWhiteCharacters(++s);
+			Misc::SkipWhiteCharacters(++s);
 		}
 		else
 		if( *s == '+' )
 		{
-			UInt<value_size>::SkipWhiteCharacters(++s);
+			Misc::SkipWhiteCharacters(++s);
 		}
 
 		if( UInt<value_size>::FromString(s,b,after_source,value_read) )
@@ -1422,7 +1422,7 @@ private:
 		}
 
 		// we're reading only digits (base=10)
-		while( s.good() && UInt<value_size>::CharToDigit(z, 10)>=0 )
+		while( s.good() && Misc::CharToDigit(z, 10)>=0 )
 		{
 			ss += z;
 			z = static_cast<char_type>(s.get());

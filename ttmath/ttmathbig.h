@@ -3308,7 +3308,7 @@ private:
 		typename string_type::size_type i = new_man.length() - 1;
 
 		// we're erasing the last character
-		uint digit = UInt<man>::CharToDigit( new_man[i] );
+		uint digit = Misc::CharToDigit( new_man[i] );
 		new_man.erase( i, 1 );
 		uint carry = new_exp.AddOne();
 
@@ -3344,14 +3344,14 @@ private:
 				continue;
 
 			// we're adding one
-			uint digit = UInt<man>::CharToDigit( new_man[i] ) + 1;
+			uint digit = Misc::CharToDigit( new_man[i] ) + 1;
 
 			if( digit == base )
 				digit = 0;
 			else
 				was_carry = false;
 
-			new_man[i] = static_cast<char_type>( UInt<man>::DigitToChar(digit) );
+			new_man[i] = static_cast<char_type>( Misc::DigitToChar(digit) );
 		}
 
 		if( i<0 && was_carry )
@@ -3606,7 +3606,7 @@ private:
 		if( static_cast<typename string_type::size_type>(max_digit_after_comma) >= after_comma )
 			return;
 
-		uint last_digit = UInt<man>::CharToDigit( new_man[ index + max_digit_after_comma + 1 ], base );
+		uint last_digit = Misc::CharToDigit( new_man[ index + max_digit_after_comma + 1 ], base );
 
 		// we're cutting the rest of the string
 		new_man.erase(index + max_digit_after_comma + 1, after_comma - max_digit_after_comma);
@@ -3724,7 +3724,7 @@ private:
 	template<class char_type>
 	void FromString_TestSign( const char_type * & source, bool & is_sign )
 	{
-		UInt<man>::SkipWhiteCharacters(source);
+		Misc::SkipWhiteCharacters(source);
 
 		is_sign = false;
 
@@ -3770,9 +3770,9 @@ private:
 		Big<exp, man> temp;
 		Big<exp, man> base_( base );
 		
-		UInt<man>::SkipWhiteCharacters( source );
+		Misc::SkipWhiteCharacters( source );
 
-		for( ; (character=UInt<man>::CharToDigit(*source, base)) != -1 ; ++source )
+		for( ; (character=Misc::CharToDigit(*source, base)) != -1 ; ++source )
 		{
 			value_read = true;
 
@@ -3808,7 +3808,7 @@ private:
 
 		power.SetOne();
 
-		for( ; (character=UInt<man>::CharToDigit(*source, base)) != -1 ; ++source, ++index )
+		for( ; (character=Misc::CharToDigit(*source, base)) != -1 ; ++source, ++index )
 		{
 			value_read = true;
 
@@ -3841,7 +3841,7 @@ private:
 		// we could break the parsing somewhere in the middle of the string,
 		// but the result (value) still can be good
 		// we should set a correct value of 'source' now
-		for( ; UInt<man>::CharToDigit(*source, base) != -1 ; ++source );
+		for( ; Misc::CharToDigit(*source, base) != -1 ; ++source );
 
 	return (c==0)? 0 : 1;
 	}
@@ -3879,7 +3879,7 @@ private:
 	template<class char_type>
 	bool FromString_TestScientific(const char_type * & source)
 	{
-		UInt<man>::SkipWhiteCharacters(source);
+		Misc::SkipWhiteCharacters(source);
 
 		if( *source=='e' || *source=='E' )
 		{
@@ -3930,12 +3930,12 @@ private:
 	sint character;
 	Big<exp, man> base, temp;
 
-		UInt<man>::SkipWhiteCharacters(source);
+		Misc::SkipWhiteCharacters(source);
 
 		new_exponent.SetZero();
 		base = 10;
 
-		for( ; (character=UInt<man>::CharToDigit(*source, 10)) != -1 ; ++source )
+		for( ; (character=Misc::CharToDigit(*source, 10)) != -1 ; ++source )
 		{
 			scientific_read = true;
 
@@ -4662,7 +4662,7 @@ private:
 					break;
 			}
 			else
-			if( UInt<man>::CharToDigit(z, 10) < 0 )
+			if( Misc::CharToDigit(z, 10) < 0 )
 				break;
 
 

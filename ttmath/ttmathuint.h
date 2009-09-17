@@ -2316,80 +2316,6 @@ public:
 
 
 	/*!
-		this static method converts one character into its value
-
-		for example:
-			1 -> 1
-			8 -> 8
-			A -> 10
-			f -> 15
-
-		this method don't check whether c is correct or not
-	*/
-	static uint CharToDigit(uint c)
-	{
-		if(c>='0' && c<='9')
-			return c-'0';
-
-		if(c>='a' && c<='z')
-			return c-'a'+10;
-
-	return c-'A'+10;
-	}
-
-
-	/*!
-		this method changes a character 'c' into its value
-		(if there can't be a correct value it returns -1)
-
-		for example:
-		c=2, base=10 -> function returns 2
-		c=A, base=10 -> function returns -1
-		c=A, base=16 -> function returns 10
-	*/
-	static sint CharToDigit(uint c, uint base)
-	{
-		if( c>='0' && c<='9' )
-			c=c-'0';
-		else
-		if( c>='a' && c<='z' )
-			c=c-'a'+10;
-		else
-		if( c>='A' && c<='Z' )
-			c=c-'A'+10;
-		else
-			return -1;
-
-
-		if( c >= base )
-			return -1;
-
-
-	return sint(c);
-	}
-
-
-	/*!
-		this method converts a digit into a char
-		digit should be from <0,F>
-		(we don't have to get a base)
-		
-		for example:
-			1  -> 1
-			8  -> 8
-			10 -> A
-			15 -> F
-	*/
-	static uint DigitToChar(uint digit)
-	{
-		if( digit < 10 )
-			return digit + '0';
-
-	return digit - 10 + 'A';
-	}
-
-
-	/*!
 		this method converts an UInt<another_size> type to this class
 
 		this operation has mainly sense if the value from p is 
@@ -2735,7 +2661,7 @@ private:
 		do
 		{
 			temp.DivInt(b, &rem);
-			character = static_cast<char>( DigitToChar(rem) );
+			character = static_cast<char>( Misc::DigitToChar(rem) );
 			result.insert(result.begin(), character);
 		}
 		while( !temp.IsZero() );
@@ -2759,18 +2685,6 @@ public:
 		return ToStringBase(result, b);
 	}
 
-
-
-	/*
-		this method's ommiting any white characters from the string
-		char_type is char or wchar_t
-	*/
-	template<class char_type>
-	static void SkipWhiteCharacters(const char_type * & c)
-	{
-		while( (*c==' ' ) || (*c=='\t') || (*c==13 ) || (*c=='\n') )
-			++c;
-	}
 
 
 private:
@@ -2800,7 +2714,7 @@ private:
 			return 1;
 
 
-		for( ; (z=CharToDigit(*s, b)) != -1 ; ++s)
+		for( ; (z=Misc::CharToDigit(*s, b)) != -1 ; ++s)
 		{
 			if( value_read )
 				*value_read = true;
@@ -3339,7 +3253,7 @@ private:
 		s >> z;
 
 		// we're reading only digits (base=10)
-		while( s.good() && CharToDigit(z, 10)>=0 )
+		while( s.good() && Misc::CharToDigit(z, 10)>=0 )
 		{
 			ss += z;
 			z = static_cast<char_type>(s.get());

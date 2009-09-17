@@ -1717,31 +1717,6 @@ bool value_read;
 
 
 /*!
-	this method converts the character ascii c into the value in range <0;base-1>
-
-	if the character is incorrect for this base the funcion will return -1
-*/
-int CharToDigit(int c, int base)
-{
-	if( c>='0' && c<='9' )
-		c=c-'0';
-	else
-	if( c>='a' && c<='z' )
-		c=c-'a'+10;
-	else
-	if( c>='A' && c<='Z' )
-		c=c-'A'+10;
-	else
-		return -1;
-
-	if( c >= base )
-		return -1;
-
-return c;
-}
-
-
-/*!
 	this method returns true if 'character' is a proper first digit for the value (or a comma -- can be first too)
 */
 bool ValueStarts(int character, int base)
@@ -1752,7 +1727,7 @@ bool ValueStarts(int character, int base)
 	if( TTMATH_COMMA_CHARACTER_2 != 0 && character == TTMATH_COMMA_CHARACTER_2 )
 		return true;
 
-	if( CharToDigit(character, base) != -1 )
+	if( Misc::CharToDigit(character, base) != -1 )
 		return true;
 
 return false;

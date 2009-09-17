@@ -2681,7 +2681,9 @@ namespace ttmath
 		   x! = gamma(x+1)
 	*/
 	template<class ValueType>
-	ValueType Factorial2(ValueType x, CGamma<ValueType> * cgamma = 0, ErrorCode * err = 0,
+	ValueType Factorial2(ValueType x,
+						 CGamma<ValueType> * cgamma = 0,
+						 ErrorCode * err = 0,
 						 const volatile StopCalculating * stop = 0)
 	{
 	ValueType result, one;
@@ -2742,7 +2744,7 @@ namespace ttmath
 	template<class ValueType>
 	ValueType Factorial(const ValueType & x, ErrorCode * err = 0)
 	{
-		return auxiliaryfunctions::Factorial2(x, 0, err, 0);
+		return auxiliaryfunctions::Factorial2(x, (CGamma<ValueType>*)0, err, 0);
 	}
 
 
