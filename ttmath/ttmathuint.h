@@ -1558,12 +1558,14 @@ private:
 	*/
 	uint Div_CalculatingSize(const UInt<value_size> & v, uint & m, uint & n)
 	{
-		for(n = value_size-1 ; n!=0 && v.table[n]==0 ; --n);
+		m = n = value_size-1;
+
+		for( ; n!=0 && v.table[n]==0 ; --n);
 
 		if( n==0 && v.table[n]==0 )
 			return 1;
 
-		for(m = value_size-1 ; m!=0 && table[m]==0 ; --m);
+		for( ; m!=0 && table[m]==0 ; --m);
 
 		if( m==0 && table[m]==0 )
 			return 2;
@@ -2384,6 +2386,7 @@ public:
 
 		return *this;
 	}
+
 
 	/*!
 		the assignment operator
