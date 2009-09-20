@@ -2594,6 +2594,18 @@ public:
 	*/
 	UInt()
 	{
+	// when macro TTMATH_DEBUG_LOG is defined
+	// we set special values to the table
+	// in order to be everywhere the same value of the UInt object
+	#ifdef TTMATH_DEBUG_LOG
+		#ifdef TTMATH_PLATFORM32
+				for(uint i=0 ; i<value_size ; ++i)
+					table[i] = 0xc1c1c1c1;
+		#else
+				for(uint i=0 ; i<value_size ; ++i)
+					table[i] = 0xc1c1c1c1c1c1c1c1;
+		#endif
+	#endif
 	}
 
 

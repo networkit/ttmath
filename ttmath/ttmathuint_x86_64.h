@@ -390,7 +390,7 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt::AddVector")
+//		TTMATH_LOG("UInt::AddVector")
 
 	return c;
 	}
@@ -613,7 +613,7 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt::SubVector")
+//		TTMATH_LOG("UInt::SubVector")
 
 	return c;
 	}

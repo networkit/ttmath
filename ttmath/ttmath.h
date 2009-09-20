@@ -46,9 +46,12 @@
 */
 
 #ifdef _MSC_VER
-//warning C4127: conditional expression is constant
 #pragma warning( disable: 4127 )
+//warning C4127: conditional expression is constant
+#pragma warning( disable: 4702 )
+//warning C4702: unreachable code
 #endif
+
 
 #include "ttmathbig.h"
 #include "ttmathobjects.h"
@@ -2788,6 +2791,8 @@ namespace ttmath
 #ifdef _MSC_VER
 #pragma warning( default: 4127 )
 //warning C4127: conditional expression is constant
+#pragma warning( disable: 4702 )
+//warning C4702: unreachable code
 #endif
 
 #endif

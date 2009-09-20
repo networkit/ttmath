@@ -1,4 +1,4 @@
-Version 0.9.0 prerelease (2009.09.13):
+Version 0.9.0 prerelease (2009.09.20):
     * fixed:   Big::operator>>(std::istream&, Big<> &) didn't recognize values
                in scientific mode (with 'e' character)
     * added:   support for wide characters (wchar_t, std::wstring)
@@ -25,6 +25,9 @@ Version 0.9.0 prerelease (2009.09.13):
                Big::SetInfoBit(unsigned char)
                Big::IsInfoBit(unsigned char)
                some methods for manipulating the info flags
+    * added:   macro: TTMATH_BITS(min_bits)
+		       which returns the number of machine words 
+		       capable to hold min_bits bits
     * changed: Factorial() is using the Gamma() function now
     * changed: Big::Div(ss2)
                Big::Mod(ss2)

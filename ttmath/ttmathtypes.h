@@ -157,6 +157,13 @@ namespace ttmath
 	*/
 	#define TTMATH_BUILTIN_VARIABLES_SIZE 256u
 
+	/*!
+		this macro returns the number of machine words 
+		capable to hold min_bits bits
+		e.g. TTMATH_BITS(128) returns 4
+	*/
+	#define TTMATH_BITS(min_bits) ((min_bits-1)/32 + 1)
+
 #else
 
 	/*!
@@ -202,6 +209,13 @@ namespace ttmath
 		(these variables are defined in ttmathbig.h)
 	*/
 	#define TTMATH_BUILTIN_VARIABLES_SIZE 128ul
+
+	/*!
+		this macro returns the number of machine words 
+		capable to hold min_bits bits
+		e.g. TTMATH_BITS(128) returns 2
+	*/
+	#define TTMATH_BITS(min_bits) ((min_bits-1)/64 + 1)
 
 #endif
 }
@@ -275,6 +289,7 @@ namespace ttmath
 	don't use smaller values than about 100
 */
 #define TTMATH_GAMMA_BOUNDARY 2000
+
 
 
 

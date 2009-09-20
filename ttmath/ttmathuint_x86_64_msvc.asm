@@ -44,11 +44,11 @@
 PUBLIC	ttmath_adc_x64
 PUBLIC	ttmath_addindexed_x64
 PUBLIC	ttmath_addindexed2_x64
-PUBLIC  ttmath_addvector_x64
+PUBLIC	ttmath_addvector_x64
 
 PUBLIC	ttmath_sbb_x64
 PUBLIC	ttmath_subindexed_x64
-PUBLIC  ttmath_subvector_x64
+PUBLIC	ttmath_subvector_x64
 
 PUBLIC	ttmath_rcl_x64
 PUBLIC	ttmath_rcr_x64
@@ -58,6 +58,8 @@ PUBLIC	ttmath_rcr2_x64
 
 PUBLIC	ttmath_div_x64
 
+;
+; Microsoft x86_64 convention: http://msdn.microsoft.com/en-us/library/9b372w95.aspx
 ;
 ;	"rax, rcx, rdx, r8-r11 are volatile."
 ;	"rbx, rbp, rdi, rsi, r12-r15 are nonvolatile."
@@ -289,14 +291,12 @@ loop1:
 		mov		r9, 1
 		dec		rdx
 		jnz		loop1
-		jc		return_1	; most of the times, there will be NO carry (I hope)
+
+		mov		rax, 1
+		ret
 
 done:
 		xor		rax, rax
-		ret
-
-  return_1:
-		mov		rax, 1
 		ret
 
 ttmath_subindexed_x64	ENDP
