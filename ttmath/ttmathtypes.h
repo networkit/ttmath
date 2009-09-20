@@ -273,12 +273,16 @@ namespace ttmath
 	if the size of a vector is smaller than TTMATH_USE_KARATSUBA_MULTIPLICATION_FROM_SIZE
 	the Karatsuba algorithm will use standard schoolbook multiplication
 */
-#ifdef __GNUC__
-#define TTMATH_USE_KARATSUBA_MULTIPLICATION_FROM_SIZE 3
+#ifdef TTMATH_DEBUG_LOG
+	// if TTMATH_DEBUG_LOG is defined then we should use the same size regardless of the compiler
+	#define TTMATH_USE_KARATSUBA_MULTIPLICATION_FROM_SIZE 3
 #else
-#define TTMATH_USE_KARATSUBA_MULTIPLICATION_FROM_SIZE 5
+	#ifdef __GNUC__
+		#define TTMATH_USE_KARATSUBA_MULTIPLICATION_FROM_SIZE 3
+	#else
+		#define TTMATH_USE_KARATSUBA_MULTIPLICATION_FROM_SIZE 5
+	#endif
 #endif
-
 
 
 /*!
