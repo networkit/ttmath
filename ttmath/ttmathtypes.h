@@ -491,9 +491,15 @@ namespace ttmath
 
 
 	#ifdef TTMATH_DEBUG_LOG
-		#define TTMATH_LOG(msg) PrintLog(msg, std::cout);
+		#define TTMATH_LOG(msg)                             PrintLog(msg, std::cout);
+		#define TTMATH_LOGC(msg, carry)                     PrintLog(msg, carry, std::cout);
+		#define TTMATH_VECTOR_LOG(msg, vector, len)         PrintVectorLog(msg, std::cout, vector, len);
+		#define TTMATH_VECTOR_LOGC(msg, carry, vector, len) PrintVectorLog(msg, carry, std::cout, vector, len);
 	#else
 		#define TTMATH_LOG(msg)
+		#define TTMATH_LOGC(msg, carry)
+		#define TTMATH_VECTOR_LOG(msg, vector, len)
+		#define TTMATH_VECTOR_LOGC(msg, carry, vector, len)
 	#endif
 
 

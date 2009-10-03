@@ -1,6 +1,13 @@
-Version 0.9.0 prerelease (2009.09.20):
+Version 0.9.0 prerelease (2009.10.03):
     * fixed:   Big::operator>>(std::istream&, Big<> &) didn't recognize values
                in scientific mode (with 'e' character)
+    * fixed:   UInt::SetBitInWord(uint & value, uint bit) set 1 if the bit was 
+               equal 1 (should be set 2)
+               this affected only no-asm parts - when macro TTMATH_NOASM was defined
+    * fixed:   UInt<value_size>::MulInt(uint ss2)
+               there was a buffer overflow when value_size was equal 1
+    * fixed:   UInt::AddVector() and UInt::SubVector() didn't want to compile
+               when macro TTMATH_NOASM was defined
     * added:   support for wide characters (wchar_t, std::wstring)
     * added:   Big::IsInteger()
                returns true if the value is integer (without fraction)

@@ -81,6 +81,12 @@ public:
 	uint table[value_size];
 
 
+
+	/*!
+		some methods used for debugging purposes
+	*/
+
+
 	/*!
 		this method is only for debugging purposes or when we want to make
 		a table of a variable (constant) in ttmathbig.h
@@ -122,13 +128,48 @@ public:
 	}
 
 
+	/*!
+		this method is used when macro TTMATH_DEBUG_LOG is defined
+	*/
 	template<class char_type, class ostream_type>
-	void PrintLog(const char_type * msg, ostream_type & output) const
+	static void PrintVectorLog(const char_type * msg, ostream_type & output, const uint * vector, uint vector_len)
 	{
 		output << msg << std::endl;
 
-		for(uint i=0 ; i<value_size ; ++i)
-			output << " table[" << i << "]: " << table[i] << std::endl;
+		for(uint i=0 ; i<vector_len ; ++i)
+			output << " table[" << i << "]: " << vector[i] << std::endl;
+	}
+
+
+	/*!
+		this method is used when macro TTMATH_DEBUG_LOG is defined
+	*/
+	template<class char_type, class ostream_type>
+	static void PrintVectorLog(const char_type * msg, uint carry, ostream_type & output, const uint * vector, uint vector_len)
+	{
+		PrintVectorLog(msg, output, vector, vector_len);
+		output << " carry: " << carry << std::endl;
+	}
+
+
+	/*!
+		this method is used when macro TTMATH_DEBUG_LOG is defined
+	*/
+	template<class char_type, class ostream_type>
+	void PrintLog(const char_type * msg, ostream_type & output) const
+	{
+		PrintVectorLog(msg, output, table, value_size);
+	}
+
+
+	/*!
+		this method is used when macro TTMATH_DEBUG_LOG is defined
+	*/
+	template<class char_type, class ostream_type>
+	void PrintLog(const char_type * msg, uint carry, ostream_type & output) const
+	{
+		PrintVectorLog(msg, output, table, value_size);
+		output << " carry: " << carry << std::endl;
 	}
 
 
@@ -243,7 +284,7 @@ public:
 			table[i] = 0;
 
 
-		TTMATH_LOG("UInt32::SetFromTable")
+		TTMATH_LOG("UInt::SetFromTable")
 	}
 
 #endif
@@ -308,7 +349,7 @@ public:
 		for( ; i >= 0 ; --i)
 			table[i] = 0;
 
-		TTMATH_LOG("UInt64::SetFromTable")
+		TTMATH_LOG("UInt::SetFromTable")
 	}
 
 #endif
@@ -436,7 +477,7 @@ public:
 			last_c = Rcl2(rest_bits, c);
 		}
 
-		TTMATH_LOG("UInt::Rcl")
+		TTMATH_LOGC("UInt::Rcl", last_c)
 
 	return last_c;
 	}
@@ -531,7 +572,7 @@ public:
 			last_c = Rcr2(rest_bits, c);
 		}
 
-		TTMATH_LOG("UInt::Rcr")
+		TTMATH_LOGC("UInt::Rcr", last_c)
 
 	return last_c;
 	}
@@ -550,11 +591,7 @@ public:
 		for(a=value_size-1 ; a>=0 && table[a]==0 ; --a);
 
 		if( a < 0 )
-		{
-			// there's a value zero
-			TTMATH_LOG("UInt::CompensationToLeft")
-			return moving;
-		}
+			return moving; // all words in table have zero
 
 		if( a != value_size-1 )
 		{
@@ -583,8 +620,6 @@ public:
 	}
 
 
-
-
 	/*!
 		this method looks for the highest set bit
 		
@@ -607,21 +642,14 @@ public:
 			// is zero
 			index = 0;
 
-			TTMATH_LOG("UInt::FindLeadingBit")
-
 		return false;
 		}
 		
 		// table[table_id] != 0
 		index = FindLeadingBitInWord( table[table_id] );
 
-		TTMATH_LOG("UInt::FindLeadingBit")
-
 	return true;
 	}
-	
-
-
 
 
 	/*!
@@ -638,8 +666,6 @@ public:
 
 		uint temp = table[index];
 		uint res  = SetBitInWord(temp, bit);
-
-		TTMATH_LOG("UInt::GetBit")
 
 	return res;
 	}
@@ -758,42 +784,38 @@ public:
 	/*!
 		multiplication: this = this * ss2
 
-		it returns a carry if it has been
+		it can return a carry
 	*/
 	uint MulInt(uint ss2)
 	{
-	uint r2,r1;
+	uint r1, r2, x1;
+	uint c = 0;
 
-		UInt<value_size> u( *this );
+		UInt<value_size> u(*this);
 		SetZero();
 
-		for(uint x1=0 ; x1<value_size ; ++x1)
+		if( ss2 == 0 )
 		{
-			MulTwoWords(u.table[x1], ss2, &r2, &r1 );
-			
-			
-			if( x1 <= value_size - 2 )
-			{
-				if( AddTwoInts(r2,r1,x1) )
-					return 1;
-			}
-			else
-			{
-				// last iteration:
-				// x1 = value_size - 1;
-
-				if( r2 )
-					return 1;
-
-				if( AddInt(r1, x1) )
-					return 1;
-			}
+			TTMATH_LOGC("UInt::MulInt(uint)", 0)
+			return 0;
 		}
 
-		TTMATH_LOG("UInt::MulInt(uint)")
+		for(x1=0 ; x1<value_size-1 ; ++x1)
+		{
+			MulTwoWords(u.table[x1], ss2, &r2, &r1);
+			c += AddTwoInts(r2,r1,x1);
+		}
 
-	return 0;
+		// x1 = value_size-1  (last word)
+		MulTwoWords(u.table[x1], ss2, &r2, &r1);
+		c += (r2!=0) ? 1 : 0;
+		c += AddInt(r1, x1);
+
+		TTMATH_LOGC("UInt::MulInt(uint)", c)
+
+	return (c==0)? 0 : 1;
 	}
+
 
 	/*!
 		multiplication: result = this * ss2
@@ -802,16 +824,21 @@ public:
 		if so there will not be a carry
 	*/
 	template<uint result_size>
-	uint MulInt(uint ss2, UInt<result_size> & result)
+	void MulInt(uint ss2, UInt<result_size> & result) const
 	{
+	TTMATH_ASSERT( result_size > value_size )
+
 	uint r2,r1;
 	uint x1size=value_size;
 	uint x1start=0;
 
-		if( value_size >= result_size )
-			return 1;
-
 		result.SetZero();
+
+		if( ss2 == 0 )
+		{
+			TTMATH_VECTOR_LOG("UInt::MulInt(uint, UInt<>)", result.table, result_size)
+			return;
+		}
 
 		if( value_size > 2 )
 		{	
@@ -820,10 +847,10 @@ public:
 
 			for(x1size=value_size ; x1size>0 && table[x1size-1]==0 ; --x1size);
 
-			if( x1size==0 )
+			if( x1size == 0 )
 			{
-				TTMATH_LOG("UInt::MulInt(uint, UInt<>)")
-				return 0;
+				TTMATH_VECTOR_LOG("UInt::MulInt(uint, UInt<>)", result.table, result_size)
+				return;
 			}
 
 			for(x1start=0 ; x1start<x1size && table[x1start]==0 ; ++x1start);
@@ -835,10 +862,9 @@ public:
 			result.AddTwoInts(r2,r1,x1);
 		}
 
+		TTMATH_VECTOR_LOG("UInt::MulInt(uint, UInt<>)", result.table, result_size)
 
-		TTMATH_LOG("UInt::MulInt(uint, UInt<>)")
-
-	return 0;
+	return;
 	}
 
 
@@ -919,19 +945,19 @@ public:
 		{
 			if( Add(*this) )
 			{
-				TTMATH_LOG("UInt::Mul1")
+				TTMATH_LOGC("UInt::Mul1", 1)
 				return 1;
 			}
 
 			if( ss1.Rcl(1) )
 				if( Add(ss2) )
 				{
-					TTMATH_LOG("UInt::Mul1")
+					TTMATH_LOGC("UInt::Mul1", 1)
 					return 1;
 				}
 		}
 
-		TTMATH_LOG("UInt::Mul1")
+		TTMATH_LOGC("UInt::Mul1", 0)
 
 	return 0;
 	}
@@ -1001,7 +1027,7 @@ public:
 				break;
 			}
 
-		TTMATH_LOG("UInt::Mul2")
+		TTMATH_LOGC("UInt::Mul2", c)
 
 	return c;
 	}
@@ -1125,7 +1151,7 @@ public:
 				break;
 			}
 
-		TTMATH_LOG("UInt::Mul3")
+		TTMATH_LOGC("UInt::Mul3", c)
 
 	return c;
 	}
@@ -1347,7 +1373,7 @@ public:
 				break;
 			}
 
-		TTMATH_LOG("UInt::MulFastest")
+		TTMATH_LOGC("UInt::MulFastest", c)
 
 	return c;
 	}
@@ -1384,7 +1410,7 @@ public:
 		uint distancex2 = x2size - x2start;
 
 		if( distancex1 < 3 || distancex2 < 3 )
-			// either 'this' or 'ss2' have only 2 (or 1) item different from zero (side by side)
+			// either 'this' or 'ss2' have only 2 (or 1) items different from zero (side by side)
 			// (this condition in the future can be improved)
 			return Mul2Big3<value_size>(table, ss2.table, result, x1start, x1size, x2start, x2size);
 
@@ -1592,7 +1618,7 @@ private:
 public:
 
 	/*!
-		the first division's algorithm
+		the first division algorithm
 		radix 2
 	*/
 	uint Div1(const UInt<value_size> & divisor, UInt<value_size> * remainder = 0)
@@ -2190,7 +2216,7 @@ public:
 
 		return values:
 		0 - ok
-		1 - carry or
+		1 - carry
 		2 - incorrect argument (0^0)
 	*/
 	uint Pow(UInt<value_size> pow)
@@ -2208,7 +2234,7 @@ public:
 			if( pow.table[0] & 1 )
 				if( result.Mul(start) )
 				{
-					TTMATH_LOG("UInt::Pow(UInt<>)")
+					TTMATH_LOGC("UInt::Pow(UInt<>)", 1)
 					return 1;
 				}
 
@@ -2216,7 +2242,7 @@ public:
 			// in the second Mul algorithm we can use start.Mul(start) directly (there is no TTMATH_ASSERT_REFERENCE there)
 			if( start.Mul(start_temp) )
 			{
-				TTMATH_LOG("UInt::Pow(UInt<>)")
+				TTMATH_LOGC("UInt::Pow(UInt<>)", 1)
 				return 1;
 			}
 
@@ -2225,7 +2251,7 @@ public:
 
 		*this = result;
 
-		TTMATH_LOG("UInt::Pow(UInt<>)")
+		TTMATH_LOGC("UInt::Pow(UInt<>)", 0)
 
 	return 0;
 	}
@@ -2311,7 +2337,7 @@ public:
 
 	/*!
 	*
-	*	conversion method
+	*	conversion methods
 	*
 	*/
 
@@ -2347,12 +2373,12 @@ public:
 			for( ; i<argument_size ; ++i)
 				if( p.table[i] != 0 )
 				{
-					TTMATH_LOG("UInt::FromUInt(UInt<>)")
+					TTMATH_LOGC("UInt::FromUInt(UInt<>)", 1)
 					return 1;
 				}
 		}
 
-		TTMATH_LOG("UInt::FromUInt(UInt<>)")
+		TTMATH_LOGC("UInt::FromUInt(UInt<>)", 0)
 
 	return 0;
 	}
@@ -2382,9 +2408,7 @@ public:
 	{
 		FromUInt(p);
 
-		TTMATH_LOG("UInt::operator=(UInt<argument_size>)")
-
-		return *this;
+	return *this;
 	}
 
 
@@ -2393,7 +2417,8 @@ public:
 	*/
 	UInt<value_size> & operator=(const UInt<value_size> & p)
 	{
-		FromUInt(p);
+		for(uint i=0 ; i<value_size ; ++i)
+			table[i] = p.table[i];
 
 		TTMATH_LOG("UInt::operator=(UInt<>)")
 
@@ -2408,8 +2433,6 @@ public:
 	{
 		FromUInt(i);
 
-		TTMATH_LOG("UInt::operator=(uint)")
-
 	return *this;
 	}
 
@@ -2420,8 +2443,6 @@ public:
 	UInt(uint i)
 	{
 		FromUInt(i);
-
-		TTMATH_LOG("UInt::UInt(uint)")
 	}
 
 
@@ -2441,8 +2462,6 @@ public:
 	{
 		FromUInt(uint(i));
 
-		TTMATH_LOG("UInt::operator=(sint)")
-
 	return *this;
 	}
 
@@ -2455,8 +2474,6 @@ public:
 	UInt(sint i)
 	{
 		FromUInt(uint(i));
-
-		TTMATH_LOG("UInt::UInt(sint)")
 	}
 
 
@@ -2487,8 +2504,6 @@ public:
 	{
 		FromUInt(uint(i));
 
-		TTMATH_LOG("UInt64::operator=(unsigned int)")
-
 	return *this;
 	}
 
@@ -2502,8 +2517,6 @@ public:
 	UInt(unsigned int i)
 	{
 		FromUInt(uint(i));
-
-		TTMATH_LOG("UInt64::UInt(unsigned int)")
 	}
 
 
@@ -2518,8 +2531,6 @@ public:
 	UInt<value_size> & operator=(signed int i)
 	{
 		FromUInt(uint(i));
-
-		TTMATH_LOG("UInt64::operator=(signed int)")
 
 	return *this;
 	}
@@ -2536,8 +2547,6 @@ public:
 	UInt(signed int i)
 	{
 		FromUInt(uint(i));
-
-		TTMATH_LOG("UInt64::UInt(signed int)")
 	}
 
 
@@ -2553,8 +2562,6 @@ public:
 	UInt(const char * s)
 	{
 		FromString(s);
-
-		TTMATH_LOG("UInt::UInt(const char *)")
 	}
 
 
@@ -2564,8 +2571,6 @@ public:
 	UInt(const wchar_t * s)
 	{
 		FromString(s);
-
-		TTMATH_LOG("UInt::UInt(const wchar_t *)")
 	}
 
 
@@ -2590,13 +2595,14 @@ public:
 	/*!
 		a default constructor
 
-		we don't clear table etc.
+		we don't clear the table
 	*/
 	UInt()
 	{
 	// when macro TTMATH_DEBUG_LOG is defined
 	// we set special values to the table
 	// in order to be everywhere the same value of the UInt object
+	// without this it would be difficult to analyse the log file
 	#ifdef TTMATH_DEBUG_LOG
 		#ifdef TTMATH_PLATFORM32
 				for(uint i=0 ; i<value_size ; ++i)
@@ -2614,7 +2620,8 @@ public:
 	*/
 	UInt(const UInt<value_size> & u)
 	{
-		FromUInt(u);
+		for(uint i=0 ; i<value_size ; ++i)
+			table[i] = u.table[i];
 
 		TTMATH_LOG("UInt::UInt(UInt<>)")
 	}
@@ -2629,8 +2636,6 @@ public:
 	{
 		// look that 'size' we still set as 'value_size' and not as u.value_size
 		FromUInt(u);
-
-		TTMATH_LOG("UInt::UInt(UInt<argument_size>)")
 	}
 
 
@@ -2717,7 +2722,7 @@ private:
 
 		SetZero();
 		temp.SetZero();
-		SkipWhiteCharacters(s);
+		Misc::SkipWhiteCharacters(s);
 
 		if( after_source )
 			*after_source = s;
@@ -2746,7 +2751,7 @@ private:
 		if( after_source )
 			*after_source = s;
 
-		TTMATH_LOG("UInt::FromString")
+		TTMATH_LOGC("UInt::FromString", c)
 
 	return (c==0)? 0 : 1;
 	}
@@ -3061,8 +3066,6 @@ public:
 	{
 		Sub(p2);
 
-		TTMATH_LOG("UInt::operator-=")
-
 	return *this;
 	}
 
@@ -3078,8 +3081,6 @@ public:
 	UInt<value_size> & operator+=(const UInt<value_size> & p2)
 	{
 		Add(p2);
-
-		TTMATH_LOG("UInt::operator+=")
 
 	return *this;
 	}
@@ -3099,8 +3100,6 @@ public:
 	{
 		Mul(p2);
 
-		TTMATH_LOG("UInt::operator*=")
-
 	return *this;
 	}
 
@@ -3118,8 +3117,6 @@ public:
 	UInt<value_size> & operator/=(const UInt<value_size> & p2)
 	{
 		Div(p2);
-
-		TTMATH_LOG("UInt::operator/=")
 
 	return *this;
 	}
@@ -3145,8 +3142,6 @@ public:
 
 		operator=(remainder);
 
-		TTMATH_LOG("UInt::operator%=")
-
 	return *this;
 	}
 
@@ -3158,10 +3153,9 @@ public:
 	{
 		AddOne();
 
-		TTMATH_LOG("UInt::operator++")
-
 	return *this;
 	}
+
 
 	/*!
 		Postfix operator e.g variable++
@@ -3172,8 +3166,6 @@ public:
 
 		AddOne();
 
-		TTMATH_LOG("UInt::operator++(int)")
-
 	return temp;
 	}
 
@@ -3181,8 +3173,6 @@ public:
 	UInt<value_size> & operator--()
 	{
 		SubOne();
-
-		TTMATH_LOG("UInt::operator--")
 
 	return *this;
 	}
@@ -3193,8 +3183,6 @@ public:
 	UInt<value_size> temp( *this );
 
 		SubOne();
-
-		TTMATH_LOG("UInt::operator--(int)")
 
 	return temp;
 	}

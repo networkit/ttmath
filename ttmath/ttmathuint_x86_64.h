@@ -142,7 +142,7 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt::Add")
+		TTMATH_LOGC("UInt::Add", c)
 	
 	return c;
 	}
@@ -214,7 +214,7 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt::AddInt")
+		TTMATH_LOGC("UInt::AddInt", c)
 	
 	return c;
 	}
@@ -302,7 +302,7 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt::AddTwoInts")
+		TTMATH_LOGC("UInt::AddTwoInts", c)
 
 	return c;
 	}
@@ -390,7 +390,7 @@ namespace ttmath
 
 		#endif
 
-//		TTMATH_LOG("UInt::AddVector")
+		TTMATH_VECTOR_LOGC("UInt::AddVector", c, result, ss1_size)
 
 	return c;
 	}
@@ -452,7 +452,7 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt::Sub")
+		TTMATH_LOGC("UInt::Sub", c)
 
 	return c;
 	}
@@ -523,7 +523,7 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt::SubInt")
+		TTMATH_LOGC("UInt::SubInt", c)
 
 	return c;
 	}
@@ -613,7 +613,7 @@ namespace ttmath
 
 		#endif
 
-//		TTMATH_LOG("UInt::SubVector")
+		TTMATH_VECTOR_LOGC("UInt::SubVector", c, result, ss1_size)
 
 	return c;
 	}
@@ -673,7 +673,7 @@ namespace ttmath
 	
 		#endif
 
-		TTMATH_LOG("UInt::Rcl2_one")
+		TTMATH_LOGC("UInt::Rcl2_one", c)
 
 	return c;
 	}
@@ -731,7 +731,7 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt::Rcr2_one")
+		TTMATH_LOGC("UInt::Rcr2_one", c)
 
 	return c;
 	}
@@ -810,7 +810,7 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt::Rcl2")
+		TTMATH_LOGC("UInt::Rcl2", c)
 
 	return c;
 	}
@@ -890,7 +890,7 @@ namespace ttmath
 
 		#endif
 
-		TTMATH_LOG("UInt::Rcr2")
+		TTMATH_LOGC("UInt::Rcr2", c)
 
 	return c;
 	}
