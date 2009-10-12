@@ -4169,19 +4169,65 @@ public:
 			// two last bits are different
 			if( a.AboutEqualWithoutSign(b, 2) ) // the result is true
 				std::cout << "true" << std::endl;
-	*/
-	bool AboutEqualWithoutSign(const Big<exp,man> & ss2, uint nBitsToIgnore) const
-	{
-		/*  not finished, should be added testing then exponents are different about one  */
 
-		// there is no sense to ignore the whole mantissas
-		TTMATH_ASSERT( nBitsToIgnore < man*TTMATH_BITS_PER_UINT )
+
+		***warning broken*** doesn't work if 'this' or 'ss2' is zero
+
+
+	*/
+	bool AboutEqualWithoutSign(const Big<exp,man> & ss2, uint ignore_bits = 4) const
+	{
+		TTMATH_ASSERT( ignore_bits < man*TTMATH_BITS_PER_UINT )
 
 		if( IsZero() && ss2.IsZero() )
 			return true;
 
-		uint words = nBitsToIgnore / TTMATH_BITS_PER_UINT;
-		uint bits  = nBitsToIgnore % TTMATH_BITS_PER_UINT;
+		if( exponent == ss2.exponent )
+			return AboutEqualExpEqual(mantissa, ss2.mantissa, ignore_bits);
+
+
+		UInt<exp> exp_diff;
+		exp_diff = exponent;
+		exp_diff.Sub(ss2.exponent);
+
+		if( exp_diff == 1 )
+		{
+			// exponent is > ss2.exponent
+			UInt<man> man_diff(mantissa);
+			UInt<man> man_temp(ss2.mantissa);
+			man_temp.Rcr(1, 0);
+			man_diff.Sub(man_temp);
+
+			return AboutEqualZero(man_diff, ignore_bits);
+		}
+		else
+		if( exp_diff == -1 )
+		{
+			// exponent is < ss2.exponent
+			UInt<man> man_diff(ss2.mantissa);
+			UInt<man> man_temp(mantissa);
+			man_temp.Rcr(1, 0);
+			man_diff.Sub(man_temp);
+			
+			return AboutEqualZero(man_diff, ignore_bits);
+		}
+
+		// exp_diff is different from zero, one or minus one
+
+	return false;
+	}
+
+private:
+
+
+	/*!
+		an auxiliary method for calculating AboutEqualWithoutSign()
+		we're using it when exponent is equal ss2.exponent
+	*/
+	bool AboutEqualExpEqual(const UInt<man> & man1, const UInt<man> & man2, uint ignore_bits) const
+	{
+		uint words = ignore_bits / TTMATH_BITS_PER_UINT;
+		uint bits  = ignore_bits % TTMATH_BITS_PER_UINT;
 		uint i;
 
 		if( bits == 0 )
@@ -4193,46 +4239,53 @@ public:
 			i = words + 1;
 			uint mask = TTMATH_UINT_MAX_VALUE << bits;
 
-			if( (mantissa.table[words] & mask) != (ss2.mantissa.table[words] & mask) )
+			if( (man1.table[words] & mask) != (man2.table[words] & mask) )
 				return false;
 		}
 
 		for( ; i<man ; ++i )
 		{
-			if( mantissa.table[i] != ss2.mantissa.table[i] )
+			if( man1.table[i] != man2.table[i] )
 				return false;
 		}
-
-		if( exponent != ss2.exponent )
-			return false;
 
 	return true;
 	}
 
 
 	/*!
-		this method compares this and ss2 by ingoring some nBitsToIgnore last bits from mantissas
-		if nBitsToIgnore is 0 then the method is equivalent to operator==() operator
-		(we don't check the NaN flag)
-
-		this method is similar to AboutEqualWithoutSign but the signs are checked now
-		sample:
-			Big<1,1> a, b;
-			a = "456.6789";
-			b = "456.678901";
-			// binary a: 111001000.10101101110011000101111
-			// binary b: 111001000.10101101110011000110111
-			// five last bits are different
-			if( a.AboutEqual(b, 5) ) // the result is true
-				std::cout << "true" << std::endl;
+		an auxiliary method for calculating AboutEqualWithoutSign()
 	*/
-	bool AboutEqual(const Big<exp,man> & ss2, uint nBitsToIgnore) const
+	bool AboutEqualZero(const UInt<man> & man_diff, uint ignore_bits) const
 	{
-		if( IsSign() != ss2.IsSign() )
-			return false;
+		uint words = ignore_bits / TTMATH_BITS_PER_UINT;
+		uint bits  = ignore_bits % TTMATH_BITS_PER_UINT;
+		uint i;
 
-	return AboutEqualWithoutSign(ss2, nBitsToIgnore);
+		if( bits == 0 )
+		{
+			i = words;
+		}
+		else
+		{
+			i = words + 1;
+			uint mask = TTMATH_UINT_MAX_VALUE << bits;
+
+			if( (man_diff.table[words] & mask) != 0 )
+				return false;
+		}
+
+		for( ; i<man ; ++i )
+		{
+			if( man_diff.table[i] != 0 )
+				return false;
+		}
+
+	return true;
 	}
+
+
+public:
 
 
 	bool operator<(const Big<exp,man> & ss2) const

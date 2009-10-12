@@ -19,9 +19,6 @@ Version 0.9.0 prerelease (2009.10.03):
     * added:   multithread support for Big<> class
                you should compile with TTMATH_MULTITHREADS
                and use TTMATH_MULTITHREADS_HELPER macro somewhere in your *.cpp file
-    * added:   Big::AboutEqual(const Big<exp,man> & ss2, int nBitsToIgnore)
-               Big::AboutEqualWithoutSign(const Big<exp,man> & ss2, int nBitsToIgnore)
-               the last nBitsToIgnore bits from mantissas will be skipped when comparing
     * added:   x86_64 asm code for Microsoft Visual compiler
                file: ttmathuint_x86_64_msvc.asm
                (this file should be compiled first because MS VC doesn't support inline assembler in x86_64 mode) 
