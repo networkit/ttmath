@@ -1,4 +1,4 @@
-Version 0.9.0 prerelease (2009.10.03):
+Version 0.9.0 prerelease (2009.10.13):
     * fixed:   Big::operator>>(std::istream&, Big<> &) didn't recognize values
                in scientific mode (with 'e' character)
     * fixed:   UInt::SetBitInWord(uint & value, uint bit) set 1 if the bit was 
@@ -32,6 +32,9 @@ Version 0.9.0 prerelease (2009.10.03):
     * added:   macro: TTMATH_BITS(min_bits)
 		       which returns the number of machine words 
 		       capable to hold min_bits bits
+    * added:   bool Parser::Calculated()
+               this method returns true is something was calculated
+               (at least one mathematical operator was used or a function or variable)
     * changed: Factorial() is using the Gamma() function now
     * changed: Big::Div(ss2)
                Big::Mod(ss2)

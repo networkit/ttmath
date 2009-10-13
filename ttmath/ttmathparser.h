@@ -439,6 +439,11 @@ std::string wide_to_ansi;
 
 
 /*!
+	true if something was calculated (at least one mathematical operator was used or a function or a variable)
+*/
+bool calculated;
+
+/*!
 	we're using this method for reporting an error
 */
 static void Error(ErrorCode code)
@@ -566,6 +571,7 @@ bool GetValueOfUserDefinedVariable(const std::string & variable_name,ValueType &
 		return false;
 
 	result = RecurrenceParsingVariablesOrFunction(true, variable_name, string_value);
+	calculated = true;
 
 return true;
 }
@@ -614,6 +620,7 @@ ValueType result;
 		Error( err_unknown_variable );
 
 	(result.*(i->second))();
+	calculated = true;
 
 return result;
 }
@@ -1432,6 +1439,7 @@ bool GetValueOfUserDefinedFunction(const std::string & function_name, int amount
 	}
 
 	stack[sindex-1].value = RecurrenceParsingVariablesOrFunction(false, function_name, string_value, &local_variables);
+	calculated = true;
 
 return true;
 }
@@ -1464,6 +1472,7 @@ void CallFunction(const std::string & function_name, int amount_of_args, int sin
 		calling the specify function
 	*/
 	(this->*(i->second))(sindex, amount_of_args, stack[sindex-1].value);
+	calculated = true;
 }
 
 
@@ -1982,6 +1991,8 @@ void MakeStandardMathematicOperation(ValueType & value1, typename MatOperator::T
 									const ValueType & value2)
 {
 uint res;
+
+	calculated = true;
 
 	switch( mat_operator )
 	{
@@ -2540,7 +2551,8 @@ ErrorCode Parse(const char * str)
 	stack_index  = 0;
 	pstring      = str;
 	error        = err_ok;
-	
+	calculated   = false;
+
 	stack.resize( default_stack_size );
 
 	try
@@ -2550,6 +2562,7 @@ ErrorCode Parse(const char * str)
 	catch(ErrorCode c)
 	{
 		error = c;
+		calculated = false;
 	}
 
 	NormalizeStack();
@@ -2586,6 +2599,21 @@ ErrorCode Parse(const std::wstring & str)
 	return Parse(str.c_str());
 }
 
+
+/*!
+	this method returns true is something was calculated
+	(at least one mathematical operator was used or a function or variable)
+	e.g. the string to Parse() looked like this:
+	"1+1"
+	"2*3"
+	"sin(5)"
+
+	if the string was e.g. "678" the result is false
+*/
+bool Calculated()
+{
+	return calculated;
+}
 
 };
 
