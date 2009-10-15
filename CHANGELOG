@@ -8,6 +8,7 @@ Version 0.9.0 prerelease (2009.10.13):
                there was a buffer overflow when value_size was equal 1
     * fixed:   UInt::AddVector() and UInt::SubVector() didn't want to compile
                when macro TTMATH_NOASM was defined
+    * fixed:   buffer overflow in Big::ToInt(Int<int_size> & result)
     * added:   support for wide characters (wchar_t, std::wstring)
     * added:   Big::IsInteger()
                returns true if the value is integer (without fraction)

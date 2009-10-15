@@ -2011,18 +2011,20 @@ public:
 		if( exponent > maxbit + sint(int_size*TTMATH_BITS_PER_UINT) )
 			// if exponent > (maxbit + sint(int_size*TTMATH_BITS_PER_UINT)) the value can't be passed
 			// into the 'Int<int_size>' type (it's too big)
+			return 1;
 
 		if( exponent <= maxbit )
 			// our value is from range (-1,1) and we return zero
 			return 0;
 
-		UInt<man> mantissa_temp(mantissa);
 		sint how_many_bits = exponent.ToInt();
 
 		if( how_many_bits < 0 )
 		{
 			how_many_bits = -how_many_bits;
 			uint index    = how_many_bits / TTMATH_BITS_PER_UINT;
+
+			UInt<man> mantissa_temp(mantissa);
 			mantissa_temp.Rcr( how_many_bits % TTMATH_BITS_PER_UINT, 0 );
 
 			for(uint i=index, a=0 ; i<man ; ++i,++a)
@@ -2033,7 +2035,7 @@ public:
 			uint index = how_many_bits / TTMATH_BITS_PER_UINT;
 
 			for(uint i=0 ; i<man ; ++i)
-				result.table[index+i] = mantissa_temp.table[i];
+				result.table[index+i] = mantissa.table[i];
 
 			result.Rcl( how_many_bits % TTMATH_BITS_PER_UINT, 0 );
 		}
