@@ -1258,15 +1258,18 @@ public:
 		result.SetOne();
 		uint c = 0;
 
-		while( !c && !pow.IsZero() )
+		while( !c )
 		{
 			if( pow.table[0] & 1 )
 				c += result.Mul(start);
 
+			pow.Rcr(1);
+
+			if( pow.IsZero() )
+				break;
+
 			start_temp = start;
 			c += start.Mul(start_temp);
-
-			pow.Rcr(1);
 		}
 
 		*this = result;
@@ -1374,15 +1377,18 @@ public:
 		one.SetOne();
 		result = one;
 
-		while( !c && pow >= one )
+		while( !c )
 		{
 			if( pow.Mod2() )
 				c += result.Mul(start);
 
+			c += pow.exponent.Sub( e_one );
+
+			if( pow < one )
+				break;
+
 			start_temp = start;
 			c += start.Mul(start_temp);
-
-			c += pow.exponent.Sub( e_one );
 		}
 
 		*this = result;

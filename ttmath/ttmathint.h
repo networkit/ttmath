@@ -514,7 +514,7 @@ public:
 			return Pow2(pow);
 
 		if( UInt<value_size>::IsZero() )
-			// if 'p' is negative then
+			// if 'pow' is negative then
 			// 'this' must be different from zero
 			return 2;
 
