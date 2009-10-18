@@ -1,4 +1,4 @@
-Version 0.9.0 prerelease (2009.10.16):
+Version 0.9.0 prerelease (2009.10.18):
     * fixed:   Big::operator>>(std::istream&, Big<> &) didn't recognize values
                in scientific mode (with 'e' character)
     * fixed:   UInt::SetBitInWord(uint & value, uint bit) set 1 if the bit was 
@@ -42,6 +42,8 @@ Version 0.9.0 prerelease (2009.10.16):
     * added:   bool Parser::Calculated()
                this method returns true is something was calculated
                (at least one mathematical operator was used or a function or variable)
+    * added:   to the parser: operator percentage
+               e.g. 1000-50%=1000-(1000*0,5)=500
     * changed: Factorial() is using the Gamma() function now
     * changed: Big::Div(ss2)
                Big::Mod(ss2)

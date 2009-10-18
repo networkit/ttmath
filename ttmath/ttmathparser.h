@@ -1940,6 +1940,31 @@ typename OperatorsTable::iterator iter_old, iter_new;
 
 
 /*!
+	this method makes a calculation for the percentage operator
+	e.g.
+	1000-50% = 1000-(1000*0,5) = 500
+*/
+void OperatorPercentage()
+{
+	if( stack_index < 3										||
+		stack[stack_index-1].type != Item::numerical_value	||
+		stack[stack_index-2].type != Item::mat_operator		||
+		stack[stack_index-3].type != Item::numerical_value	)
+		Error(err_percent_from);
+
+	++pstring;
+	SkipWhiteCharacters();
+
+	uint c = 0;
+	c += stack[stack_index-1].value.Div(100);
+	c += stack[stack_index-1].value.Mul(stack[stack_index-3].value);
+
+	if( c )
+		Error(err_overflow);
+}
+
+
+/*!
 	this method reads a mathematic operators
 	or the final bracket or the semicolon operator
 
@@ -1950,7 +1975,11 @@ typename OperatorsTable::iterator iter_old, iter_new;
 int ReadOperator(Item & result)
 {
 	SkipWhiteCharacters();
-	
+
+	if( *pstring == '%' )
+		OperatorPercentage();
+
+
 	if( *pstring == 0 )
 		return 1;
 	else
@@ -2054,7 +2083,6 @@ uint res;
 		if( res == 2 ) Error( err_improper_argument );
 
 		break;
-
 
 	default:
 		/*

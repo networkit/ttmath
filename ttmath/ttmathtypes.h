@@ -331,7 +331,8 @@ namespace ttmath
 		err_object_exists,
 		err_unknown_object,
 		err_still_calculating,
-		err_in_short_form_used_function
+		err_in_short_form_used_function,
+		err_percent_from
 	};
 
 
