@@ -1,20 +1,4 @@
-Version 0.9.0 prerelease (2009.10.18):
-    * fixed:   Big::operator>>(std::istream&, Big<> &) didn't recognize values
-               in scientific mode (with 'e' character)
-    * fixed:   UInt::SetBitInWord(uint & value, uint bit) set 1 if the bit was 
-               equal 1 (should be set 2)
-               this affected only no-asm parts - when macro TTMATH_NOASM was defined
-    * fixed:   UInt<value_size>::MulInt(uint ss2)
-               there was a buffer overflow when value_size was equal 1
-    * fixed:   UInt::AddVector() and UInt::SubVector() didn't want to compile
-               when macro TTMATH_NOASM was defined
-    * fixed:   buffer overflow in Big::ToInt(Int<int_size> & result)
-    * fixed:   powering algorithm in:
-               UInt::Pow(UInt<value_size> pow)
-               Big::Pow(UInt<pow_size> pow)
-               Big::PowUInt(Big<exp, man> pow)
-               when 'pow' was sufficient large the algorithm returned carry
-               but the result could have been calculated correctly
+Version 0.9.0 prerelease (2009.10.25):
     * added:   support for wide characters (wchar_t, std::wstring)
     * added:   Big::IsInteger()
                returns true if the value is integer (without fraction)
@@ -52,6 +36,26 @@ Version 0.9.0 prerelease (2009.10.18):
     * removed: Parser<>::SetFactorialMax() method
                the factorial() is such a fast now that we don't need the method longer
     * removed: ErrorCode::err_too_big_factorial
+
+
+Version 0.8.6 (2009.10.25):
+    * fixed:   UInt::SetBitInWord(uint & value, uint bit) set 1 if the bit was
+               equal 1 (should be set 2)
+               this affected only no-asm parts - when macro TTMATH_NOASM was defined
+    * fixed:   UInt<value_size>::MulInt(uint ss2)
+               there was a buffer overflow when value_size was equal 1
+    * fixed:   UInt::AddVector() and UInt::SubVector() didn't want to compile
+               when macro TTMATH_NOASM was defined
+    * fixed:   Big::operator>> didn't correctly recognize values in scientific mode (with 'e' character)
+    * fixed:   Int::FromString(const tt_string & s, uint b = 10)
+               didn't use 'b' (always was '10')
+    * fixed:   buffer overflow in Big::ToInt(Int<int_size> & result)
+    * fixed:   powering algorithm in:
+               UInt::Pow(UInt<value_size> pow)
+               Big::Pow(UInt<pow_size> pow)
+               Big::PowUInt(Big<exp, man> pow)
+               when 'pow' was sufficient large the algorithm returned carry
+               but the result could have been calculated correctly
 
 
 Version 0.8.5 (2009.06.16):
