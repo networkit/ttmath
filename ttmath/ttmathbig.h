@@ -1509,6 +1509,7 @@ public:
 	}
 
 
+
 private:
 
 #ifdef TTMATH_CONSTANTSGENERATOR

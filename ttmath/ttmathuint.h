@@ -2252,6 +2252,50 @@ public:
 	}
 
 
+	/*!
+		square root
+		e.g. Sqrt(9) = 3
+		('digit-by-digit' algorithm)
+	*/
+	void Sqrt()
+	{
+	UInt<value_size> bit, temp;
+
+		if( IsZero() )
+			return;
+
+		UInt<value_size> value(*this);
+
+		SetZero();
+		bit.SetZero();
+		bit.table[value_size-1] = (TTMATH_UINT_HIGHEST_BIT >> 1);
+		
+		while( bit > value )
+			bit.Rcr(2);
+
+		while( !bit.IsZero() )
+		{
+			temp = *this;
+			temp.Add(bit);
+
+			if( value >= temp )
+			{
+				value.Sub(temp);
+				Rcr(1);
+				Add(bit);
+			}
+			else
+			{
+				Rcr(1);
+			}
+
+			bit.Rcr(2);
+		}
+
+		TTMATH_LOG("UInt::Sqrt")
+	}
+
+
 
 	/*!
 		this method sets n first bits to value zero

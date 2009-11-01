@@ -534,6 +534,7 @@ public:
 	}
 
 
+
 	/*!
 	*
 	*	convertion methods
