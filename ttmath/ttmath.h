@@ -1856,144 +1856,187 @@ namespace ttmath
 	namespace auxiliaryfunctions
 	{
 
-		template<class ValueType>
-		bool RootCheckIndexSign(ValueType & x, const ValueType & index, ErrorCode * err)
+	template<class ValueType>
+	bool RootCheckIndexSign(ValueType & x, const ValueType & index, ErrorCode * err)
+	{
+		if( index.IsSign() )
 		{
-			if( index.IsSign() )
-			{
-				// index cannot be negative
-				if( err )
-					*err = err_improper_argument;
+			// index cannot be negative
+			if( err )
+				*err = err_improper_argument;
 
-				x.SetNan();
+			x.SetNan();
 
-			return true;
-			}
-
-		return false;
+		return true;
 		}
 
-
-		template<class ValueType>
-		bool RootCheckIndexZero(ValueType & x, const ValueType & index, ErrorCode * err)
-		{
-			if( index.IsZero() )
-			{
-				if( x.IsZero() )
-				{
-					// there isn't root(0;0) - we assume it's not defined
-					if( err )
-						*err = err_improper_argument;
-
-					x.SetNan();
-
-				return true;
-				}
-		
-				// root(x;0) is 1 (if x!=0)
-				x.SetOne();
-
-				if( err )
-					*err = err_ok;
-
-			return true;
-			}
-
-		return false;
-		}
+	return false;
+	}
 
 
-		template<class ValueType>
-		bool RootCheckIndexOne(const ValueType & index, ErrorCode * err)
-		{
-			ValueType one;
-			one.SetOne();
-
-			if( index == one )
-			{
-				//root(x;1) is x
-				// we do it because if we used the PowFrac function
-				// we would lose the precision
-				if( err )
-					*err = err_ok;
-
-			return true;
-			}
-
-		return false;
-		}
-
-
-		template<class ValueType>
-		bool RootCheckIndexFrac(ValueType & x, const ValueType & index, ErrorCode * err)
-		{
-			if( !index.IsInteger() )
-			{
-				// index must be integer
-				if( err )
-					*err = err_improper_argument;
-
-				x.SetNan();
-
-			return true;
-			}
-
-		return false;
-		}
-
-
-		template<class ValueType>
-		bool RootCheckXZero(ValueType & x, ErrorCode * err)
+	template<class ValueType>
+	bool RootCheckIndexZero(ValueType & x, const ValueType & index, ErrorCode * err)
+	{
+		if( index.IsZero() )
 		{
 			if( x.IsZero() )
 			{
-				// root(0;index) is zero (if index!=0)
-				// RootCheckIndexZero() must be called beforehand
-				x.SetZero();
-
+				// there isn't root(0;0) - we assume it's not defined
 				if( err )
-					*err = err_ok;
+					*err = err_improper_argument;
+
+				x.SetNan();
 
 			return true;
 			}
+	
+			// root(x;0) is 1 (if x!=0)
+			x.SetOne();
 
-		return false;
+			if( err )
+				*err = err_ok;
+
+		return true;
 		}
 
-
-		template<class ValueType>
-		bool RootCheckIndex(ValueType & x, const ValueType & index, ErrorCode * err, bool * change_sign)
-		{
-			*change_sign = false;
-
-			if( index.Mod2() )
-			{
-				// index is odd (1,3,5...)
-				if( x.IsSign() )
-				{
-					*change_sign = true;
-					x.Abs();
-				}
-			}
-			else
-			{
-				// index is even
-				// x cannot be negative
-				if( x.IsSign() )
-				{
-					if( err )
-						*err = err_improper_argument;
-
-					x.SetNan();
-
-					return true;
-				}
-			}
-
-		return false;
-		}
-
+	return false;
 	}
+
+
+	template<class ValueType>
+	bool RootCheckIndexOne(const ValueType & index, ErrorCode * err)
+	{
+		ValueType one;
+		one.SetOne();
+
+		if( index == one )
+		{
+			//root(x;1) is x
+			// we do it because if we used the PowFrac function
+			// we would lose the precision
+			if( err )
+				*err = err_ok;
+
+		return true;
+		}
+
+	return false;
+	}
+
+
+	template<class ValueType>
+	bool RootCheckIndexTwo(ValueType & x, const ValueType & index, ErrorCode * err)
+	{
+		if( index == 2 )
+		{
+			x = Sqrt(x, err);
+
+		return true;
+		}
+
+	return false;
+	}
+
+
+	template<class ValueType>
+	bool RootCheckIndexFrac(ValueType & x, const ValueType & index, ErrorCode * err)
+	{
+		if( !index.IsInteger() )
+		{
+			// index must be integer
+			if( err )
+				*err = err_improper_argument;
+
+			x.SetNan();
+
+		return true;
+		}
+
+	return false;
+	}
+
+
+	template<class ValueType>
+	bool RootCheckXZero(ValueType & x, ErrorCode * err)
+	{
+		if( x.IsZero() )
+		{
+			// root(0;index) is zero (if index!=0)
+			// RootCheckIndexZero() must be called beforehand
+			x.SetZero();
+
+			if( err )
+				*err = err_ok;
+
+		return true;
+		}
+
+	return false;
+	}
+
+
+	template<class ValueType>
+	bool RootCheckIndex(ValueType & x, const ValueType & index, ErrorCode * err, bool * change_sign)
+	{
+		*change_sign = false;
+
+		if( index.Mod2() )
+		{
+			// index is odd (1,3,5...)
+			if( x.IsSign() )
+			{
+				*change_sign = true;
+				x.Abs();
+			}
+		}
+		else
+		{
+			// index is even
+			// x cannot be negative
+			if( x.IsSign() )
+			{
+				if( err )
+					*err = err_improper_argument;
+
+				x.SetNan();
+
+				return true;
+			}
+		}
+
+	return false;
+	}
+
+
+	template<class ValueType>
+	uint RootCorrectInteger(ValueType & old_x, ValueType & x, const ValueType & index)
+	{
+		if( !old_x.IsInteger() || x.IsInteger() || !index.exponent.IsSign() )
+			return 0;
+
+		// old_x is integer,
+		// x is not integer,
+		// index is relatively small (index.exponent<0 or index.exponent<=0)
+		// (because we're using a special powering algorithm Big::PowUInt())
+
+		uint c = 0;
+
+		ValueType temp(x);
+		c += temp.Round();
+
+		ValueType temp_round(temp);
+		c += temp.PowUInt(index);
+
+		if( temp == old_x )
+			x = temp_round;
+
+	return (c==0)? 0 : 1;
+	}
+
+
+
+	} // namespace auxiliaryfunctions 
+
 
 
 	/*!
@@ -2026,30 +2069,33 @@ namespace ttmath
 		if( RootCheckIndexSign(x, index, err) ) return x;
 		if( RootCheckIndexZero(x, index, err) ) return x;
 		if( RootCheckIndexOne (   index, err) ) return x;
+		if( RootCheckIndexTwo (x, index, err) ) return x;
 		if( RootCheckIndexFrac(x, index, err) ) return x;
 		if( RootCheckXZero    (x,        err) ) return x;
 
 		// index integer and index!=0
 		// x!=0
 
-		uint c = 0;
+		ValueType old_x(x);
 		bool change_sign;
+
 		if( RootCheckIndex(x, index, err, &change_sign ) ) return x;
 
-		ValueType newindex;
-		newindex.SetOne();
-		c += newindex.Div(index);
-		c += x.PowFrac(newindex); // here can only be a carry
+		ValueType temp;
+		uint c = 0;
+
+		// we're using the formula: root(x ; n) = exp( ln(x) / n )
+		c += temp.Ln(x);
+		c += temp.Div(index);
+		c += x.Exp(temp);
 
 		if( change_sign )
 		{
-			// the value of x should be different from zero
-			// (x is actually tested by RootCheckXZero)
-			TTMATH_ASSERT( x.IsZero() == false )
-
+			// x is different from zero
 			x.SetSign();
 		}
 
+		c += RootCorrectInteger(old_x, x, index);
 
 		if( err )
 			*err = c ? err_overflow : err_ok;

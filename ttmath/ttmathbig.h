@@ -1511,8 +1511,7 @@ public:
 
 	/*!
 		this function calculates the square root
-
-		Sqrt(9) = 3
+		e.g. let this=9 then this.Sqrt() gives 3
 
 		return: 0 - ok
 				1 - carry
@@ -1529,11 +1528,33 @@ public:
 		if( IsZero() )
 			return 0;
 
-		Big<exp, man> pow;
-		pow.Set05();
+		Big<exp, man> old(*this);
+		Big<exp, man> ln;
+		uint c = 0;
 
-	// PowFrac can return only a carry because x is greater than zero
-	return PowFrac(pow);
+		// we're using the formula: sqrt(x) = e ^ (ln(x) / 2)
+		c += ln.Ln(*this);
+		c += ln.exponent.SubOne(); // ln = ln / 2
+		c += Exp(ln);
+
+		// above formula doesn't give accurate results for some integers
+		// e.g. Sqrt(81) would not be 9 but a value very closed to 9
+		// we're rounding the result, calculating result*result and comparing
+		// with the old value, if they are equal then the result is an integer too
+
+		if( !c && old.IsInteger() && !IsInteger() )
+		{
+			Big<exp, man> temp(*this);
+			c += temp.Round();
+
+			Big<exp, man> temp2(temp);
+			c += temp.Mul(temp2);
+
+			if( temp == old )
+				*this = temp2;
+		}
+
+	return CheckCarry(c);
 	}
 
 

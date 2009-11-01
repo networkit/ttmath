@@ -45,12 +45,16 @@ Version 0.9.0 prerelease (2009.11.01):
                uint FromString(const std::string & string, const Conv & conv, const wchar_t **, bool *)
                uint FromString(const std::wstring & string, const Conv & conv, const wchar_t **, bool *)
     * added:   UInt::Sqrt() - a new algorithm for calculating the square root
-    * added:   to the parser: function frac() - remains fraction
+    * added:   to the parser: function frac() - returns a value without the integer part
+               (only fraction remains)
     * changed: Factorial() is using the Gamma() function now
     * changed: Big::Div(ss2)
                Big::Mod(ss2)
                they return 2 when ss2 is zero
                previously returned 1
+    * changed: algorithms in Big::Sqrt() and ttmath::Root(x ; n)
+               they were not too much accurate for some integers
+               e.g. Root(16;4) returned a value very closed to 2 (not exactly 2)
     * removed: Parser<>::SetFactorialMax() method
                the factorial() is such a fast now that we don't need the method longer
     * removed: ErrorCode::err_too_big_factorial
