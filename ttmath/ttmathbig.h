@@ -1509,6 +1509,33 @@ public:
 	}
 
 
+	/*!
+		this function calculates the square root
+
+		Sqrt(9) = 3
+
+		return: 0 - ok
+				1 - carry
+		        2 - improper argument (this<0 or NaN)
+	*/
+	uint Sqrt()
+	{
+		if( IsNan() || IsSign() )
+		{
+			SetNan();
+			return 2;
+		}
+
+		if( IsZero() )
+			return 0;
+
+		Big<exp, man> pow;
+		pow.Set05();
+
+	// PowFrac can return only a carry because x is greater than zero
+	return PowFrac(pow);
+	}
+
 
 private:
 

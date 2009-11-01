@@ -1843,20 +1843,7 @@ namespace ttmath
 		return ValueType(); // NaN is set by default
 		}
 
-		if( x.IsZero() )
-		{
-			// Sqrt(0) = 0
-			if( err )
-				*err = err_ok;
-
-		return x;
-		}
-
-		ValueType pow;
-		pow.Set05();
-
-		// PowFrac can return only a carry because x is greater than zero
-		uint c = x.PowFrac(pow);
+		uint c = x.Sqrt();
 
 		if( err )
 			*err = c ? err_overflow : err_ok;
