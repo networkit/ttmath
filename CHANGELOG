@@ -45,6 +45,7 @@ Version 0.9.0 prerelease (2009.11.01):
                uint FromString(const std::string & string, const Conv & conv, const wchar_t **, bool *)
                uint FromString(const std::wstring & string, const Conv & conv, const wchar_t **, bool *)
     * added:   UInt::Sqrt() - a new algorithm for calculating the square root
+    * added:   to the parser: function frac() - remains fraction
     * changed: Factorial() is using the Gamma() function now
     * changed: Big::Div(ss2)
                Big::Mod(ss2)

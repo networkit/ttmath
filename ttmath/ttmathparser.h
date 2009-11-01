@@ -1390,6 +1390,15 @@ void Avg(int sindex, int amount_of_args, ValueType & result)
 }	
 
 
+void Frac(int sindex, int amount_of_args, ValueType & result)
+{
+	if( amount_of_args != 1 )
+		Error( err_improper_amount_of_arguments );
+
+	result = stack[sindex].value;
+	result.RemainFraction();
+}
+
 
 
 
@@ -1596,6 +1605,7 @@ void CreateFunctionsTable()
 	InsertFunctionToTable("bxor",		&Parser<ValueType>::BitXor);
 	InsertFunctionToTable("sum",		&Parser<ValueType>::Sum);
 	InsertFunctionToTable("avg",		&Parser<ValueType>::Avg);
+	InsertFunctionToTable("frac",		&Parser<ValueType>::Frac);
 }
 
 
