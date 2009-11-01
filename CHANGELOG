@@ -1,4 +1,4 @@
-Version 0.9.0 prerelease (2009.10.25):
+Version 0.9.0 prerelease (2009.11.01):
     * added:   support for wide characters (wchar_t, std::wstring)
     * added:   Big::IsInteger()
                returns true if the value is integer (without fraction)
@@ -28,6 +28,22 @@ Version 0.9.0 prerelease (2009.10.25):
                (at least one mathematical operator was used or a function or variable)
     * added:   to the parser: operator percentage
                e.g. 1000-50%=1000-(1000*0,5)=500
+    * added:   struct: Conv
+               consists of some parameters used
+               in ToString() and FromString()
+    * added:   Big::ToString() can group digits
+               e.g. 1234567 -> 1`234`567
+    * added:   Parser::SetGroup(int g)
+               Parser::SetComma(int c, int c2 = 0)
+               Parser::SetParamSep(int s)
+    * added:   uint Big::ToString(std::string & result, const Conv & conv)
+               uint Big::ToString(std::wstring & result, const Conv & conv)
+               std::string Big::ToString(const Conv & conv) const
+               std::string Big::ToString()
+    * added:   uint FromString(const char * source, const Conv & conv, const char **, bool *)
+               uint FromString(const wchar_t * source, const Conv & conv, const wchar_t **, bool *)
+               uint FromString(const std::string & string, const Conv & conv, const wchar_t **, bool *)
+               uint FromString(const std::wstring & string, const Conv & conv, const wchar_t **, bool *)
     * changed: Factorial() is using the Gamma() function now
     * changed: Big::Div(ss2)
                Big::Mod(ss2)
@@ -36,7 +52,9 @@ Version 0.9.0 prerelease (2009.10.25):
     * removed: Parser<>::SetFactorialMax() method
                the factorial() is such a fast now that we don't need the method longer
     * removed: ErrorCode::err_too_big_factorial
-
+    * removed: macros: TTMATH_COMMA_CHARACTER_1 and TTMATH_COMMA_CHARACTER_2
+               the comma characters we have in Conv struct now
+               
 
 Version 0.8.6 (2009.10.25):
     * fixed:   UInt::SetBitInWord(uint & value, uint bit) set 1 if the bit was

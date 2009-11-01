@@ -110,8 +110,7 @@ namespace ttmath
 	for example a correct input string can be:
 		"1"
 		"2.1234"
-		"2,1234"    (they are the same, we can either use a comma or a dot in values)
-		            (look at the macro TTMATH_COMMA_CHARACTER_2)
+		"2,1234"    (they are the same, by default we can either use a comma or a dot)
 		"1 + 2"
 		"(1 + 2) * 3"
 		"pi"
@@ -436,6 +435,28 @@ CGamma<ValueType> cgamma;
 	temporary object for a whole string when Parse(std::wstring) is used
 */
 std::string wide_to_ansi;
+
+
+/*!
+	group character (used when parsing)
+	default zero (not used)
+*/
+int group;
+
+
+/*!
+	characters used as a comma
+	default: '.' and ','
+	comma2 can be zero (it means it is not used)
+*/
+int comma, comma2;
+
+
+/*!
+	an additional character used as a separator between function parameters
+	(semicolon is used always)
+*/
+int param_sep;
 
 
 /*!
@@ -1713,9 +1734,15 @@ void ReadValue(Item & result, int reading_base)
 {
 const char * new_stack_pointer;
 bool value_read;
+Conv conv;
 
-	uint carry = result.value.FromString(pstring, reading_base, &new_stack_pointer, &value_read);
-	pstring   = new_stack_pointer;
+	conv.base   = base;
+	conv.comma  = comma;
+	conv.comma2 = comma2;
+	conv.group  = group;
+
+	uint carry = result.value.FromString(pstring, conv, &new_stack_pointer, &value_read);
+	pstring    = new_stack_pointer;
 
 	if( carry )
 		Error( err_overflow );
@@ -1730,10 +1757,10 @@ bool value_read;
 */
 bool ValueStarts(int character, int base)
 {
-	if( character == TTMATH_COMMA_CHARACTER_1 )
+	if( character == comma )
 		return true;
 
-	if( TTMATH_COMMA_CHARACTER_2 != 0 && character == TTMATH_COMMA_CHARACTER_2 )
+	if( comma2!=0 && character==comma2 )
 		return true;
 
 	if( Misc::CharToDigit(character, base) != -1 )
@@ -1989,7 +2016,7 @@ int ReadOperator(Item & result)
 		++pstring;
 	}
 	else
-	if( *pstring == ';' )
+	if( *pstring == ';' || (param_sep!=0 && *pstring==param_sep) )
 	{
 		result.type = Item::semicolon;
 		++pstring;
@@ -2464,12 +2491,16 @@ public:
 Parser(): default_stack_size(100)
 {
 	pstop_calculating = 0;
-	puser_variables = 0;
-	puser_functions = 0;
+	puser_variables   = 0;
+	puser_functions   = 0;
 	pfunction_local_variables = 0;
-	base = 10;
-	deg_rad_grad = 1;
-	error = err_ok;
+	base              = 10;
+	deg_rad_grad      = 1;
+	error             = err_ok;
+	group             = 0;
+	comma             = '.';
+	comma2            = ',';
+	param_sep         = 0;
 
 	CreateFunctionsTable();
 	CreateVariablesTable();
@@ -2488,7 +2519,11 @@ Parser<ValueType> & operator=(const Parser<ValueType> & p)
 	pfunction_local_variables = 0;
 	base              = p.base;
 	deg_rad_grad      = p.deg_rad_grad;
-	error             = err_ok;
+	error             = p.error;
+	group             = p.group;
+	comma             = p.comma;
+	comma2            = p.comma2;
+	param_sep         = p.param_sep;
 
 	/*
 		we don't have to call 'CreateFunctionsTable()' etc.
@@ -2515,7 +2550,8 @@ Parser(const Parser<ValueType> & p): default_stack_size(p.default_stack_size)
 
 
 /*!
-	the new base of mathematic system		
+	the new base of mathematic system
+	default is 10
 */
 void SetBase(int b)
 {
@@ -2569,6 +2605,39 @@ void SetFunctions(const Objects * pf)
 	puser_functions = pf;
 }
 
+
+/*!
+	setting the group character
+	default zero (not used)
+*/
+void SetGroup(int g)
+{
+	group = g;
+}
+
+
+/*!
+	setting the main comma operator and the additional comma operator
+	the additional operator can be zero (which means it is not used)
+	default are: '.' and ','
+*/
+void SetComma(int c, int c2 = 0)
+{
+	comma  = c;
+	comma2 = c2;
+}
+
+
+/*!
+	setting an additional character which is used as a parameters separator
+	the main parameters separator is a semicolon (is used always)
+
+	this character is used also as a global separator
+*/
+void SetParamSep(int s)
+{
+	param_sep = s;
+}
 
 
 /*!

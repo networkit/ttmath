@@ -2809,82 +2809,114 @@ public:
 
 
 	/*!
-		a method for converting the value into a string with a base equal 'base'
-
-		input:
-		*	base - a base (radix) on which the value will be shown
-
-		*	if 'always_scientific' is true the result will be shown in 'scientific' mode
-			if 'always_scientific' is false the result will be shown
-			either as 'scientific' or 'normal' mode, it depends whether the abs(exponent)
-			is greater than 'when_scientific' or not, if it's greater the value
-			will be printed as 'scientific'
-
-		*   'max_digit_after_comma' - rounding
-			if 'max_digit_after_comma' is equal -1 that all digits in the mantissa
-			will be printed
-			if 'max_digit_after_comma' is equal or greater than zero
-			that only 'max_digit_after_comma' after the comma operator will be shown
-			(if 'max_digit_after_comma' is equal zero there'll be shown only 
-			integer value without the comma)
-				for example when the value is:
-					12.345678 and max_digit_after_comma is 4
-				then the result will be 
-					12.3457   (the last digit was rounded)
-			if there isn't the comma operator (when the value is too big and we're printing
-			it not as scientific) 'max_digit_after_comma' will be ignored
-
-		*	if 'remove_trailing_zeroes' is true that not mattered digits
-			in the mantissa will be cut off
-			(zero characters at the end -- after the comma operator)
-
-		*	decimal_point - a character which will be used as a decimal point
+		a method for converting into a string
+		struct Conv is defined in ttmathtypes.h, look there for more information about parameters
 
 		output:
 			return value:
 			0 - ok and 'result' will be an object of type std::string (or std::wstring) which holds the value
-			1 - if there was a carry (shoudn't be in a normal situation - if is that means there
+			1 - if there is a carry (it shoudn't be in a normal situation - if it is that means there
 			    is somewhere an error in the library)
 	*/
 	uint ToString(	std::string & result,
-					uint base                  = 10,
-					bool always_scientific     = false,
-					sint when_scientific       = 15,
-					sint max_digit_after_comma = -1,
-					bool remove_trailing_zeroes = true,
-					char decimal_point = TTMATH_COMMA_CHARACTER_1 ) const
+					uint base         = 10,
+					bool scient       = false,
+					sint scient_from  = 15,
+					sint comma_digits = -1,
+					bool trim_zeroes  = true,
+					wchar_t comma     = '.' ) const
 	{
-		return ToStringBase(result, base, always_scientific, when_scientific,
-						 max_digit_after_comma, remove_trailing_zeroes, decimal_point);
+		Conv conv;
+
+		conv.base         = base;
+		conv.scient       = scient;
+		conv.scient_from  = scient_from;
+		conv.comma_digits = comma_digits;
+		conv.trim_zeroes  = trim_zeroes;
+		conv.comma        = static_cast<uint>(comma);
+
+	return ToStringBase<std::string, char>(result, conv);
 	}
 
 
 	/*!
-		a method for converting the value into a string with a base equal 'base'
+		a method for converting into a string
+		struct Conv is defined in ttmathtypes.h, look there for more information about parameters
 	*/
 	uint ToString(	std::wstring & result,
-					uint base                  = 10,
-					bool always_scientific     = false,
-					sint when_scientific       = 15,
-					sint max_digit_after_comma = -1,
-					bool remove_trailing_zeroes = true,
-					wchar_t decimal_point = TTMATH_COMMA_CHARACTER_1 ) const
+					uint base         = 10,
+					bool scient       = false,
+					sint scient_from  = 15,
+					sint comma_digits = -1,
+					bool trim_zeroes  = true,
+					wchar_t comma     = '.' ) const
 	{
-		return ToStringBase(result, base, always_scientific, when_scientific,
-						 max_digit_after_comma, remove_trailing_zeroes, decimal_point);
+		Conv conv;
+
+		conv.base         = base;
+		conv.scient       = scient;
+		conv.scient_from  = scient_from;
+		conv.comma_digits = comma_digits;
+		conv.trim_zeroes  = trim_zeroes;
+		conv.comma        = static_cast<uint>(comma);
+
+	return ToStringBase<std::wstring, wchar_t>(result, conv);
 	}
+
+
+	/*!
+		a method for converting into a string
+		struct Conv is defined in ttmathtypes.h, look there for more information about parameters
+	*/
+	uint ToString(std::string & result, const Conv & conv) const
+	{
+		return ToStringBase<std::string, char>(result, conv);
+	}
+
+
+	/*!
+		a method for converting into a string
+		struct Conv is defined in ttmathtypes.h, look there for more information about parameters
+	*/
+	uint ToString(std::wstring & result, const Conv & conv) const
+	{
+		return ToStringBase<std::wstring, wchar_t>(result, conv);
+	}
+
+
+	/*!
+		a method for converting into a string
+		struct Conv is defined in ttmathtypes.h, look there for more information about parameters
+	*/
+	std::string ToString(const Conv & conv) const
+	{
+		std::string result;
+		ToStringBase<std::string, char>(result, conv);
+		
+	return result;
+	}
+
+
+	/*!
+		a method for converting into a string
+		struct Conv is defined in ttmathtypes.h, look there for more information about parameters
+	*/
+	std::string ToString() const
+	{
+		Conv conv;
+
+	return ToString(conv);
+	}
+
 
 private:
 
 
+	/*!
+		an auxiliary method for converting into the string
+	*/
 	template<class string_type, class char_type>
-	uint ToStringBase(	string_type & result,
-					uint base,
-					bool always_scientific,
-					sint when_scientific,
-					sint max_digit_after_comma,
-					bool remove_trailing_zeroes,
-					char_type decimal_point) const
+	uint ToStringBase(string_type & result, const Conv & conv) const
 	{
 		static char error_overflow_msg[] = "overflow";
 		static char error_nan_msg[]      = "NaN";
@@ -2896,7 +2928,7 @@ private:
 			return 0;
 		}
 
-		if( base<2 || base>16 )
+		if( conv.base<2 || conv.base>16 )
 		{
 			Misc::AssignString(result, error_overflow_msg);
 			return 1;
@@ -2926,7 +2958,7 @@ private:
 		*/
 		Int<exp+1> new_exp;
 
-		if( ToString_CreateNewMantissaAndExponent(result, base, new_exp) )
+		if( ToString_CreateNewMantissaAndExponent(result, conv, new_exp) )
 		{
 			Misc::AssignString(result, error_overflow_msg);
 			return 1;
@@ -2936,16 +2968,14 @@ private:
 			we're rounding the mantissa only if the base is different from 2,4,8 or 16
 			(this formula means that the number of bits in the base is greater than one)
 		*/
-		if( base!=2 && base!=4 && base!=8 && base!=16 )
-			if( ToString_RoundMantissa(result, base, new_exp, decimal_point) )
+		if( conv.base!=2 && conv.base!=4 && conv.base!=8 && conv.base!=16 )
+			if( ToString_RoundMantissa<string_type, char_type>(result, conv, new_exp) )
 			{
 				Misc::AssignString(result, error_overflow_msg);
 				return 1;
 			}
 
-		if( ToString_SetCommaAndExponent(	result, base, new_exp, always_scientific,
-											when_scientific, max_digit_after_comma,
-											remove_trailing_zeroes, decimal_point ) )
+		if( ToString_SetCommaAndExponent<string_type, char_type>(result, conv, new_exp) )
 		{
 			Misc::AssignString(result, error_overflow_msg);
 			return 1;
@@ -2959,8 +2989,6 @@ private:
 	}
 
 
-private:
-
 
 	/*!
 		in the method 'ToString_CreateNewMantissaAndExponent()' we're using 
@@ -2971,7 +2999,7 @@ private:
 
 
 	/*!
-		an auxiliary method for converting into the string (private)
+		an auxiliary method for converting into the string
 
 		input:
 			base - the base in range <2,16>
@@ -3030,16 +3058,16 @@ private:
 			new_exp = [log base (2^exponent)] + 1  <- where [x] means integer value from x
 	*/
 	template<class string_type>
-	uint ToString_CreateNewMantissaAndExponent(	string_type & new_man, uint base,
+	uint ToString_CreateNewMantissaAndExponent(	string_type & new_man, const Conv & conv,
 												Int<exp+1> & new_exp) const
 	{
 	uint c = 0;
 
-		if(base<2 || base>16)
+		if( conv.base<2 || conv.base>16 )
 			return 1;
 	
 		// the speciality for base equal 2
-		if( base == 2 )
+		if( conv.base == 2 )
 			return ToString_CreateNewMantissaAndExponent_Base2(new_man, new_exp);
 
 		// this = mantissa * 2^exponent
@@ -3054,7 +3082,7 @@ private:
 
 		// new_exp_ = [log base (2^exponent)] + 1
 		Big<exp+1,man> new_exp_;
-		c += new_exp_.ToString_Log(temp, base); // this logarithm isn't very complicated
+		c += new_exp_.ToString_Log(temp, conv.base); // this logarithm isn't very complicated
 		new_exp_.SkipFraction();
 		temp.SetOne();
 		c += new_exp_.Add( temp );
@@ -3067,7 +3095,7 @@ private:
 		c += new_exp_.ToInt(new_exp);
 
 		// base_ = base
-		Big<exp+1,man> base_(base);
+		Big<exp+1,man> base_(conv.base);
 
 		// base_ = base_ ^ new_exp_
 		c += base_.Pow( new_exp_ );
@@ -3089,7 +3117,7 @@ private:
 		// (temp.Div( base_ )) the value of exponent should be equal zero or 
 		// minimum smaller than zero then we've got the mantissa which has 
 		// maximum valid bits
-		temp.mantissa.ToString(new_man, base);
+		temp.mantissa.ToString(new_man, conv.base);
 
 		// because we had used a bigger type for calculating I think we 
 		// shouldn't have had a carry
@@ -3307,7 +3335,7 @@ private:
 		(it's used in systems where the base is different from 2)
 	*/
 	template<class string_type, class char_type>
-	uint ToString_RoundMantissa(string_type & new_man, uint base, Int<exp+1> & new_exp, char_type decimal_point) const
+	uint ToString_RoundMantissa(string_type & new_man, const Conv & conv, Int<exp+1> & new_exp) const
 	{
 		// we must have minimum two characters
 		if( new_man.length() < 2 )
@@ -3322,8 +3350,8 @@ private:
 
 		// if the last character is greater or equal 'base/2'
 		// we'll add one into the new mantissa
-		if( digit >= base / 2 )
-			ToString_RoundMantissa_AddOneIntoMantissa(new_man, base, decimal_point);
+		if( digit >= conv.base / 2 )
+			ToString_RoundMantissa_AddOneIntoMantissa<string_type, char_type>(new_man, conv);
 
 	return carry;
 	}
@@ -3335,7 +3363,7 @@ private:
 		this method addes one into the new mantissa
 	*/
 	template<class string_type, class char_type>
-	void ToString_RoundMantissa_AddOneIntoMantissa(string_type & new_man, uint base, char_type decimal_point) const
+	void ToString_RoundMantissa_AddOneIntoMantissa(string_type & new_man, const Conv & conv) const
 	{
 		if( new_man.empty() )
 			return;
@@ -3348,13 +3376,13 @@ private:
 			// we can have the comma as well because
 			// we're using this method later in ToString_CorrectDigitsAfterComma_Round()
 			// (we're only ignoring it)
-			if( new_man[i] == decimal_point )
+			if( new_man[i] == static_cast<char_type>(conv.comma) )
 				continue;
 
 			// we're adding one
 			uint digit = Misc::CharToDigit( new_man[i] ) + 1;
 
-			if( digit == base )
+			if( digit == conv.base )
 				digit = 0;
 			else
 				was_carry = false;
@@ -3374,13 +3402,7 @@ private:
 		into the string
 	*/
 	template<class string_type, class char_type>
-	uint ToString_SetCommaAndExponent(	string_type & new_man, uint base,
-										Int<exp+1> & new_exp,
-										bool always_scientific,
-										sint when_scientific,
-										sint max_digit_after_comma,
-										bool remove_trailing_zeroes,
-										char_type decimal_point) const
+	uint ToString_SetCommaAndExponent(string_type & new_man, const Conv & conv, Int<exp+1> & new_exp) const
 	{
 	uint carry = 0;
 
@@ -3399,18 +3421,19 @@ private:
 		// there shouldn't have been a carry because we're using
 		// a greater type -- 'Int<exp+1>' instead of 'Int<exp>'
 
-		if( !always_scientific )
+		bool print_scientific = conv.scient;
+
+		if( !print_scientific )
 		{
-			if( scientific_exp > when_scientific || scientific_exp < -sint(when_scientific) )
-				always_scientific = true;
+			if( scientific_exp > conv.scient_from || scientific_exp < -sint(conv.scient_from) )
+				print_scientific = true;
 		}
 
-		// 'always_scientific' could be changed
-		if( !always_scientific )
-			ToString_SetCommaAndExponent_Normal(new_man, base, new_exp, max_digit_after_comma, remove_trailing_zeroes, decimal_point);
+		if( !print_scientific )
+			ToString_SetCommaAndExponent_Normal<string_type, char_type>(new_man, conv, new_exp);
 		else
 			// we're passing the 'scientific_exp' instead of 'new_exp' here
-			ToString_SetCommaAndExponent_Scientific(new_man, base, scientific_exp, max_digit_after_comma, remove_trailing_zeroes, decimal_point);
+			ToString_SetCommaAndExponent_Scientific<string_type, char_type>(new_man, conv, scientific_exp);
 
 	return (carry==0)? 0 : 1;
 	}
@@ -3420,25 +3443,22 @@ private:
 		an auxiliary method for converting into the string
 	*/
 	template<class string_type, class char_type>
-	void ToString_SetCommaAndExponent_Normal(
-											string_type & new_man,
-											uint base, 
-											Int<exp+1> & new_exp,
-											sint max_digit_after_comma,
-											bool remove_trailing_zeroes,
-											char_type decimal_point) const
+	void ToString_SetCommaAndExponent_Normal(string_type & new_man,	const Conv & conv, Int<exp+1> & new_exp ) const
 	{
-		if( !new_exp.IsSign() ) //if( new_exp >= 0 )
-			return ToString_SetCommaAndExponent_Normal_AddingZero(new_man, new_exp);
+		if( !new_exp.IsSign() ) // it means: if( new_exp >= 0 )
+			ToString_SetCommaAndExponent_Normal_AddingZero<string_type, char_type>(new_man, new_exp);
 		else
-			return ToString_SetCommaAndExponent_Normal_SetCommaInside(new_man, base, new_exp, max_digit_after_comma, remove_trailing_zeroes, decimal_point);
+			ToString_SetCommaAndExponent_Normal_SetCommaInside<string_type, char_type>(new_man, conv, new_exp);
+
+
+		ToString_Group_man<string_type, char_type>(new_man, conv);
 	}
 
 
 	/*!
 		an auxiliary method for converting into the string
 	*/
-	template<class string_type>
+	template<class string_type, class char_type>
 	void ToString_SetCommaAndExponent_Normal_AddingZero(string_type & new_man,
 														Int<exp+1> & new_exp) const
 	{
@@ -3460,12 +3480,9 @@ private:
 	*/
 	template<class string_type, class char_type>
 	void ToString_SetCommaAndExponent_Normal_SetCommaInside(
-														string_type & new_man,
-														uint base,
-														Int<exp+1> & new_exp,
-														sint max_digit_after_comma,
-														bool remove_trailing_zeroes,
-														char_type decimal_point) const
+															string_type & new_man,
+															const Conv & conv,
+															Int<exp+1> & new_exp ) const
 	{
 		// new_exp is < 0 
 
@@ -3477,7 +3494,7 @@ private:
 			// we're setting the comma within the mantissa
 			
 			sint index = new_man_len - e;
-			new_man.insert( new_man.begin() + index, decimal_point);
+			new_man.insert( new_man.begin() + index, static_cast<char_type>(conv.comma));
 		}
 		else
 		{
@@ -3486,11 +3503,11 @@ private:
 			uint how_many = e - new_man_len;
 			string_type man_temp(how_many+1, '0');
 
-			man_temp.insert( man_temp.begin()+1, decimal_point);
+			man_temp.insert( man_temp.begin()+1, static_cast<char_type>(conv.comma));
 			new_man.insert(0, man_temp);
 		}
 
-		ToString_CorrectDigitsAfterComma(new_man, base, max_digit_after_comma, remove_trailing_zeroes, decimal_point);
+		ToString_CorrectDigitsAfterComma<string_type, char_type>(new_man, conv);
 	}
 
 
@@ -3499,20 +3516,18 @@ private:
 	*/
 	template<class string_type, class char_type>
 	void ToString_SetCommaAndExponent_Scientific(	string_type & new_man,
-													uint base,
-													Int<exp+1> & scientific_exp,
-													sint max_digit_after_comma,
-													bool remove_trailing_zeroes,
-													char_type decimal_point) const
+													const Conv & conv,
+													Int<exp+1> & scientific_exp ) const
 	{
 		if( new_man.empty() )
 			return;
 		
-		new_man.insert( new_man.begin()+1, decimal_point );
+		new_man.insert( new_man.begin()+1, static_cast<char_type>(conv.comma) );
 
-		ToString_CorrectDigitsAfterComma(new_man, base, max_digit_after_comma, remove_trailing_zeroes, decimal_point);
-	
-		if( base == 10 )
+		ToString_CorrectDigitsAfterComma<string_type, char_type>(new_man, conv);
+		ToString_Group_man<string_type, char_type>(new_man, conv);
+
+		if( conv.base == 10 )
 		{
 			new_man += 'e';
 
@@ -3527,7 +3542,7 @@ private:
 		}
 
 		string_type temp_exp;
-		scientific_exp.ToString( temp_exp, base );
+		scientific_exp.ToString( temp_exp, conv.base );
 
 		new_man += temp_exp;
 	}
@@ -3537,17 +3552,84 @@ private:
 		an auxiliary method for converting into the string
 	*/
 	template<class string_type, class char_type>
-	void ToString_CorrectDigitsAfterComma(	string_type & new_man,
-											uint base,
-											sint max_digit_after_comma,
-											bool remove_trailing_zeroes,
-											char_type decimal_point) const
+	void ToString_Group_man(string_type & new_man, const Conv & conv) const
 	{
-		if( max_digit_after_comma >= 0 )
-			ToString_CorrectDigitsAfterComma_Round(new_man, base, max_digit_after_comma, decimal_point);
+		typedef typename string_type::size_type StrSize;
 
-		if( remove_trailing_zeroes )
-			ToString_CorrectDigitsAfterComma_CutOffZeroCharacters(new_man, decimal_point);
+		if( conv.group == 0 )
+			return;
+
+		// first we're looking for the comma operator
+		StrSize index = new_man.find(static_cast<char_type>(conv.comma), 0);
+
+		if( index == string_type::npos )
+			index = new_man.size();	
+
+		ToString_Group_man_before_comma<string_type, char_type>(new_man, conv, index);
+		ToString_Group_man_after_comma<string_type, char_type>(new_man, conv, index+1);
+	}
+
+
+
+	/*!
+		an auxiliary method for converting into the string
+	*/
+	template<class string_type, class char_type>
+	void ToString_Group_man_before_comma(	string_type & new_man, const Conv & conv,
+											typename string_type::size_type & index) const
+	{
+	typedef typename string_type::size_type StrSize;
+	uint group = 0;
+		
+		StrSize i = index;
+
+		// adding group characters before the comma operator
+		// i>0 because on the first position we don't put any additional grouping characters
+		for( ; i>0 ; --i, ++group)
+		{
+			if( group >= 3 )
+			{
+				group = 0;
+				new_man.insert(i, 1, static_cast<char_type>(conv.group));
+				++index;
+			}
+		}
+	}
+
+
+	/*!
+		an auxiliary method for converting into the string
+	*/
+	template<class string_type, class char_type>
+	void ToString_Group_man_after_comma(string_type & new_man, const Conv & conv,
+										typename string_type::size_type index) const
+	{
+	uint group = 0;
+
+		for( ; index<new_man.size() ; ++index, ++group)
+		{
+			if( group >= 3 )
+			{
+				group = 0;
+				new_man.insert(index, 1, static_cast<char_type>(conv.group));
+				++index;
+			}
+		}
+	}
+
+
+	/*!
+		an auxiliary method for converting into the string
+	*/
+	template<class string_type, class char_type>
+	void ToString_CorrectDigitsAfterComma(	string_type & new_man,
+											const Conv & conv ) const
+	{
+		if( conv.comma_digits >= 0 )
+			ToString_CorrectDigitsAfterComma_Round<string_type, char_type>(new_man, conv);
+
+		if( conv.trim_zeroes )
+			ToString_CorrectDigitsAfterComma_CutOffZeroCharacters<string_type, char_type>(new_man, conv);
 	}
 
 
@@ -3557,7 +3639,7 @@ private:
 	template<class string_type, class char_type>
 	void ToString_CorrectDigitsAfterComma_CutOffZeroCharacters(
 												string_type & new_man,
-												char_type decimal_point) const
+												const Conv & conv) const
 	{
 		// minimum two characters
 		if( new_man.length() < 2 )
@@ -3575,12 +3657,12 @@ private:
 		// we must have a comma 
 		// (the comma can be removed by ToString_CorrectDigitsAfterComma_Round
 		// which is called before)
-		if( new_man.find_last_of(decimal_point, i) == string_type::npos )
+		if( new_man.find_last_of(static_cast<char_type>(conv.comma), i) == string_type::npos )
 			return;
 
 		// if directly before the first zero is the comma operator
 		// we're cutting it as well
-		if( i>0 && new_man[i]==decimal_point )
+		if( i>0 && new_man[i]==static_cast<char_type>(conv.comma) )
 			--i;
 
 		new_man.erase(i+1, new_man.length()-i-1);
@@ -3593,12 +3675,12 @@ private:
 	template<class string_type, class char_type>
 	void ToString_CorrectDigitsAfterComma_Round(
 											string_type & new_man,
-											uint base,
-											sint max_digit_after_comma,
-											char_type decimal_point) const
+											const Conv & conv ) const
 	{
+		typedef typename string_type::size_type StrSize;
+
 		// first we're looking for the comma operator
-		typename string_type::size_type index = new_man.find(decimal_point, 0);
+		StrSize index = new_man.find(static_cast<char_type>(conv.comma), 0);
 
 		if( index == string_type::npos )
 			// nothing was found (actually there can't be this situation)
@@ -3607,45 +3689,141 @@ private:
 		// we're calculating how many digits there are at the end (after the comma)
 		// 'after_comma' will be greater than zero because at the end
 		// we have at least one digit
-		typename string_type::size_type after_comma = new_man.length() - index - 1;
+		StrSize after_comma = new_man.length() - index - 1;
 
 		// if 'max_digit_after_comma' is greater than 'after_comma' (or equal)
 		// we don't have anything for cutting
-		if( static_cast<typename string_type::size_type>(max_digit_after_comma) >= after_comma )
+		if( static_cast<StrSize>(conv.comma_digits) >= after_comma )
 			return;
 
-		uint last_digit = Misc::CharToDigit( new_man[ index + max_digit_after_comma + 1 ], base );
+		uint last_digit = Misc::CharToDigit( new_man[ index + conv.comma_digits + 1 ], conv.base );
 
 		// we're cutting the rest of the string
-		new_man.erase(index + max_digit_after_comma + 1, after_comma - max_digit_after_comma);
+		new_man.erase(index + conv.comma_digits + 1, after_comma - conv.comma_digits);
 
-		if( max_digit_after_comma == 0 )
+		if( conv.comma_digits == 0 )
 		{
 			// we're cutting the comma operator as well
 			// (it's not needed now because we've cut the whole rest after the comma)
 			new_man.erase(index, 1);
 		}
 
-		if( last_digit >= base / 2 )
+		if( last_digit >= conv.base / 2 )
 			// we must round here
-			ToString_RoundMantissa_AddOneIntoMantissa(new_man, base, decimal_point);
+			ToString_RoundMantissa_AddOneIntoMantissa<string_type, char_type>(new_man, conv);
 	}
 
 
 
+public:
+
+	/*!
+		a method for converting a string into its value
+
+		it returns 1 if the value is too big -- we cannot pass it into the range
+		of our class Big<exp,man> (or if the base is incorrect)
+
+		that means only digits before the comma operator can make this value too big, 
+		all digits after the comma we can ignore
+
+		'source' - pointer to the string for parsing
+
+		if 'after_source' is set that when this method finishes
+		it sets the pointer to the new first character after parsed value
+
+		'value_read' - if the pointer is provided that means the value_read will be true
+		only when a value has been actually read, there can be situation where only such
+		a string '-' or '+' will be parsed -- 'after_source' will be different from 'source' but
+		no value has been read (there are no digits)
+		on other words if 'value_read' is true -- there is at least one digit in the string
+	*/
+	uint FromString(const char * source, uint base = 10, const char ** after_source = 0, bool * value_read = 0)
+	{
+		Conv conv;
+		conv.base = base;
+
+		return FromStringBase(source, conv, after_source, value_read);
+	}
+
+
+	/*!
+		a method for converting a string into its value
+	*/
+	uint FromString(const wchar_t * source, uint base = 10, const wchar_t ** after_source = 0, bool * value_read = 0)
+	{
+		Conv conv;
+		conv.base = base;
+
+		return FromStringBase(source, conv, after_source, value_read);
+	}
+
+
+	/*!
+		a method for converting a string into its value
+	*/
+	uint FromString(const char * source, const Conv & conv, const char ** after_source = 0, bool * value_read = 0)
+	{
+		return FromStringBase(source, conv, after_source, value_read);
+	}
+
+
+	/*!
+		a method for converting a string into its value
+	*/
+	uint FromString(const wchar_t * source, const Conv & conv, const wchar_t ** after_source = 0, bool * value_read = 0)
+	{
+		return FromStringBase(source, conv, after_source, value_read);
+	}
+
+
+	/*!
+		a method for converting a string into its value		
+	*/
+	uint FromString(const std::string & string, uint base = 10, const wchar_t ** after_source = 0, bool * value_read = 0)
+	{
+		return FromString(string.c_str(), base, after_source, value_read);
+	}
+
+
+	/*!
+		a method for converting a string into its value		
+	*/
+	uint FromString(const std::wstring & string, uint base = 10, const wchar_t ** after_source = 0, bool * value_read = 0)
+	{
+		return FromString(string.c_str(), base, after_source, value_read);
+	}
+
+
+	/*!
+		a method for converting a string into its value		
+	*/
+	uint FromString(const std::string & string, const Conv & conv, const wchar_t ** after_source = 0, bool * value_read = 0)
+	{
+		return FromString(string.c_str(), conv, after_source, value_read);
+	}
+
+
+	/*!
+		a method for converting a string into its value		
+	*/
+	uint FromString(const std::wstring & string, const Conv & conv, const wchar_t ** after_source = 0, bool * value_read = 0)
+	{
+		return FromString(string.c_str(), conv, after_source, value_read);
+	}
 
 private:
+
 
 	/*!
 		an auxiliary method for converting from a string
 	*/
 	template<class char_type>
-	uint FromStringBase(const char_type * source, uint base = 10, const char_type ** after_source = 0, bool * value_read = 0)
+	uint FromStringBase(const char_type * source, const Conv & conv, const char_type ** after_source = 0, bool * value_read = 0)
 	{
 	bool is_sign;
 	bool value_read_temp = false;
 
-		if( base<2 || base>16 )
+		if( conv.base<2 || conv.base>16 )
 		{
 			SetNan();
 
@@ -3661,12 +3839,12 @@ private:
 		SetZero();
 		FromString_TestSign( source, is_sign );
 
-		uint c = FromString_ReadPartBeforeComma( source, base, value_read_temp );
+		uint c = FromString_ReadPartBeforeComma( source, conv, value_read_temp );
 
-		if( FromString_TestCommaOperator(source) )
-			c += FromString_ReadPartAfterComma( source, base, value_read_temp );
+		if( FromString_TestCommaOperator(source, conv) )
+			c += FromString_ReadPartAfterComma( source, conv, value_read_temp );
 
-		if( value_read_temp && base == 10 )
+		if( value_read_temp && conv.base == 10 )
 			c += FromString_ReadScientificIfExists( source );
 
 		if( is_sign && !IsZero() )
@@ -3681,48 +3859,6 @@ private:
 	return CheckCarry(c);
 	}
 
-
-
-
-public:
-
-	/*!
-		a method for converting a string into its value
-
-		it returns 1 if the value will be too big -- we cannot pass it into the range
-		of our class Big<exp,man> (or if the base is incorrect)
-
-		that means only digits before the comma operator can make this value too big, 
-		all digits after the comma we can ignore
-
-		'source' - pointer to the string for parsing
-		           'const char*' or 'const wchar_t*'
-
-		if 'after_source' is set that when this method finishes
-		it sets the pointer to the new first character after parsed value
-
-		'value_read' - if the pointer is provided that means the value_read will be true
-		only when a value has been actually read, there can be situation where only such
-		a string '-' or '+' will be parsed -- 'after_source' will be different from 'source' but
-		no value has been read (there are no digits)
-		on other words if 'value_read' is true -- there is at least one digit in the string
-	*/
-	uint FromString(const char * source, uint base = 10, const char ** after_source = 0, bool * value_read = 0)
-	{
-		return FromStringBase(source, base, after_source, value_read);
-	}
-
-
-	/*!
-		a method for converting a string into its value
-	*/
-	uint FromString(const wchar_t * source, uint base = 10, const wchar_t ** after_source = 0, bool * value_read = 0)
-	{
-		return FromStringBase(source, base, after_source, value_read);
-	}
-
-
-private:
 
 	/*!
 		we're testing whether the value is with the sign
@@ -3753,10 +3889,10 @@ private:
 		we're testing whether there's a comma operator
 	*/
 	template<class char_type>
-	bool FromString_TestCommaOperator(const char_type * & source)
+	bool FromString_TestCommaOperator(const char_type * & source, const Conv & conv)
 	{
-		if( (*source == TTMATH_COMMA_CHARACTER_1) || 
-			(*source == TTMATH_COMMA_CHARACTER_2 && TTMATH_COMMA_CHARACTER_2 != 0 ) )
+		if( (*source == static_cast<char_type>(conv.comma)) || 
+			(*source == static_cast<char_type>(conv.comma2) && conv.comma2 != 0 ) )
 		{
 			++source;
 
@@ -3772,18 +3908,25 @@ private:
 		(before the comma operator)
 	*/
 	template<class char_type>
-	uint FromString_ReadPartBeforeComma( const char_type * & source, uint base, bool & value_read )
+	uint FromString_ReadPartBeforeComma( const char_type * & source, const Conv & conv, bool & value_read )
 	{
 		sint character;
 		Big<exp, man> temp;
-		Big<exp, man> base_( base );
+		Big<exp, man> base_( conv.base );
 		
 		Misc::SkipWhiteCharacters( source );
 
-		for( ; (character=Misc::CharToDigit(*source, base)) != -1 ; ++source )
+		for( ; true ; ++source )
 		{
-			value_read = true;
+			if( conv.group!=0 && *source==static_cast<char>(conv.group) )
+				continue;
 
+			character = Misc::CharToDigit(*source, conv.base);
+
+			if( character == -1 )
+				break;
+
+			value_read = true;
 			temp = character;
 
 			if( Mul(base_) )
@@ -3802,11 +3945,11 @@ private:
 		(after the comma operator)
 	*/
 	template<class char_type>
-	uint FromString_ReadPartAfterComma( const char_type * & source, uint base, bool & value_read )
+	uint FromString_ReadPartAfterComma( const char_type * & source, const Conv & conv, bool & value_read )
 	{
 	sint character;
 	uint c = 0, index = 1;
-	Big<exp, man> part, power, old_value, base_( base );
+	Big<exp, man> part, power, old_value, base_( conv.base );
 
 		// we don't remove any white characters here
 
@@ -3816,8 +3959,16 @@ private:
 
 		power.SetOne();
 
-		for( ; (character=Misc::CharToDigit(*source, base)) != -1 ; ++source, ++index )
+		for( ; true ; ++source, ++index )
 		{
+			if( conv.group!=0 && *source==static_cast<char>(conv.group) )
+				continue;
+			
+			character = Misc::CharToDigit(*source, conv.base);
+
+			if( character == -1 )
+				break;
+
 			value_read = true;
 
 			part = character;
@@ -3849,7 +4000,7 @@ private:
 		// we could break the parsing somewhere in the middle of the string,
 		// but the result (value) still can be good
 		// we should set a correct value of 'source' now
-		for( ; Misc::CharToDigit(*source, base) != -1 ; ++source );
+		for( ; Misc::CharToDigit(*source, conv.base) != -1 ; ++source );
 
 	return (c==0)? 0 : 1;
 	}
@@ -3961,24 +4112,6 @@ private:
 
 
 public:
-
-
-	/*!
-		a method for converting a string into its value		
-	*/
-	uint FromString(const std::string & string, uint base = 10)
-	{
-		return FromString( string.c_str(), base );
-	}
-
-
-	/*!
-		a method for converting a string into its value		
-	*/
-	uint FromString(const std::wstring & string, uint base = 10)
-	{
-		return FromString( string.c_str(), base );
-	}
 
 
 	/*!
@@ -4564,8 +4697,7 @@ private:
 		// we're reading only digits (base=10) and only one comma operator
 		for( ; s.good() ; z=static_cast<char_type>(s.get()) )
 		{
-			if( z == TTMATH_COMMA_CHARACTER_1 ||
-			  ( z == TTMATH_COMMA_CHARACTER_2 && TTMATH_COMMA_CHARACTER_2 != 0 ) )
+			if( z=='.' ||  z==',' )
 			{
 				if( was_comma || was_e )
 					// second comma operator or comma operator after 'e' character

@@ -233,23 +233,6 @@ namespace ttmath
 	#endif
 #endif
 
-/*!
-	characters which represent the comma operator
-
-	TTMATH_COMMA_CHARACTER_1 is used in reading (parsing) and in writing (default, can be overwritten in ToString() function)
-	TTMATH_COMMA_CHARACTER_2 can be used in reading as an auxiliary comma character
-	that means you can input values for example 1.2345 and 1,2345 as well
-
-	if you don't want it just put 0 there e.g.
-		#define TTMATH_COMMA_CHARACTER_2 0
-	then only TTMATH_COMMA_CHARACTER_1 will be used
-
-	don't put there any special character which is used by the parser
-	(for example a semicolon ';' shouldn't be there)
-*/
-#define TTMATH_COMMA_CHARACTER_1 '.'
-#define TTMATH_COMMA_CHARACTER_2 ','
-
 
 
 /*!
@@ -334,6 +317,114 @@ namespace ttmath
 		err_in_short_form_used_function,
 		err_percent_from
 	};
+
+
+	/*!
+		this struct is used when converting to/from a string
+	*/
+	struct Conv
+	{
+		/*!
+			base (radix) on which the value will be shown (or read)
+			default: 10
+		*/
+		uint base;
+
+
+		/*!
+			used only in Big::ToString()
+			if true the value will be always shown in the scientific mode, e.g: 123e+30
+			default: false
+		*/
+		bool scient;
+
+
+		/*!
+			used only in Big::ToString()
+			if scient is false then the value will be print in the scientific mode
+			only if the exponent is greater than scien_from
+			default: 15
+		*/
+		sint scient_from;
+
+
+		/*!
+			used only in Big::ToString()
+			tells how many digits after comma are possible
+			default: -1 which means all digits are printed
+
+			set it to zero if you want integer value only
+
+			for example when the value is:
+				12.345678 and comma_digit is 4
+			then the result will be 
+				12.3457   (the last digit was rounded)
+		*/
+		sint comma_digits;
+
+
+		/*!
+			if true that not mattered digits in the mantissa will be cut off
+			(zero characters at the end -- after the comma operator)
+			e.g. 1234,78000 will be: 1234,78
+			default: true
+		*/
+		bool trim_zeroes;
+
+
+		/*!
+			the main comma operator (used when reading and writing)
+			default is a dot '.'
+		*/
+		uint comma;
+
+
+		/*!
+			additional comma operator (used only when reading) 
+			if you don't want it just set it to zero
+			default is a comma ','
+
+			this allowes you to convert from a value:
+			123.45 as well as from 123,45
+		*/
+		uint comma2;
+
+
+		/*!
+			it sets the character which is used for grouping
+			if group=' ' then: 1234,56789 will be printed as: 1 234,567 89
+
+			if you don't want grouping just set it to zero (which is default)
+		*/
+		uint group;
+
+
+		/*!
+		*/
+		uint group_exp; // not implemented yet
+
+
+		/*!
+		*/
+		bool group_multiple; // not implemented yet
+
+
+		Conv()
+		{
+			// default values
+			base         = 10;
+			scient       = false;
+			scient_from  = 15;
+			comma_digits = -1; // !! change to 'round' ?
+			trim_zeroes  = true;
+			comma        = '.';
+			comma2       = ',';
+			group        = 0;
+			group_exp    = 0;
+			group_multiple = true;
+		}
+	};
+
 
 
 	/*!
