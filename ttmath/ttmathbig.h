@@ -3119,6 +3119,19 @@ private:
 		if( conv.base == 2 )
 			return ToString_CreateNewMantissaAndExponent_Base2(new_man, new_exp);
 
+		// the speciality for base equal 4
+		if( conv.base == 4 )
+			return ToString_CreateNewMantissaAndExponent_BasePow2(new_man, new_exp, 2);
+
+		// the speciality for base equal 8
+		if( conv.base == 8 )
+			return ToString_CreateNewMantissaAndExponent_BasePow2(new_man, new_exp, 3);
+
+		// the speciality for base equal 16
+		if( conv.base == 16 )
+			return ToString_CreateNewMantissaAndExponent_BasePow2(new_man, new_exp, 4);
+
+
 		// this = mantissa * 2^exponent
 
 		// temp = +1 * 2^exponent  
@@ -3348,9 +3361,6 @@ private:
 		we use it because if base is equal 2 we don't have to make those
 		complicated calculations and the output is directly from the source
 		(there will not be any small distortions)
-
-		(we can make that speciality when the base is 4,8 or 16 as well 
-		but maybe in further time)
 	*/
 	template<class string_type>
 	uint ToString_CreateNewMantissaAndExponent_Base2(	string_type & new_man,
@@ -3372,6 +3382,135 @@ private:
 		}
 
 		new_exp = exponent;
+
+	return 0;
+	}
+
+
+	/*!
+		a special method used to calculate the new mantissa and exponent
+		when the 'base' is equal 4, 8 or 16
+
+		when base is 4 then bits is 2
+		when base is 8 then bits is 3
+		when base is 16 then bits is 4
+		(and the algorithm can be used with a base greater than 16)
+	*/
+	template<class string_type>
+	uint ToString_CreateNewMantissaAndExponent_BasePow2(	string_type & new_man,
+															Int<exp+1> & new_exp,
+															uint bits) const
+	{
+		int move;							// how many times move the mantissa
+		UInt<man+1> man_temp(mantissa);		// man+1 for moving
+		new_exp = exponent;
+		new_exp.DivInt((int)bits, move);
+
+		if( move != 0 )
+		{
+			// we're moving the man_temp to left-hand side
+			if( move < 0 )
+			{
+				move = bits + move;
+				new_exp.SubOne();			// when move is < than 0 then new_exp is < 0 too
+			}
+
+			man_temp.Rcl(move);
+		}
+
+
+		if( bits == 3 )
+		{
+			// base 8
+			// now 'move' is greater than or equal 0
+			uint len = man*TTMATH_BITS_PER_UINT + move;
+			return ToString_CreateNewMantissaAndExponent_Base8(new_man, man_temp, len, bits);
+		}
+		else
+		{
+			// base 4 or 16
+			return ToString_CreateNewMantissaAndExponent_Base4or16(new_man, man_temp, bits);
+		}
+	}
+
+
+	/*!
+		a special method used to calculate the new mantissa
+		when the 'base' is equal 8
+
+		bits is always 3
+
+		we can use this algorithm when the base is 4 or 16 too
+		but we have a faster method ToString_CreateNewMantissaAndExponent_Base4or16()
+	*/
+	template<class string_type>
+	uint ToString_CreateNewMantissaAndExponent_Base8(	string_type & new_man,
+														UInt<man+1> & man_temp,
+														uint len,
+														uint bits) const
+	{
+		uint shift = TTMATH_BITS_PER_UINT - bits;
+		uint mask  = TTMATH_UINT_MAX_VALUE >> shift;
+		uint i;
+
+		for( i=0 ; i<len ; i+=bits )
+		{
+			uint digit = man_temp.table[0] & mask;
+			new_man.insert(new_man.begin(), static_cast<char>(Misc::DigitToChar(digit)));
+
+			man_temp.Rcr(bits);
+		}
+
+		TTMATH_ASSERT( man_temp.IsZero() )
+
+	return 0;
+	}
+
+
+	/*!
+		a special method used to calculate the new mantissa
+		when the 'base' is equal 4 or 16
+
+		when the base is equal 4 or 16 the bits is 2 or 4
+		and because TTMATH_BITS_PER_UINT (32 or 64) is divisible by 2 (or 4)
+		then we can get digits from the end of our mantissa
+	*/
+	template<class string_type>
+	uint ToString_CreateNewMantissaAndExponent_Base4or16(	string_type & new_man,
+															UInt<man+1> & man_temp,
+															uint bits) const
+	{
+		TTMATH_ASSERT( TTMATH_BITS_PER_UINT % 2 == 0 )
+		TTMATH_ASSERT( TTMATH_BITS_PER_UINT % 4 == 0 )
+
+		uint shift = TTMATH_BITS_PER_UINT - bits;
+		uint mask  = TTMATH_UINT_MAX_VALUE << shift;
+		uint digit;
+
+		 // table[man] - last word - is different from zero if we moved man_temp
+		digit = man_temp.table[man];
+
+		if( digit != 0 )
+			new_man += static_cast<char>(Misc::DigitToChar(digit));
+
+
+		for( int i=man-1 ; i>=0 ; --i )
+		{
+			uint shift_local = shift;
+			uint mask_local  = mask;
+
+			while( mask_local != 0 )
+			{
+				digit = man_temp.table[i] & mask_local;
+
+				if( shift_local != 0 )
+					digit = digit >> shift_local;
+
+				new_man    += static_cast<char>(Misc::DigitToChar(digit));
+				mask_local  = mask_local >> bits;
+				shift_local = shift_local - bits;
+			}
+		}
 
 	return 0;
 	}

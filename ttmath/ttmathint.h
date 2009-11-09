@@ -468,6 +468,64 @@ public:
 	}
 
 
+	/*!
+		division this = this / ss2  (ss2 is int)
+		returned values:
+			0 - ok
+			1 - division by zero
+
+		for example: (result means 'this')
+			 20 /  3 --> result:  6   remainder:  2
+			-20 /  3 --> result: -6   remainder: -2
+			 20 / -3 --> result: -6   remainder:  2
+			-20 / -3 --> result:  6   remainder: -2
+
+		in other words: this(old) = ss2 * this(new)(result) + remainder
+	*/
+	uint DivInt(int ss2, int * remainder = 0)
+	{
+	bool ss1_is_sign, ss2_is_sign;
+
+		ss1_is_sign = IsSign();
+
+		/*
+			we don't have to test the carry from Abs as well as in Mul
+		*/
+		Abs();
+
+		if( ss2 < 0 )
+		{
+			ss2 = -ss2;
+			ss2_is_sign = true;
+		}
+		else
+		{
+			ss2_is_sign = false;
+		}
+
+		uint rem;
+		uint c = UInt<value_size>::DivInt((uint)ss2, &rem);
+
+		if( ss1_is_sign != ss2_is_sign )
+			SetSign();
+
+		if( remainder )
+		{
+			if( ss1_is_sign )
+				*remainder = -int(rem);
+			else
+				*remainder = int(rem);
+		}
+
+	return c;
+	}
+
+
+	uint DivInt(int ss2, int & remainder)
+	{
+		return DivInt(ss2, &remainder);
+	}
+
 
 private:
 

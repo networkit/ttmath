@@ -1,4 +1,4 @@
-Version 0.9.0 prerelease (2009.11.01):
+	Version 0.9.0 prerelease (2009.11.09):
     * added:   support for wide characters (wchar_t, std::wstring)
     * added:   Big::IsInteger()
                returns true if the value is integer (without fraction)
@@ -47,6 +47,7 @@ Version 0.9.0 prerelease (2009.11.01):
     * added:   UInt::Sqrt() - a new algorithm for calculating the square root
     * added:   to the parser: function frac() - returns a value without the integer part
                (only fraction remains)
+    * added:   Int::DivInt(int divisor, int * remainder)
     * changed: Factorial() is using the Gamma() function now
     * changed: Big::Div(ss2)
                Big::Mod(ss2)
@@ -55,6 +56,18 @@ Version 0.9.0 prerelease (2009.11.01):
     * changed: algorithms in Big::Sqrt() and ttmath::Root(x ; n)
                they were not too much accurate for some integers
                e.g. Root(16;4) returned a value very closed to 2 (not exactly 2)
+    * changed: added specializations to Big::ToString() when the base is equal 4, 8 or 16
+               the previous version was not accurate on some last digits (after the comma operator)
+               consider this binary value (32 bit mantissa):
+               base 2: 1.1111 1111 1111 1111 1111 1111 1110 101
+               previous ToString() gave:
+                  base 4:  1.33333333333332
+                  base 8:  1.777777777
+                  base 16: 1.FFFFFF
+               now we have:
+                  base 4:  1.3333333333333222
+                  base 8:  1.77777777724
+                  base 16: 1.FFFFFFEA
     * removed: Parser<>::SetFactorialMax() method
                the factorial() is such a fast now that we don't need the method longer
     * removed: ErrorCode::err_too_big_factorial
