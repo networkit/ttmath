@@ -46,10 +46,12 @@
 */
 
 #ifdef _MSC_VER
-#pragma warning( disable: 4127 )
 //warning C4127: conditional expression is constant
-#pragma warning( disable: 4702 )
+#pragma warning( disable: 4127 )
 //warning C4702: unreachable code
+#pragma warning( disable: 4702 )
+//warning C4800: forcing value to bool 'true' or 'false' (performance warning)
+#pragma warning( disable: 4800 )
 #endif
 
 
@@ -2822,10 +2824,12 @@ namespace ttmath
 
 
 #ifdef _MSC_VER
-#pragma warning( default: 4127 )
 //warning C4127: conditional expression is constant
-#pragma warning( disable: 4702 )
+#pragma warning( default: 4127 )
 //warning C4702: unreachable code
+#pragma warning( default: 4702 )
+//warning C4800: forcing value to bool 'true' or 'false' (performance warning)
+#pragma warning( default: 4800 )
 #endif
 
 #endif

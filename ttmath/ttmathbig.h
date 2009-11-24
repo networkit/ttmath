@@ -3401,17 +3401,17 @@ private:
 															Int<exp+1> & new_exp,
 															uint bits) const
 	{
-		int move;							// how many times move the mantissa
+		sint move;							// how many times move the mantissa
 		UInt<man+1> man_temp(mantissa);		// man+1 for moving
 		new_exp = exponent;
-		new_exp.DivInt((int)bits, move);
+		new_exp.DivInt((sint)bits, move);
 
 		if( move != 0 )
 		{
 			// we're moving the man_temp to left-hand side
 			if( move < 0 )
 			{
-				move = bits + move;
+				move = sint(bits) + move;
 				new_exp.SubOne();			// when move is < than 0 then new_exp is < 0 too
 			}
 

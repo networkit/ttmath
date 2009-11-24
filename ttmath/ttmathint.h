@@ -482,7 +482,7 @@ public:
 
 		in other words: this(old) = ss2 * this(new)(result) + remainder
 	*/
-	uint DivInt(int ss2, int * remainder = 0)
+	uint DivInt(sint ss2, sint * remainder = 0)
 	{
 	bool ss1_is_sign, ss2_is_sign;
 
@@ -512,16 +512,16 @@ public:
 		if( remainder )
 		{
 			if( ss1_is_sign )
-				*remainder = -int(rem);
+				*remainder = -sint(rem);
 			else
-				*remainder = int(rem);
+				*remainder = sint(rem);
 		}
 
 	return c;
 	}
 
 
-	uint DivInt(int ss2, int & remainder)
+	uint DivInt(sint ss2, sint & remainder)
 	{
 		return DivInt(ss2, &remainder);
 	}
