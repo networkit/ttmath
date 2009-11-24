@@ -2984,6 +2984,31 @@ public:
 	}
 
 
+	/*!
+		a method for converting into a string
+		struct Conv is defined in ttmathtypes.h, look there for more information about parameters
+	*/
+	std::wstring ToWString(const Conv & conv) const
+	{
+		std::wstring result;
+		ToStringBase<std::wstring, wchar_t>(result, conv);
+		
+	return result;
+	}
+
+
+	/*!
+		a method for converting into a string
+		struct Conv is defined in ttmathtypes.h, look there for more information about parameters
+	*/
+	std::wstring ToWString() const
+	{
+		Conv conv;
+
+	return ToWString(conv);
+	}
+
+
 private:
 
 

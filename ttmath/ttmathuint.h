@@ -2744,6 +2744,21 @@ public:
 		return ToStringBase(result, b);
 	}
 
+	std::string ToString(uint b = 10) const
+	{
+		std::string result;
+		ToStringBase(result, b);
+	
+	return result;
+	}
+
+	std::wstring ToWString(uint b = 10) const
+	{
+		std::wstring result;
+		ToStringBase(result, b);
+	
+	return result;
+	}
 
 
 private:

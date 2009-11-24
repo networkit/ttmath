@@ -985,6 +985,30 @@ public:
 	}
 
 
+	/*!	
+		this method converts the value to a string with a base equal 'b'
+	*/
+	std::string ToString(uint b = 10) const
+	{
+		std::string result;
+		ToStringBase(result, b);
+
+	return result;
+	}
+
+
+	/*!	
+		this method converts the value to a string with a base equal 'b'
+	*/
+	std::wstring ToWString(uint b = 10) const
+	{
+		std::wstring result;
+		ToStringBase(result, b);
+
+	return result;
+	}
+
+
 private:
 
 	/*!
