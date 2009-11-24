@@ -2871,7 +2871,7 @@ public:
 					uint base         = 10,
 					bool scient       = false,
 					sint scient_from  = 15,
-					sint comma_digits = -1,
+					sint round        = -1,
 					bool trim_zeroes  = true,
 					wchar_t comma     = '.' ) const
 	{
@@ -2880,7 +2880,7 @@ public:
 		conv.base         = base;
 		conv.scient       = scient;
 		conv.scient_from  = scient_from;
-		conv.comma_digits = comma_digits;
+		conv.round        = round;
 		conv.trim_zeroes  = trim_zeroes;
 		conv.comma        = static_cast<uint>(comma);
 
@@ -2896,7 +2896,7 @@ public:
 					uint base         = 10,
 					bool scient       = false,
 					sint scient_from  = 15,
-					sint comma_digits = -1,
+					sint round        = -1,
 					bool trim_zeroes  = true,
 					wchar_t comma     = '.' ) const
 	{
@@ -2905,7 +2905,7 @@ public:
 		conv.base         = base;
 		conv.scient       = scient;
 		conv.scient_from  = scient_from;
-		conv.comma_digits = comma_digits;
+		conv.round        = round;
 		conv.trim_zeroes  = trim_zeroes;
 		conv.comma        = static_cast<uint>(comma);
 
@@ -3017,7 +3017,7 @@ private:
 			we're rounding the mantissa only if the base is different from 2,4,8 or 16
 			(this formula means that the number of bits in the base is greater than one)
 		*/
-		if( conv.base!=2 && conv.base!=4 && conv.base!=8 && conv.base!=16 )
+		if( conv.base_round && conv.base!=2 && conv.base!=4 && conv.base!=8 && conv.base!=16 )
 			if( ToString_RoundMantissa<string_type, char_type>(result, conv, new_exp) )
 			{
 				Misc::AssignString(result, error_overflow_msg);
@@ -3529,11 +3529,17 @@ private:
 		if( new_man.length() < 2 )
 			return 0;
 
+		// the rounding is only made when new_exp is less than zero
+		// if new_exp is greater or equal zero then the value is integer and 
+		// don't have to be rounded
+		if( !new_exp.IsSign() )
+			return 0;
+
 		typename string_type::size_type i = new_man.length() - 1;
 
 		// we're erasing the last character
 		uint digit = Misc::CharToDigit( new_man[i] );
-		new_man.erase( i, 1 );
+		new_man.erase(i, 1);
 		uint carry = new_exp.AddOne();
 
 		// if the last character is greater or equal 'base/2'
@@ -3813,7 +3819,7 @@ private:
 	void ToString_CorrectDigitsAfterComma(	string_type & new_man,
 											const Conv & conv ) const
 	{
-		if( conv.comma_digits >= 0 )
+		if( conv.round >= 0 )
 			ToString_CorrectDigitsAfterComma_Round<string_type, char_type>(new_man, conv);
 
 		if( conv.trim_zeroes )
@@ -3881,15 +3887,15 @@ private:
 
 		// if 'max_digit_after_comma' is greater than 'after_comma' (or equal)
 		// we don't have anything for cutting
-		if( static_cast<StrSize>(conv.comma_digits) >= after_comma )
+		if( static_cast<StrSize>(conv.round) >= after_comma )
 			return;
 
-		uint last_digit = Misc::CharToDigit( new_man[ index + conv.comma_digits + 1 ], conv.base );
+		uint last_digit = Misc::CharToDigit( new_man[ index + conv.round + 1 ], conv.base );
 
 		// we're cutting the rest of the string
-		new_man.erase(index + conv.comma_digits + 1, after_comma - conv.comma_digits);
+		new_man.erase(index + conv.round + 1, after_comma - conv.round);
 
-		if( conv.comma_digits == 0 )
+		if( conv.round == 0 )
 		{
 			// we're cutting the comma operator as well
 			// (it's not needed now because we've cut the whole rest after the comma)

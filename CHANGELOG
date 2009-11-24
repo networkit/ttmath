@@ -1,4 +1,4 @@
-	Version 0.9.0 prerelease (2009.11.09):
+Version 0.9.0 prerelease (2009.11.24):
     * added:   support for wide characters (wchar_t, std::wstring)
     * added:   Big::IsInteger()
                returns true if the value is integer (without fraction)
@@ -68,6 +68,8 @@
                   base 4:  1.3333333333333222
                   base 8:  1.77777777724
                   base 16: 1.FFFFFFEA
+    * changed: in Big::ToString() some additional rounding (base_round) is now made only 
+               when the value is not an integer
     * removed: Parser<>::SetFactorialMax() method
                the factorial() is such a fast now that we don't need the method longer
     * removed: ErrorCode::err_too_big_factorial

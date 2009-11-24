@@ -321,6 +321,7 @@ namespace ttmath
 
 	/*!
 		this struct is used when converting to/from a string
+		/temporarily only in Big::ToString() and Big::FromString()/
 	*/
 	struct Conv
 	{
@@ -349,6 +350,21 @@ namespace ttmath
 
 
 		/*!
+			if 'base_round' is true and 'base' is different from 2, 4, 8, or 16
+			and the result value is not an integer then we make an additional rounding
+			(after converting the last digit from the result is skipped)
+			default: true
+
+			e.g.
+			Conv c;
+			c.base_round = false;
+			Big<1, 1> a = "0.1";                       // decimal input
+			std::cout << a.ToString(c) << std::endl;   // the result is: 0.099999999
+		*/
+		bool base_round;
+
+
+		/*!
 			used only in Big::ToString()
 			tells how many digits after comma are possible
 			default: -1 which means all digits are printed
@@ -356,11 +372,11 @@ namespace ttmath
 			set it to zero if you want integer value only
 
 			for example when the value is:
-				12.345678 and comma_digit is 4
+				12.345678 and 'round' is 4
 			then the result will be 
 				12.3457   (the last digit was rounded)
 		*/
-		sint comma_digits;
+		sint round;
 
 
 		/*!
@@ -404,9 +420,6 @@ namespace ttmath
 		uint group_exp; // not implemented yet
 
 
-		/*!
-		*/
-		bool group_multiple; // not implemented yet
 
 
 		Conv()
@@ -415,13 +428,13 @@ namespace ttmath
 			base         = 10;
 			scient       = false;
 			scient_from  = 15;
-			comma_digits = -1; // !! change to 'round' ?
+			base_round   = true;
+			round        = -1;
 			trim_zeroes  = true;
 			comma        = '.';
 			comma2       = ',';
 			group        = 0;
 			group_exp    = 0;
-			group_multiple = true;
 		}
 	};
 
