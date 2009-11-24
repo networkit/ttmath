@@ -112,6 +112,15 @@ namespace ttmath
 
 
 
+/*!
+	another compilers than MS VC or GCC by default use no asm version (TTMATH_NOASM)
+*/
+#if !defined _MSC_VER && !defined __GNUC__
+	#define TTMATH_NOASM
+#endif
+
+
+
 #ifdef TTMATH_PLATFORM32
 
 	/*!
@@ -283,6 +292,26 @@ namespace ttmath
 
 namespace ttmath
 {
+
+	/*!
+		lib type codes:
+		  asm_vc_32   - with asm code designed for Microsoft Visual C++ (32 bits)
+		  asm_gcc_32  - with asm code designed for GCC (32 bits)
+		  asm_vc_64   - with asm for VC (64 bit)
+		  asm_gcc_64  - with asm for GCC (64 bit)
+		  no_asm_32   - pure C++ version (32 bit) - without any asm code
+		  no_asm_64   - pure C++ version (64 bit) - without any asm code
+	*/
+	enum LibTypeCode
+	{
+	  asm_vc_32 = 0,
+	  asm_gcc_32,
+	  asm_vc_64,
+	  asm_gcc_64,
+	  no_asm_32,
+	  no_asm_64
+	};
+
 
 	/*!
 		error codes

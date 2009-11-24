@@ -3373,6 +3373,8 @@ private:
 	uint Rcr2(uint bits, uint c);
 
 public:
+	static const char * LibTypeStr();
+	static LibTypeCode LibType();
 	uint Add(const UInt<value_size> & ss2, uint c=0);
 	uint AddInt(uint value, uint index = 0);
 	uint AddTwoInts(uint x2, uint x1, uint index);
