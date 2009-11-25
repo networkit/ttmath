@@ -3242,7 +3242,40 @@ public:
 	}
 
 
+	UInt<value_size> operator>>(int move)
+	{
+	UInt<value_size> temp( *this );
 
+		temp.Rcr(move);
+
+	return temp;
+	}
+
+
+	UInt<value_size> & operator>>=(int move)
+	{
+		Rcr(move);
+
+	return *this;
+	}
+
+
+	UInt<value_size> operator<<(int move)
+	{
+	UInt<value_size> temp( *this );
+
+		temp.Rcl(move);
+
+	return temp;
+	}
+
+
+	UInt<value_size> & operator<<=(int move)
+	{
+		Rcl(move);
+
+	return *this;
+	}
 
 
 	/*!

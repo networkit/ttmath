@@ -66,6 +66,10 @@ Version 0.9.0 prerelease (2009.11.24):
                    asm_gcc_64  - with asm for GCC (64 bit)
                    no_asm_32   - pure C++ version (32 bit) - without any asm code
                    no_asm_64   - pure C++ version (64 bit) - without any asm code
+    * added:   UInt::operator>>(int)
+               UInt::operator>>=(int)
+               UInt::operator<<(int)
+               UInt::operator<<=(int)
     * changed: Factorial() is using the Gamma() function now
     * changed: Big::Div(ss2)
                Big::Mod(ss2)
