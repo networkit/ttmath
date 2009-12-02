@@ -1746,7 +1746,7 @@ const char * new_stack_pointer;
 bool value_read;
 Conv conv;
 
-	conv.base   = base;
+	conv.base   = reading_base;
 	conv.comma  = comma;
 	conv.comma2 = comma2;
 	conv.group  = group;
