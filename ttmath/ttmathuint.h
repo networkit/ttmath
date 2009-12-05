@@ -627,7 +627,7 @@ public:
 			if 'this' is not zero:
 				return value - true
 				'table_id'   - the index of a word <0..value_size-1>
-				'index'      - the index of this set bit in the word <0..31>
+				'index'      - the index of this set bit in the word <0..TTMATH_BITS_PER_UINT)
 
 			if 'this' is zero: 
 				return value - false
@@ -645,8 +645,54 @@ public:
 		return false;
 		}
 		
-		// table[table_id] != 0
+		// table[table_id] is different from 0
 		index = FindLeadingBitInWord( table[table_id] );
+
+	return true;
+	}
+
+
+	/*!
+		this method looks for the smallest set bit
+		
+		result:
+			if 'this' is not zero:
+				return value - true
+				'table_id'   - the index of a word <0..value_size-1>
+				'index'      - the index of this set bit in the word <0..TTMATH_BITS_PER_UINT)
+
+			if 'this' is zero: 
+				return value - false
+				both 'table_id' and 'index' are zero
+	*/
+	bool FindLowestBit(uint & table_id, uint & index) const
+	{
+		for(table_id=0 ; table_id<value_size && table[table_id]==0 ; ++table_id);
+
+		if( table_id >= value_size )
+		{
+			// is zero
+			index = 0;
+			table_id = 0;
+
+		return false;
+		}
+		
+		// table[table_id] is different from 0
+
+		// !! need asm version:
+		// index = FindSmallestBitInWord( table[table_id] );
+
+		index = 0;
+		uint temp = table[table_id];
+
+		while( (temp & 1) == 0 )
+		{
+			index += 1;
+			temp >>= 1;
+		}
+
+		// !!
 
 	return true;
 	}

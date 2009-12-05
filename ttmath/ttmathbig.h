@@ -3069,12 +3069,14 @@ private:
 			(this formula means that the number of bits in the base is greater than one)
 		*/
 		if( conv.base_round && conv.base!=2 && conv.base!=4 && conv.base!=8 && conv.base!=16 )
-			if( ToString_RoundMantissa<string_type, char_type>(result, conv, new_exp) )
+		{
+			if( ToString_BaseRound<string_type, char_type>(result, conv, new_exp) )
 			{
 				Misc::AssignString(result, error_overflow_msg);
 				return 1;
 			}
-
+		}
+			
 		if( ToString_SetCommaAndExponent<string_type, char_type>(result, conv, new_exp) )
 		{
 			Misc::AssignString(result, error_overflow_msg);
@@ -3083,6 +3085,7 @@ private:
 
 		if( IsSign() )
 			result.insert(result.begin(), '-');
+
 
 	// converted successfully
 	return 0;
@@ -3570,20 +3573,180 @@ private:
 	/*!
 		an auxiliary method for converting into the string
 
+		returns log(n, 2) (logarithm with the base equal 2)
+		n is in the range of [2,16]
+	*/
+	double ToString_LogBase2(uint n) const
+	{
+		static double log_tab[] = {
+			1.0000000000000000,
+			1.5849625007211562,
+			2.0000000000000000,
+			2.3219280948873623,
+			2.5849625007211562,
+			2.8073549220576041,
+			3.0000000000000000,
+			3.1699250014423124,
+			3.3219280948873623,
+			3.4594316186372973,
+			3.5849625007211562,
+			3.7004397181410922,
+			3.8073549220576041,
+			3.9068905956085185,
+			4.0000000000000000
+			};
+
+		if( n < 2 || n > 16 )
+			return 1.0;
+
+	return log_tab[n-2];
+	}
+
+
+	/*!
+		an auxiliary method for converting into the string
+
+		this method is used for base!=2, base!=4, base!=8 and base!=16
+		we do the rounding when the value has fraction (is not an integer)
+
+		if the value is not an integer we calculate how many valid digits there are
+		after the comma operator (in conv.base radix) and then we skipped the rest
+		digits, after skipping the base-rounding is made
+	*/
+	template<class string_type, class char_type>
+	uint ToString_BaseRound(string_type & new_man, const Conv & conv, Int<exp+1> & new_exp) const
+	{
+	uint table_id, bit_index, zeroes;
+
+		// at least two digits
+		if( new_man.size() < 2 )
+			return 0;
+
+		// exponents should be less than zero
+		// if new_exp are greater than or equal to zero then the value is integer
+		if( !new_exp.IsSign() || !exponent.IsSign() )
+			return 0;
+
+		if( !mantissa.FindLowestBit(table_id, bit_index) )
+			// mantissa is zero, it should not be zero here
+			return 0;
+
+		// how many zero bits there are at the end of the mantissa
+		zeroes = table_id * TTMATH_BITS_PER_UINT + bit_index;
+
+	return ToString_BaseRoundDelInvalidAndRound<string_type, char_type>(new_man, conv, new_exp, zeroes);
+	}
+
+	
+	
+	/*!
+		an auxiliary method for converting into the string
+
+		this method is used for base!=2, base!=4, base!=8 and base!=16
+		we do the rounding when the value has fraction (is not an integer)
+	*/
+	template<class string_type, class char_type>
+	uint ToString_BaseRoundDelInvalidAndRound(string_type & new_man, const Conv & conv, Int<exp+1> & new_exp, uint zeroes) const
+	{
+	uint len, valid_bits, del;
+
+		del = 0;
+
+		// how many bits there are in the mantissa
+		len = man * TTMATH_BITS_PER_UINT;
+
+		if( exponent > -sint(len) )
+			// but bits only after the comma operator
+			len = uint(-exponent.ToInt());  // exponent is also less than zero
+
+		valid_bits = 0;
+
+		if( len > zeroes )
+			valid_bits = len - zeroes;
+		
+		if( valid_bits == 0 )
+			// oops, this is an integer value (the value was not Standardized)
+			return 0;
+
+		// the rest digits (in conv.base radix) will be cut off from new_man
+		// but at least two characters must be left
+		del = ToString_BaseRoundDelInvalid<string_type, char_type>(new_man, conv.base, new_exp, valid_bits);
+
+		// rounding from the last digit (the last digit will be deleted)
+		uint c = ToString_RoundMantissa<string_type, char_type>(new_man, conv, new_exp);
+		
+		if( del > 0 )
+		{
+			if( conv.trim_zeroes )
+				c += new_exp.Add(del);
+			else
+				new_man.append(del, '0');
+		}
+
+	return c;
+	}
+
+
+	/*!
+		an auxiliary method for converting into the string
+
+		returning how many digits were deleted
+	*/
+	template<class string_type, class char_type>
+	uint ToString_BaseRoundDelInvalid(	string_type & new_man,
+										uint radix,
+										Int<exp+1> & new_exp,
+										uint valid_bits) const
+	{
+	uint del, del_max, new_exp_abs, valid_digits;
+
+		// calculating how many valid digits there are after the comma operator
+		// (in new_man where the radix is conv.base)
+		sint v = sint(double(valid_bits) / ToString_LogBase2(radix) - 2.0);
+		valid_digits = uint( (v<=1)? 1 : v ); // minimum 1
+		del = 0;
+
+		if( new_man.size() >= TTMATH_UINT_HIGHEST_BIT )
+			// oops, new_man.size() is too big for calculating
+			return del;
+
+		if( new_man.size() < 3 )
+			// it must be at least three characters in the new_man
+			return del;
+
+		if( new_exp <= -sint(TTMATH_UINT_HIGHEST_BIT) )
+			// oops, new_exp is too big for calculating
+			return del;
+
+		new_exp_abs = uint(-new_exp.ToInt());	// new_exp is also less than zero
+
+		if( new_exp_abs > valid_digits )
+			del = new_exp_abs - valid_digits;
+
+		// miminum two characters should be left in new_man
+		// also new_man.size() is > 2
+		del_max = (new_man.size()==3)? 1 : new_man.size()-2;
+
+		if( del > del_max )
+			del = del_max;
+
+		if( del > 0 )
+			new_man.erase(new_man.size()-del);	// deleting del characters at the end of new_man
+
+	return del;
+	}
+
+
+	/*!
+		an auxiliary method for converting into the string
+
 		this method roundes the last character from the new mantissa
-		(it's used in systems where the base is different from 2)
 	*/
 	template<class string_type, class char_type>
 	uint ToString_RoundMantissa(string_type & new_man, const Conv & conv, Int<exp+1> & new_exp) const
 	{
 		// we must have minimum two characters
-		if( new_man.length() < 2 )
-			return 0;
-
-		// the rounding is only made when new_exp is less than zero
-		// if new_exp is greater or equal zero then the value is integer and 
-		// don't have to be rounded
-		if( !new_exp.IsSign() )
+		if( new_man.size() < 2 )
 			return 0;
 
 		typename string_type::size_type i = new_man.length() - 1;
@@ -3638,6 +3801,7 @@ private:
 		if( i<0 && was_carry )
 			new_man.insert( new_man.begin() , '1' );
 	}
+
 
 
 	/*!
@@ -3767,9 +3931,12 @@ private:
 		if( new_man.empty() )
 			return;
 		
-		new_man.insert( new_man.begin()+1, static_cast<char_type>(conv.comma) );
+		if( new_man.size() > 1 )
+		{
+			new_man.insert( new_man.begin()+1, static_cast<char_type>(conv.comma) );
+			ToString_CorrectDigitsAfterComma<string_type, char_type>(new_man, conv);
+		}
 
-		ToString_CorrectDigitsAfterComma<string_type, char_type>(new_man, conv);
 		ToString_Group_man<string_type, char_type>(new_man, conv);
 
 		if( conv.base == 10 )
@@ -4194,7 +4361,7 @@ private:
 	{
 	sint character;
 	uint c = 0, index = 1;
-	Big<exp, man> part, power, old_value, base_( conv.base );
+	Big<exp, man> sum, part, power, old_value, base_( conv.base );
 
 		// we don't remove any white characters here
 
@@ -4203,9 +4370,15 @@ private:
 		old_value.SetZero();
 
 		power.SetOne();
+		sum.SetZero();
 
 		for( ; true ; ++source, ++index )
 		{
+			if( index == 98 )
+			{
+				index = 98;
+			}
+
 			if( conv.group!=0 && *source==static_cast<char>(conv.group) )
 				continue;
 			
@@ -4231,12 +4404,12 @@ private:
 			bool testing = (character != 0 && (index % 5) == 0);
 
 			if( testing )
-				old_value = *this;
+				old_value = sum;
 
 			// there actually shouldn't be a carry here
-			c += Add( part );
+			c += sum.Add( part );
 
-			if( testing && old_value == *this )
+			if( testing && old_value == sum )
 				// after adding 'part' the value has not been changed
 				// there's no sense to add any next parts
 				break;
@@ -4246,6 +4419,8 @@ private:
 		// but the result (value) still can be good
 		// we should set a correct value of 'source' now
 		for( ; Misc::CharToDigit(*source, conv.base) != -1 ; ++source );
+
+		c += Add(sum);
 
 	return (c==0)? 0 : 1;
 	}
