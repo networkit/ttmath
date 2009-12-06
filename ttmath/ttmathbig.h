@@ -714,7 +714,36 @@ public:
 
 
 
+private:
 
+	/*!
+		this method does the half-to-even rounding (banker's rounding)
+
+		if is_half is:
+		  true  - that means the rest was equal the half (0.5 decimal)
+		  false - that means the rest was greater than a half (greater than 0.5 decimal)
+
+	    if the rest was less than a half then don't call this method
+		(the rounding should does nothing then)
+	*/
+	uint RoundHalfToEven(bool is_half)
+	{
+	uint c = 0;
+
+		if( !is_half || mantissa.IsTheLowestBitSet() )
+		{
+			if( mantissa.AddOne() )
+			{
+				mantissa.Rcr(1, 1);
+				c = exponent.AddOne();
+			}
+		}
+
+	return c;
+	}
+
+
+public:
 
 	/*!
 	*
@@ -772,8 +801,11 @@ public:
 			// values have the same signs
 			if( mantissa.Add(ss2.mantissa) )
 			{
-				mantissa.Rcr(1,1);
-				c = exponent.AddOne();
+				bool is_exact_half = mantissa.Rcr(1,1);
+				c += exponent.AddOne();
+
+				if( is_exact_half )
+					c += RoundHalfToEven(is_exact_half);
 			}
 		}
 		else
@@ -1078,6 +1110,41 @@ public:
 	}
 
 
+private:
+
+
+	/*!
+		this method checks whether a table pointed by 'tab' and 'len'
+		has the value 0.5 decimal
+		(it is treated as the comma operator would be before the highest bit)
+		call this method only if the highest bit is set - you have to test it beforehand
+
+		return:
+		  true  - tab was equal the half (0.5 decimal)
+		  false - tab was greater than a half (greater than 0.5 decimal)
+
+	*/
+	bool CheckGreaterOrEqualHalf(uint * tab, uint len)
+	{
+	uint i;
+
+		TTMATH_ASSERT( len>0 && (tab[len-1] & TTMATH_UINT_HIGHEST_BIT)!=0 )
+
+		for(i=0 ; i<len-1 ; ++i)
+			if( tab[i] != 0 )
+				return false;
+
+		if( tab[i] != TTMATH_UINT_HIGHEST_BIT )
+			return false;
+
+	return true;
+	}
+
+
+
+public:
+
+
 	/*!
 		multiplication this = this * ss2
 		this method returns a carry
@@ -1087,7 +1154,8 @@ public:
 	TTMATH_REFERENCE_ASSERT( ss2 )
 
 	UInt<man*2> man_result;
-	uint i,c;
+	uint c = 0;
+	uint i;
 
 		if( IsNan() || ss2.IsNan() )
 			return CheckCarry(1);
@@ -1110,12 +1178,21 @@ public:
 		// if there is a zero value in man_result the method CompensationToLeft()
 		// returns 0 but we'll correct this at the end in Standardizing() method)
 		i = man_result.CompensationToLeft();
-		
-		c  = exponent.Add( man * TTMATH_BITS_PER_UINT - i );
+		uint exp_add = man * TTMATH_BITS_PER_UINT - i;
+
+		if( exp_add )
+			c += exponent.Add( exp_add );
+
 		c += exponent.Add( ss2.exponent );
 
 		for(i=0 ; i<man ; ++i)
 			mantissa.table[i] = man_result.table[i+man];
+
+		if( (man_result.table[man-1] & TTMATH_UINT_HIGHEST_BIT) != 0 )
+		{
+			bool is_half = CheckGreaterOrEqualHalf(man_result.table, man);
+			c += RoundHalfToEven(is_half);		
+		}
 
 		if( IsSign() == ss2.IsSign() )
 		{
@@ -1186,6 +1263,12 @@ public:
 		
 		for(i=0 ; i<man ; ++i)
 			mantissa.table[i] = man1.table[i+man];
+
+		if( (man1.table[man-1] & TTMATH_UINT_HIGHEST_BIT) != 0 )
+		{
+			bool is_half = CheckGreaterOrEqualHalf(man1.table, man);
+			c += RoundHalfToEven(is_half);		
+		}
 
 		if( IsSign() == ss2.IsSign() )
 			Abs();
@@ -4374,11 +4457,6 @@ private:
 
 		for( ; true ; ++source, ++index )
 		{
-			if( index == 98 )
-			{
-				index = 98;
-			}
-
 			if( conv.group!=0 && *source==static_cast<char>(conv.group) )
 				continue;
 			
