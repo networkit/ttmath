@@ -807,6 +807,10 @@ public:
 				if( is_exact_half )
 					c += RoundHalfToEven(is_exact_half);
 			}
+
+			// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			// rounding
+			// we have to test bits from ss2 too
 		}
 		else
 		{
@@ -3707,6 +3711,7 @@ private:
 
 		// exponents should be less than zero
 		// if new_exp are greater than or equal to zero then the value is integer
+		// (but the integer can be too if the exponents are less than zero - we check it later)
 		if( !new_exp.IsSign() || !exponent.IsSign() )
 			return 0;
 
@@ -3731,8 +3736,9 @@ private:
 	template<class string_type, class char_type>
 	uint ToString_BaseRoundDelInvalidAndRound(string_type & new_man, const Conv & conv, Int<exp+1> & new_exp, uint zeroes) const
 	{
-	uint len, valid_bits, del;
+	uint c, len, valid_bits, del;
 
+		c   = 0;
 		del = 0;
 
 		// how many bits there are in the mantissa
@@ -3748,23 +3754,22 @@ private:
 			valid_bits = len - zeroes;
 		
 		if( valid_bits == 0 )
-			// oops, this is an integer value (the value was not Standardized)
+			// this is an integer value
 			return 0;
 
 		// the rest digits (in conv.base radix) will be cut off from new_man
 		// but at least two characters must be left
 		del = ToString_BaseRoundDelInvalid<string_type, char_type>(new_man, conv.base, new_exp, valid_bits);
 
+		if( del>0 && conv.trim_zeroes )
+			c += new_exp.Add(del);
+
 		// rounding from the last digit (the last digit will be deleted)
-		uint c = ToString_RoundMantissa<string_type, char_type>(new_man, conv, new_exp);
+		c += ToString_RoundMantissa<string_type, char_type>(new_man, conv, new_exp);
 		
-		if( del > 0 )
-		{
-			if( conv.trim_zeroes )
-				c += new_exp.Add(del);
-			else
-				new_man.append(del, '0');
-		}
+		if( del>0 && !conv.trim_zeroes )
+			// we must add the zeroes after ToString_RoundMantissa()
+			new_man.append(del, '0');
 
 	return c;
 	}
@@ -3781,30 +3786,38 @@ private:
 										Int<exp+1> & new_exp,
 										uint valid_bits) const
 	{
-	uint del, del_max, new_exp_abs, valid_digits;
+	uint del, del_max, valid_digits;
+
+		del = 0;
 
 		// calculating how many valid digits there are after the comma operator
 		// (in new_man where the radix is conv.base)
-		sint v = sint(double(valid_bits) / ToString_LogBase2(radix) - 2.0);
+		sint v = sint(double(valid_bits) / ToString_LogBase2(radix) + 0.5);
+		// even if v is less than 1 we want at least one digit after comma
+		// (valid_bits is greater than zero)
 		valid_digits = uint( (v<=1)? 1 : v ); // minimum 1
-		del = 0;
 
-		if( new_man.size() >= TTMATH_UINT_HIGHEST_BIT )
-			// oops, new_man.size() is too big for calculating
-			return del;
+		if( valid_digits > new_man.size() )
+			valid_digits = new_man.size();
 
 		if( new_man.size() < 3 )
 			// it must be at least three characters in the new_man
 			return del;
 
-		if( new_exp <= -sint(TTMATH_UINT_HIGHEST_BIT) )
-			// oops, new_exp is too big for calculating
-			return del;
+		Int<exp+1> new_exp_abs(new_exp);
+		new_exp_abs.Abs();
 
-		new_exp_abs = uint(-new_exp.ToInt());	// new_exp is also less than zero
+		if( new_exp_abs > new_man.size() )
+			new_exp_abs = new_man.size();
 
 		if( new_exp_abs > valid_digits )
-			del = new_exp_abs - valid_digits;
+		{
+			new_exp_abs.Sub(valid_digits);
+			del = new_exp_abs.ToUInt();
+		}
+
+		// because valid_digits is >= 1 then del is less than new_exp_abs
+		// and after deleting the result will not be an integer
 
 		// miminum two characters should be left in new_man
 		// also new_man.size() is > 2
@@ -3822,6 +3835,41 @@ private:
 
 	/*!
 		an auxiliary method for converting into the string
+	*/
+	template<class string_type, class char_type>
+	bool ToString_RoundMantissaWouldBeInteger(string_type & new_man, Int<exp+1> & new_exp) const
+	{
+		// if new_exp is equal -1 then we have only one digit after the comma
+		// and after rounding it would be an integer value
+		// (we don't want to be integer after rounding)
+		if( new_exp == -1 )
+			return true;
+
+		if( new_man.size() > TTMATH_UINT_HIGHEST_BIT )
+			// oops, the mantissa is too large for calculating
+			return false;
+		
+		uint i = 0;
+
+		if( new_exp > -sint(new_man.size()) )
+		{
+			uint new_exp_abs = -new_exp.ToInt();
+			i = new_man.size() - new_exp_abs;
+		}
+
+		// at least one digit after the comma operator should be different from zero
+		// but without checking the last digit (the last digit will be deleted later)
+		for( ; i<new_man.size()-1 ; ++i) // new_man.size() is >= 2
+			if( new_man[i] != '0' )
+				// it will not be integer
+				return false; 
+		
+	return true;
+	}
+
+
+	/*!
+		an auxiliary method for converting into the string
 
 		this method roundes the last character from the new mantissa
 	*/
@@ -3830,6 +3878,9 @@ private:
 	{
 		// we must have minimum two characters
 		if( new_man.size() < 2 )
+			return 0;
+
+		if( ToString_RoundMantissaWouldBeInteger<string_type, char_type>(new_man, new_exp) )
 			return 0;
 
 		typename string_type::size_type i = new_man.length() - 1;
@@ -3842,7 +3893,17 @@ private:
 		// if the last character is greater or equal 'base/2'
 		// we'll add one into the new mantissa
 		if( digit >= conv.base / 2 )
-			ToString_RoundMantissa_AddOneIntoMantissa<string_type, char_type>(new_man, conv);
+		{
+			uint how_many = ToString_RoundMantissa_AddOneIntoMantissa<string_type, char_type>(new_man, conv, false);
+
+			if( new_exp <= -(int)how_many ) // it means: abs(new_exp) >= how_many
+			{
+				// we have to round only digits after the comma operator
+				// if how_many were greater than abs(new_exp) then 
+				// the result would be integer (we don't want it to be integer)
+				ToString_RoundMantissa_AddOneIntoMantissa<string_type, char_type>(new_man, conv);
+			}
+		}
 
 	return carry;
 	}
@@ -3852,15 +3913,17 @@ private:
 		an auxiliary method for converting into the string
 
 		this method addes one into the new mantissa
+		returns how many digits were affected
 	*/
 	template<class string_type, class char_type>
-	void ToString_RoundMantissa_AddOneIntoMantissa(string_type & new_man, const Conv & conv) const
+	uint ToString_RoundMantissa_AddOneIntoMantissa(string_type & new_man, const Conv & conv, bool change_mantissa = true) const
 	{
 		if( new_man.empty() )
-			return;
+			return 0;
 
 		sint i = sint( new_man.length() ) - 1;
 		bool was_carry = true;
+		uint how_many = 0;
 
 		for( ; i>=0 && was_carry ; --i )
 		{
@@ -3878,11 +3941,21 @@ private:
 			else
 				was_carry = false;
 
-			new_man[i] = static_cast<char_type>( Misc::DigitToChar(digit) );
+			if( change_mantissa )
+				new_man[i] = static_cast<char_type>( Misc::DigitToChar(digit) );
+
+			how_many += 1;
 		}
 
 		if( i<0 && was_carry )
-			new_man.insert( new_man.begin() , '1' );
+		{
+			if( change_mantissa )
+				new_man.insert( new_man.begin() , '1' );
+
+			how_many += 1;
+		}
+
+	return how_many;
 	}
 
 
@@ -5117,9 +5190,7 @@ public:
 	return CheckCarry(c);
 	}
 
-
-
-
+	
 
 	/*!
 	*
