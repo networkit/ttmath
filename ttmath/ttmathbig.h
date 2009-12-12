@@ -726,16 +726,29 @@ private:
 	    if the rest was less than a half then don't call this method
 		(the rounding should does nothing then)
 	*/
-	uint RoundHalfToEven(bool is_half)
+	uint RoundHalfToEven(bool is_half, bool rounding_up = true)
 	{
 	uint c = 0;
 
 		if( !is_half || mantissa.IsTheLowestBitSet() )
 		{
-			if( mantissa.AddOne() )
+			if( rounding_up)
 			{
-				mantissa.Rcr(1, 1);
-				c = exponent.AddOne();
+				if( mantissa.AddOne() )
+				{
+					mantissa.Rcr(1, 1);
+					c = exponent.AddOne();
+				}
+			}
+			else
+			{
+				uint c_from_zero = mantissa.SubOne();
+
+				// we're using rounding_up=false in Add() when the mantissas
+				// have different signs, but we have guarantee then the result
+				// will be greater than or equal to zero
+				// (if it is zero then we should not do the rounding here)
+				TTMATH_ASSERT( c_from_zero == 0 )
 			}
 		}
 
@@ -751,6 +764,105 @@ public:
 	*
 	*/
 
+private:
+
+
+	/*!
+		an auxiliary method for adding
+	*/
+	void AddCheckExponents(	Big<exp, man> & ss2,
+							Int<exp> & exp_offset,
+							bool & last_bit_set,
+							bool & rest_zero,
+							bool & do_adding,
+							bool & do_rounding)
+	{
+	Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
+
+		if( exp_offset == mantissa_size_in_bits )
+		{
+			last_bit_set = ss2.mantissa.IsTheHighestBitSet();
+			rest_zero    = ss2.mantissa.AreFirstBitsZero(man*TTMATH_BITS_PER_UINT - 1);
+			do_rounding  = true;	// we'are only rounding
+		}
+		else
+		if( exp_offset < mantissa_size_in_bits )
+		{
+			uint moved = exp_offset.ToInt(); // how many times we must move ss2.mantissa
+	
+			if( moved > 0 )
+			{
+				last_bit_set = static_cast<bool>( ss2.mantissa.GetBit(moved-1) );
+
+				if( moved > 1)
+					rest_zero = ss2.mantissa.AreFirstBitsZero(moved - 1);
+			
+				// (2) moving 'exp_offset' times
+				ss2.mantissa.Rcr(moved, 0);
+			}
+
+			do_adding    = true; 
+			do_rounding  = true;
+		}
+
+		// if exp_offset is greater than mantissa_size_in_bits then we do nothing
+		// ss2 is too small for taking into consideration in the sum
+	}
+
+
+	/*!
+		an auxiliary method for adding
+	*/
+	uint AddMantissas(	Big<exp, man> & ss2,
+						bool & last_bit_set,
+						bool & rest_zero,
+						bool & do_rounding,
+						bool & rounding_up)
+	{
+	uint c = 0;
+
+		if( IsSign() == ss2.IsSign() )
+		{
+			// values have the same signs
+			if( mantissa.Add(ss2.mantissa) )
+			{
+				// we have one bit more from addition (carry was)
+				// now rest_zero means the old rest_zero with the old last_bit_set
+				// we check only the situation when rest_zero was true
+				// (if it was false then it is false now too)
+				if( rest_zero && last_bit_set )
+					rest_zero = false;
+
+				last_bit_set = mantissa.Rcr(1,1);
+				c += exponent.AddOne();
+			}
+		}
+		else
+		{
+			// values have different signs
+			// there shouldn't be a carry here because
+			// (1) (2) guarantee that the mantissa of this
+			// is greater than or equal to the mantissa of the ss2
+
+			#ifdef TTMATH_DEBUG
+			// this is to get rid of a warning saying that c_temp is not used
+			uint c_temp = /* mantissa.Sub(ss2.mantissa); */
+			#endif
+			mantissa.Sub(ss2.mantissa);
+
+			TTMATH_ASSERT( c_temp == 0 )
+
+			rounding_up = false;
+		}
+
+		do_rounding = true;
+
+	return c;
+	}
+
+
+public:
+
 
 	/*!
 		Addition this = this + ss2
@@ -760,7 +872,6 @@ public:
 	uint Add(Big<exp, man> ss2)
 	{
 	Int<exp> exp_offset( exponent );
-	Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
 
 	uint c = 0;
 
@@ -782,53 +893,22 @@ public:
 			*this = temp;
 		}
 	
+		bool last_bit_set = false;
+		bool rest_zero    = true;
+		bool do_adding    = false;
+		bool do_rounding  = false;
+		bool rounding_up  = true;
 
-		if( exp_offset >= mantissa_size_in_bits )
-		{
-			// the second value is too small for taking into consideration in the sum
-			return 0;
-		}
-		else
-		if( exp_offset < mantissa_size_in_bits )
-		{
-			// (2) moving 'exp_offset' times
-			ss2.mantissa.Rcr( exp_offset.ToInt(), 0 );
-		}
+		AddCheckExponents(ss2, exp_offset, last_bit_set, rest_zero, do_adding, do_rounding);
 
+		if( do_adding )
+			c += AddMantissas(ss2, last_bit_set, rest_zero, do_rounding, rounding_up);
 
-		if( IsSign() == ss2.IsSign() )
-		{
-			// values have the same signs
-			if( mantissa.Add(ss2.mantissa) )
-			{
-				bool is_exact_half = mantissa.Rcr(1,1);
-				c += exponent.AddOne();
+		if( do_rounding && last_bit_set )
+			c += RoundHalfToEven(rest_zero, rounding_up);
 
-				if( is_exact_half )
-					c += RoundHalfToEven(is_exact_half);
-			}
-
-			// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			// rounding
-			// we have to test bits from ss2 too
-		}
-		else
-		{
-			// values have different signs
-			// there shouldn't be a carry here because
-			// (1) (2) guarantee that the mantissa of this
-			// is greater than or equal to the mantissa of the ss2
-			
-			#ifdef TTMATH_DEBUG
-			// this is to get rid of a warning saying that c_temp is not used
-			uint c_temp = /* mantissa.Sub(ss2.mantissa); */
-			#endif
-			mantissa.Sub(ss2.mantissa);
-
-			TTMATH_ASSERT( c_temp == 0 )
-		}
-
-		c += Standardizing();
+		if( do_adding || (do_rounding && last_bit_set) )
+			c += Standardizing();
 
 	return CheckCarry(c);
 	}

@@ -699,7 +699,7 @@ public:
 
 
 	/*!
-		setting the 'bit_index' bit
+		getting the 'bit_index' bit
 
 		bit_index bigger or equal zero
 	*/
@@ -2416,7 +2416,28 @@ public:
 	}
 
 
+	/*!
+		returning true if first 'bits' bits are equal zero
+	*/
+	bool AreFirstBitsZero(uint bits) const
+	{
+		TTMATH_ASSERT( bits <= value_size * TTMATH_BITS_PER_UINT )
 
+		uint index = bits / TTMATH_BITS_PER_UINT;
+		uint rest  = bits % TTMATH_BITS_PER_UINT;
+		uint i;
+
+		for(i=0 ; i<index ; ++i)
+			if(table[i] != 0 )
+				return false;
+
+		if( rest == 0 )
+			return true;
+
+		uint mask = TTMATH_UINT_MAX_VALUE >> (TTMATH_BITS_PER_UINT - rest);
+
+	return (table[i] & mask) == 0;
+	}
 
 
 
