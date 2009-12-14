@@ -869,7 +869,7 @@ public:
 
 		it returns carry if the sum is too big
 	*/
-	uint Add(Big<exp, man> ss2)
+	uint Add(Big<exp, man> ss2, bool round = true)
 	{
 	Int<exp> exp_offset( exponent );
 
@@ -904,7 +904,7 @@ public:
 		if( do_adding )
 			c += AddMantissas(ss2, last_bit_set, rest_zero, do_rounding, rounding_up);
 
-		if( do_rounding && last_bit_set )
+		if( round && do_rounding && last_bit_set )
 			c += RoundHalfToEven(rest_zero, rounding_up);
 
 		if( do_adding || (do_rounding && last_bit_set) )
@@ -919,11 +919,11 @@ public:
 
 		it returns carry if the result is too big
 	*/
-	uint Sub(Big<exp, man> ss2)
+	uint Sub(Big<exp, man> ss2, bool round = true)
 	{
 		ss2.ChangeSign();
 
-	return Add(ss2);
+	return Add(ss2, round);
 	}
 		
 
@@ -1233,7 +1233,7 @@ public:
 		multiplication this = this * ss2
 		this method returns a carry
 	*/
-	uint Mul(const Big<exp, man> & ss2)
+	uint Mul(const Big<exp, man> & ss2, bool round = true)
 	{
 	TTMATH_REFERENCE_ASSERT( ss2 )
 
@@ -1272,7 +1272,7 @@ public:
 		for(i=0 ; i<man ; ++i)
 			mantissa.table[i] = man_result.table[i+man];
 
-		if( (man_result.table[man-1] & TTMATH_UINT_HIGHEST_BIT) != 0 )
+		if( round && (man_result.table[man-1] & TTMATH_UINT_HIGHEST_BIT) != 0 )
 		{
 			bool is_half = CheckGreaterOrEqualHalf(man_result.table, man);
 			c += RoundHalfToEven(is_half);		
@@ -1304,7 +1304,7 @@ public:
 		1 - carry (in a division carry can be as well)
 		2 - improper argument (ss2 is zero)
 	*/
-	uint Div(const Big<exp, man> & ss2)
+	uint Div(const Big<exp, man> & ss2, bool round = true)
 	{
 	TTMATH_REFERENCE_ASSERT( ss2 )
 
@@ -1348,10 +1348,10 @@ public:
 		for(i=0 ; i<man ; ++i)
 			mantissa.table[i] = man1.table[i+man];
 
-		if( (man1.table[man-1] & TTMATH_UINT_HIGHEST_BIT) != 0 )
+		if( round && (man1.table[man-1] & TTMATH_UINT_HIGHEST_BIT) != 0 )
 		{
 			bool is_half = CheckGreaterOrEqualHalf(man1.table, man);
-			c += RoundHalfToEven(is_half);		
+			c += RoundHalfToEven(is_half, true);
 		}
 
 		if( IsSign() == ss2.IsSign() )
@@ -3225,24 +3225,12 @@ private:
 		*/
 		Int<exp+1> new_exp;
 
-		if( ToString_CreateNewMantissaAndExponent(result, conv, new_exp) )
+		if( ToString_CreateNewMantissaAndExponent<string_type, char_type>(result, conv, new_exp) )
 		{
 			Misc::AssignString(result, error_overflow_msg);
 			return 1;
 		}
 
-		/*
-			we're rounding the mantissa only if the base is different from 2,4,8 or 16
-			(this formula means that the number of bits in the base is greater than one)
-		*/
-		if( conv.base_round && conv.base!=2 && conv.base!=4 && conv.base!=8 && conv.base!=16 )
-		{
-			if( ToString_BaseRound<string_type, char_type>(result, conv, new_exp) )
-			{
-				Misc::AssignString(result, error_overflow_msg);
-				return 1;
-			}
-		}
 			
 		if( ToString_SetCommaAndExponent<string_type, char_type>(result, conv, new_exp) )
 		{
@@ -3313,7 +3301,7 @@ private:
 			M = mm * 2^ee where ee will be <= 0 
 
 		next we'll move all bits of mm into the right when ee is equal zero
-		abs(ee) must not to be too big that only few bits from mm we can leave
+		abs(ee) must not be too big that only few bits from mm we can leave
 
 		then we'll have:
 			M = mmm * 2^0
@@ -3327,7 +3315,7 @@ private:
 			but we need 'new'exp' as integer then we take:
 			new_exp = [log base (2^exponent)] + 1  <- where [x] means integer value from x
 	*/
-	template<class string_type>
+	template<class string_type, class char_type>
 	uint ToString_CreateNewMantissaAndExponent(	string_type & new_man, const Conv & conv,
 												Int<exp+1> & new_exp) const
 	{
@@ -3389,7 +3377,7 @@ private:
 		// the sign don't interest us here
 		temp.mantissa = mantissa;
 		temp.exponent = exponent;
-		c += temp.Div( base_ );
+		c += temp.Div(base_, false); // dividing without rounding
 
 		// moving all bits of the mantissa into the right 
 		// (how many times to move depend on the exponent)
@@ -3405,6 +3393,10 @@ private:
 		// because we had used a bigger type for calculating I think we 
 		// shouldn't have had a carry
 		// (in the future this can be changed)
+
+		// base rounding
+		if( conv.base_round )
+			c += ToString_BaseRound<string_type, char_type>(new_man, conv, new_exp);
 
 	return (c==0)? 0 : 1;
 	}
