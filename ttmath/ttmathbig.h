@@ -1351,7 +1351,7 @@ public:
 		if( round && (man1.table[man-1] & TTMATH_UINT_HIGHEST_BIT) != 0 )
 		{
 			bool is_half = CheckGreaterOrEqualHalf(man1.table, man);
-			c += RoundHalfToEven(is_half, true);
+			c += RoundHalfToEven(is_half);
 		}
 
 		if( IsSign() == ss2.IsSign() )
