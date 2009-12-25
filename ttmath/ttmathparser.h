@@ -159,14 +159,20 @@ private:
 			none,add,sub,mul,div,pow,lt,gt,let,get,eq,neq,lor,land,shortmul
 		};
 
+		enum Assoc
+		{
+			right,		// right-associative
+			non_right	// associative or left-associative
+		};
 
-		Type GetType()     const { return type; }
-		int  GetPriority() const { return priority; }
-
+		Type  GetType()     const { return type; }
+		int   GetPriority() const { return priority; }
+		Assoc GetAssoc()    const { return assoc; }
 
 		void SetType(Type t)
 		{
-			type = t;
+			type  = t;
+			assoc = non_right;
 
 			switch( type )
 			{		
@@ -200,6 +206,7 @@ private:
 
 			case pow:
 				priority = 14;
+				assoc    = right;
 				break;
 
 			default:
@@ -208,15 +215,15 @@ private:
 			}
 		}
 
-		MatOperator(): type(none), priority(0)
+		MatOperator(): type(none), priority(0), assoc(non_right)
 		{
 		}
 
 	private:
 
-		Type type;
-		int  priority;
-
+		Type  type;
+		int   priority;
+		Assoc assoc;
 	}; // end of MatOperator class
 
 
@@ -2207,10 +2214,20 @@ void TryRollingUpStackWithOperatorPriority()
 {
 	while(	stack_index>=4 &&
 			stack[stack_index-4].type == Item::numerical_value &&
-			stack[stack_index-3].type == Item::mat_operator &&
+			stack[stack_index-3].type == Item::mat_operator    &&
 			stack[stack_index-2].type == Item::numerical_value &&
-			stack[stack_index-1].type == Item::mat_operator &&
-			stack[stack_index-3].moperator.GetPriority() >= stack[stack_index-1].moperator.GetPriority()
+			stack[stack_index-1].type == Item::mat_operator    &&
+			(
+				(
+					// the first operator has greater priority
+					stack[stack_index-3].moperator.GetPriority() > stack[stack_index-1].moperator.GetPriority()
+				) ||
+				(
+					// or both operators have the same priority and the first operator is not right associative
+					stack[stack_index-3].moperator.GetPriority() == stack[stack_index-1].moperator.GetPriority() &&
+					stack[stack_index-3].moperator.GetAssoc()    == MatOperator::non_right
+				)
+			)
 		 )
 	{
 		MakeStandardMathematicOperation(stack[stack_index-4].value,

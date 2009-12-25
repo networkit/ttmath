@@ -1575,7 +1575,7 @@ public:
 			if( pow.Mod2() )
 				c += result.Mul(start);
 
-			c += pow.exponent.Sub( e_one );
+			c += pow.exponent.Sub( e_one ); // !! may use SubOne() here?
 
 			if( pow < one )
 				break;

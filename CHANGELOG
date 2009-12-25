@@ -1,13 +1,13 @@
-Version 0.9.1 prerelease (2009.12.06):
+Version 0.9.1 prerelease (2009.12.25):
     * fixed:   the parser didn't use characters for changing the base (# and &)
                those characters were skipped
                (this bug was introduced in 0.9.0)
+    * fixed:   added in the parser: operator's associativity
+               operator ^ (powering) is right-associative:
+               sample: 2^3^4 is equal 2^(3^4) and it is: 2.41e+24
+               previously was: 2^3^4 = (2^3)^4 = 4096
     * added:   IEEE 754 half-to-even rounding (bankers' rounding) to the following
-               floating point algorithms:
-               Big::Add
-               Big::Sub
-               Big::Mul
-               Big::Div
+               floating point algorithms: Big::Add, Big::Sub, Big::Mul, Big::Div
     * added:   to Big::ToString() - additional rounding when conv.base_round is used
                if the value is not an integer we calculate how many valid digits there are
                after the comma operator (in conv.base radix) and then we skipped the rest
