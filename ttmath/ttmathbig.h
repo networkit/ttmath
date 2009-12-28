@@ -3312,8 +3312,11 @@ private:
 			2^exponent <= base^new_exp
 			new_exp >= log base (2^exponent)   <- logarithm with the base 'base' from (2^exponent)
 			
-			but we need 'new'exp' as integer then we take:
-			new_exp = [log base (2^exponent)] + 1  <- where [x] means integer value from x
+			but we need new_exp as integer then we test:
+			if new_exp is greater than zero and with fraction we add one to new_exp
+			  new_exp = new_exp + 1    (if new_exp>0 and with fraction)
+			and at the end we take the integer part:
+			  new_exp = int(new_exp)
 	*/
 	template<class string_type, class char_type>
 	uint ToString_CreateNewMantissaAndExponent(	string_type & new_man, const Conv & conv,
@@ -3351,12 +3354,21 @@ private:
 		temp.mantissa.SetOne();
 		c += temp.Standardizing();
 
-		// new_exp_ = [log base (2^exponent)] + 1
+		// new_exp_ = log base (2^exponent)   
+		// if new_exp_ is positive and with fraction then we add one 
 		Big<exp+1,man> new_exp_;
 		c += new_exp_.ToString_Log(temp, conv.base); // this logarithm isn't very complicated
+
+		if( !new_exp_.IsSign() && !new_exp_.IsInteger() )
+		{
+			// new_exp_ > 0 and with fraction
+			temp.SetOne();
+			c += new_exp_.Add( temp );
+		}
+
+		// new_exp_ = int(new_exp_)
 		new_exp_.SkipFraction();
-		temp.SetOne();
-		c += new_exp_.Add( temp );
+
 
 		// because 'base^new_exp' is >= '2^exponent' then 
 		// because base is >= 2 then we've got:

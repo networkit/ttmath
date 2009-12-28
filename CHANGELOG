@@ -1,4 +1,4 @@
-Version 0.9.1 prerelease (2009.12.25):
+Version 0.9.1 prerelease (2009.12.28):
     * fixed:   the parser didn't use characters for changing the base (# and &)
                those characters were skipped
                (this bug was introduced in 0.9.0)
@@ -6,6 +6,14 @@ Version 0.9.1 prerelease (2009.12.25):
                operator ^ (powering) is right-associative:
                sample: 2^3^4 is equal 2^(3^4) and it is: 2.41e+24
                previously was: 2^3^4 = (2^3)^4 = 4096
+    * fixed:   in Big::ToString_CreateNewMantissaAndExponent() changed the formula:
+               new_exp_ = [log base (2^exponent)] + 1
+               now the part '+ 1' is only made when the logarithm is positive and with fraction
+               if the value is negative we can only skip the fraction, previously
+               we lost some last digits from the new mantissa
+               Consider this binary value (32 bit mantissa):
+               (bin)1.0000000000000000000000000000011
+               previously ToString() gave 1, now we have: 1.000000001
     * added:   IEEE 754 half-to-even rounding (bankers' rounding) to the following
                floating point algorithms: Big::Add, Big::Sub, Big::Mul, Big::Div
     * added:   to Big::ToString() - additional rounding when conv.base_round is used
