@@ -1353,6 +1353,50 @@ namespace ttmath
 
 
 
+	/*
+		this method returns the number of the smallest set bit in one 32-bit word
+		if the 'x' is zero this method returns '-1'
+	*/
+	template<uint value_size>
+	sint UInt<value_size>::FindLowestBitInWord(uint x)
+	{
+	sint result;
+
+		#ifndef __GNUC__
+			__asm
+			{
+				push eax
+				push edx
+
+				mov edx,-1
+				bsf eax,[x]
+				cmovz eax,edx
+				mov [result], eax
+
+				pop edx
+				pop eax
+			}
+		#endif
+
+
+		#ifdef __GNUC__
+		uint dummy;
+
+				__asm__ (
+
+				"movl $-1, %1          \n"
+				"bsfl %2, %0           \n"
+				"cmovz %1, %0          \n"
+
+				: "=r" (result), "=&r" (dummy)
+				: "r" (x)
+				: "cc" );
+
+		#endif
+
+	return result;
+	}
+
 
 
 	/*!

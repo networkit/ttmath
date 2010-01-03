@@ -588,6 +588,27 @@ namespace ttmath
 
 
 
+	/*!
+		this method returns the number of the highest set bit in x
+		if the 'x' is zero this method returns '-1'
+	*/
+	template<uint value_size>
+	sint UInt<value_size>::FindLowestBitInWord(uint x)
+	{
+		if( x == 0 )
+			return -1;
+
+		uint bit = 0;
+		
+		while( (x & 1) == 0 )
+		{
+			x = x >> 1;
+			++bit;
+		}
+
+	return bit;
+	}
+
 
 
 	/*!

@@ -34,8 +34,10 @@ Version 0.9.1 prerelease (2009.12.28):
                - and the exponent is smaller than about 2 times the number of bits from the mantissa
                this helps to correctly calculate expressions such as: "0.80-3*0.34+0.22"
                now the parser gives zero (previous there was a value very closed to zero)
+    * added:   static sint UInt<value_size>::FindLowestBitInWord(uint x)
+               this method is looking for the lowest set bit in a word
     * added:   UInt::FindLowestBit(uint & table_id, uint & index)
-               /temporarily version - asm version is missing /
+               this method is looking for the lowest set bit
 
                
 Version 0.9.0 (2009.11.25):

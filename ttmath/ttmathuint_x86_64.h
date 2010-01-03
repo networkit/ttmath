@@ -987,6 +987,55 @@ namespace ttmath
 	}
 
 
+	/*
+		this method returns the number of the highest set bit in one 64-bit word
+		if the 'x' is zero this method returns '-1'
+
+		***this method is created only on a 64bit platform***
+	*/
+	template<uint value_size>
+	sint UInt<value_size>::FindLowestBitInWord(uint x)
+	{
+	sint result;
+
+
+		#if !defined(__GNUC__) && !defined(_MSC_VER)
+			#error "another compiler than GCC or Microsoft VC is currently not supported in 64bit mode, you can compile with TTMATH_NOASM macro"
+		#endif
+
+		
+		#ifdef _MSC_VER
+
+			unsigned long nIndex = 0;
+
+			if( _BitScanForward64(&nIndex,x) == 0 )
+				result = -1;
+			else
+				result = nIndex;
+
+		#endif
+
+
+		#ifdef __GNUC__
+		uint dummy;
+
+				__asm__ (
+
+				"movq $-1, %1          \n"
+				"bsfq %2, %0           \n"
+				"cmovz %1, %0          \n"
+
+				: "=r" (result), "=&r" (dummy)
+				: "r" (x)
+				: "cc" );
+
+		#endif
+
+
+	return result;
+	}
+
+
 	/*!
 		this method sets a special bit in the 'value'
 		and returns the last state of the bit (zero or one)

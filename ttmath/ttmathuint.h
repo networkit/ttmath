@@ -672,27 +672,14 @@ public:
 		if( table_id >= value_size )
 		{
 			// is zero
-			index = 0;
+			index    = 0;
 			table_id = 0;
 
 		return false;
 		}
 		
 		// table[table_id] is different from 0
-
-		// !! need asm version:
-		// index = FindSmallestBitInWord( table[table_id] );
-
-		index = 0;
-		uint temp = table[table_id];
-
-		while( (temp & 1) == 0 )
-		{
-			index += 1;
-			temp >>= 1;
-		}
-
-		// !!
+		index = FindLowestBitInWord( table[table_id] );
 
 	return true;
 	}
@@ -3498,6 +3485,7 @@ public:
 	uint SubInt(uint value, uint index = 0);
 	static uint SubVector(const uint * ss1, const uint * ss2, uint ss1_size, uint ss2_size, uint * result);
 	static sint FindLeadingBitInWord(uint x);
+	static sint FindLowestBitInWord(uint x);
 	static uint SetBitInWord(uint & value, uint bit);
 	static void MulTwoWords(uint a, uint b, uint * result_high, uint * result_low);
 	static void DivTwoWords(uint a,uint b, uint c, uint * r, uint * rest);
