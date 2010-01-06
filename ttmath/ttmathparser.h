@@ -472,16 +472,6 @@ int param_sep;
 bool calculated;
 
 
-/*!
-	small values will be set to zero
-	small value means:
-	 - if the mantissa of the value consists only of one, two or three set bits
-	 - and these bits are next to each other
-	 - and the exponent is smaller than about 2 times the number of bits from the mantissa
-	default: true
-*/
-bool small_to_zero;
-
 
 /*!
 	we're using this method for reporting an error
@@ -1756,45 +1746,6 @@ return is_it_name_of_function;
 }
 
 
-/*!
-	small values will be set to zero
-	small value means:
-	 - if the mantissa of the value consists only of one, two or three set bits
-	 - and these bits are next to each other
-	 - and the exponent is smaller than about 2 times the number of bits from the mantissa
-*/
-void SmallToZero(ValueType & value)
-{
-	if( value.IsNan() || value.IsZero() )
-		return;
-
-	int man_size = int(value.mantissa.Size() * TTMATH_BITS_PER_UINT);
-	int epsilon  = man_size / 10;
-
-	if( value.exponent >= -(2*man_size - epsilon) )
-		return;
-	
-	uint id, bit;
-	uint highest, lowest;
-
-	value.mantissa.FindLeadingBit(id, bit);
-	highest = id * TTMATH_BITS_PER_UINT + bit;
-
-	value.mantissa.FindLowestBit(id, bit);
-	lowest = id * TTMATH_BITS_PER_UINT + bit;
-
-	if( highest < lowest )
-		// oops, something wrong
-		return;
-
-	uint bits = highest-lowest + 1;
-
-	// max two set bits (these bits are next to each other) 
-	// maybe in the future this can be changed to 3 or more
-	// may this should be depended from value.mantissa.Size() ?
-	if( bits <= 3 ) 
-		value.SetZero();
-}
 
 
 /*!
@@ -1951,8 +1902,6 @@ int  character;
 		result.sign = false;
 	}
 	
-	if( small_to_zero )
-		SmallToZero(result.value);
 
 return 0;
 }
@@ -2190,9 +2139,6 @@ uint res;
 		*/
 		Error( err_internal_error );
 	}
-
-	if( small_to_zero )
-		SmallToZero(value1);
 }
 
 
@@ -2383,9 +2329,6 @@ int index;
 		// the result of a function will be on 'stack[index-1]'
 		// and then at the end we'll set the correct type (numerical value) of this element
 		CallFunction(stack[index-1].function_name, amount_of_parameters, index);
-
-		if( small_to_zero )
-			SmallToZero(stack[index-1].value);
 	}
 	else
 	{
@@ -2589,7 +2532,6 @@ Parser(): default_stack_size(100)
 	comma             = '.';
 	comma2            = ',';
 	param_sep         = 0;
-	small_to_zero     = true;
 
 	CreateFunctionsTable();
 	CreateVariablesTable();
@@ -2613,7 +2555,6 @@ Parser<ValueType> & operator=(const Parser<ValueType> & p)
 	comma             = p.comma;
 	comma2            = p.comma2;
 	param_sep         = p.param_sep;
-	small_to_zero     = p.small_to_zero;
 
 	/*
 		we don't have to call 'CreateFunctionsTable()' etc.
@@ -2801,23 +2742,6 @@ bool Calculated()
 {
 	return calculated;
 }
-
-
-/*!
-	small values will be set to zero
-	(all values, variables, functions and results from calculating are checked)
-
-	small value means:
-	 - if the mantissa of the value consists only of one, two or three set bits
-	 - and these bits are next to each other
-	 - and the exponent is smaller than about 2 times the number of bits from the mantissa
-	 default: true
-*/
-void SetSmallToZero(bool zero)
-{
-	small_to_zero = zero;
-}
-
 
 
 };
