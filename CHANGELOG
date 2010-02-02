@@ -1,4 +1,4 @@
-Version 0.9.1 prerelease (2009.12.28):
+Version 0.9.1 prerelease (2010.02.02):
     * fixed:   the parser didn't use characters for changing the base (# and &)
                those characters were skipped
                (this bug was introduced in 0.9.0)
@@ -14,26 +14,11 @@ Version 0.9.1 prerelease (2009.12.28):
                Consider this binary value (32 bit mantissa):
                (bin)1.0000000000000000000000000000011
                previously ToString() gave 1, now we have: 1.000000001
+    * changed: in Big::ToString() the base rounding is made only if the result value
+               would not be an integer, e.g. if the value is 1.999999999999 then
+               the base rounding will not be done - because as the result would be 2
     * added:   IEEE 754 half-to-even rounding (bankers' rounding) to the following
                floating point algorithms: Big::Add, Big::Sub, Big::Mul, Big::Div
-    * added:   to Big::ToString() - additional rounding when conv.base_round is used
-               if the value is not an integer we calculate how many valid digits there are
-               after the comma operator (in conv.base radix) and then we skipped the rest
-               digits, after skipping the base-rounding is made
-               this helps to print values which have some last clear bits in the mantissa
-               consider this 32 bit value:
-               (binary)0.00011100001010001111010111000000000
-               which has mantissa equal: (binary)11100001010001111010111000000000 (32 bits)
-               previous the ToString() method gave: (decimal)0.10999999[...] 
-               now we have: (decimal)0.11
-    * added:   Parser::SetSmallToZero(bool zero) (default true)
-               if true then the parser changes small values into zero
-               small value means:
-               - if the mantissa of the value consists only of one, two or three set bits
-               - and these bits are next to each other
-               - and the exponent is smaller than about 2 times the number of bits from the mantissa
-               this helps to correctly calculate expressions such as: "0.80-3*0.34+0.22"
-               now the parser gives zero (previous there was a value very closed to zero)
     * added:   static sint UInt<value_size>::FindLowestBitInWord(uint x)
                this method is looking for the lowest set bit in a word
     * added:   UInt::FindLowestBit(uint & table_id, uint & index)

@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2009, Tomasz Sowa
+ * Copyright (c) 2006-2010, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -2731,7 +2731,7 @@ ErrorCode Parse(const std::wstring & str)
 /*!
 	this method returns true is something was calculated
 	(at least one mathematical operator was used or a function or variable)
-	e.g. the string to Parse() looked like this:
+	e.g. true if the string to Parse() looked like this:
 	"1+1"
 	"2*3"
 	"sin(5)"

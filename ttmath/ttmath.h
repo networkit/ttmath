@@ -2807,7 +2807,7 @@ namespace ttmath
 		}
 
 		// the simplest way to initialize is to call the Gamma function with (TTMATH_GAMMA_BOUNDARY + 1)
-		// when x is larger then less coefficients we need
+		// when x is larger then fewer coefficients we need
 		Gamma(x, *this);
 	}
 
