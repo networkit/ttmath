@@ -729,7 +729,7 @@ private:
 	uint RoundHalfToEven(bool is_half, bool rounding_up = true)
 	{
 	uint c = 0;
-return 0;
+
 		if( !is_half || mantissa.IsTheLowestBitSet() )
 		{
 			if( rounding_up )
