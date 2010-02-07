@@ -1,4 +1,4 @@
-Version 0.9.1 prerelease (2010.02.02):
+Version 0.9.1 (2010.02.07):
     * fixed:   the parser didn't use characters for changing the base (# and &)
                those characters were skipped
                (this bug was introduced in 0.9.0)
