@@ -8,7 +8,7 @@ CFLAGS = -Wall -pedantic -s -O2 -I..
 	$(CC) -c $(CFLAGS) $<
 
 
-all: uint int big parser
+all: uint int big big2 parser
 
 
 uint: uint.o
@@ -20,6 +20,9 @@ int: int.o
 big: big.o
 	$(CC) -o big $(CFLAGS) big.o
 
+big2: big2.o
+	$(CC) -o big2 $(CFLAGS) big2.o
+
 parser: parser.o
 	$(CC) -o parser $(CFLAGS) parser.o
 
@@ -27,6 +30,7 @@ parser: parser.o
 uint.o:		uint.cpp
 int.o:		int.cpp
 big.o:		big.cpp
+big2.o:		big2.cpp
 parser.o:	parser.cpp
 
 
@@ -36,6 +40,7 @@ clean:
 	rm -f uint
 	rm -f int
 	rm -f big
+	rm -f big2
 	rm -f parser
 # on MS Windows can automatically be added suffixes .exe to the names of output programs
 	rm -f *.exe

@@ -1,14 +1,27 @@
 #include <ttmath/ttmath.h>
 #include <iostream>
 
-// for convenience we're defining MyBig type
-// this type has 2 words for its mantissa and 1 word for its exponent
-// (on a 32bit platform one word means a word of 32 bits,
-// and on a 64bit platform one word means a word of 64 bits)
+
+// this is a similar example to big.cpp
+// but now we're using TTMATH_BITS() macro
+// this macro returns how many words we need to store
+// the given number of bits
+
+// TTMATH_BITS(64) 
+//   on a 32bit platform the macro returns 2 (2*32=64)
+//   on a 64bit platform the macro returns 1
+
+// TTMATH_BITS(128)
+//   on a 32bit platform the macro returns 4 (4*32=128)
+//   on a 64bit platform the macro returns 2 (2*64=128)
 
 // Big<exponent, mantissa>
-typedef ttmath::Big<1,2> MyBig;
+typedef ttmath::Big<TTMATH_BITS(64), TTMATH_BITS(128)> MyBig;
 
+// consequently on a 32bit platform we define: Big<2, 4>
+// and on a 64bit platform: Big<1, 2>
+// and the calculations will be the same on both platforms       
+       
        
 void SimpleCalculating(const MyBig & a, const MyBig & b)
 {
@@ -81,20 +94,20 @@ MyBig a,b;
 }
 
 /*
-the result (on 32 bit platform):
+the result (the same on a 32 or 64bit platform):
 
 Simple calculating
 a = 123456.543456
 b = 98767878.124322
 a + b = 98891334.667778
 a - b = -98644421.580866
-a * b = 12193540837712.2708
-a / b = 0.00124996654580957646
+a * b = 12193540837712.270763536832
+a / b = 0.001249966545809576460596448526166860913
 Calculating with a carry
-a = 1.624801256066640878e+646457012
-b = 456.319999999999993
-a + b = 1.624801256066640878e+646457012
-a - b = 1.624801256066640878e+646457012
+a = 2.3495345545711177736883282090959505003e+2776511644261678604
+b = 456.3199999999999931787897367030382156
+a + b = 2.3495345545711177736883282090959505003e+2776511644261678604
+a - b = 2.3495345545711177736883282090959505003e+2776511644261678604
 a * b = (carry)
-a / b = 3.560661939136222174e+646457009
+a / b = 5.1488748127873374141170361292780486452e+2776511644261678601
 */
