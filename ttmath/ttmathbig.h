@@ -3062,7 +3062,7 @@ public:
 					sint scient_from  = 15,
 					sint round        = -1,
 					bool trim_zeroes  = true,
-					wchar_t comma     = '.' ) const
+					char comma     = '.' ) const
 	{
 		Conv conv;
 
@@ -3075,6 +3075,45 @@ public:
 
 	return ToStringBase<std::string, char>(result, conv);
 	}
+
+
+	/*!
+		a method for converting into a string
+		struct Conv is defined in ttmathtypes.h, look there for more information about parameters
+	*/
+	uint ToString(std::string & result, const Conv & conv) const
+	{
+		return ToStringBase<std::string, char>(result, conv);
+	}
+
+
+	/*!
+		a method for converting into a string
+		struct Conv is defined in ttmathtypes.h, look there for more information about parameters
+	*/
+	std::string ToString(const Conv & conv) const
+	{
+		std::string result;
+		ToStringBase<std::string, char>(result, conv);
+		
+	return result;
+	}
+
+
+	/*!
+		a method for converting into a string
+		struct Conv is defined in ttmathtypes.h, look there for more information about parameters
+	*/
+	std::string ToString() const
+	{
+		Conv conv;
+
+	return ToString(conv);
+	}
+
+
+
+#ifndef TTMATH_DONT_USE_WCHAR
 
 
 	/*!
@@ -3106,44 +3145,9 @@ public:
 		a method for converting into a string
 		struct Conv is defined in ttmathtypes.h, look there for more information about parameters
 	*/
-	uint ToString(std::string & result, const Conv & conv) const
-	{
-		return ToStringBase<std::string, char>(result, conv);
-	}
-
-
-	/*!
-		a method for converting into a string
-		struct Conv is defined in ttmathtypes.h, look there for more information about parameters
-	*/
 	uint ToString(std::wstring & result, const Conv & conv) const
 	{
 		return ToStringBase<std::wstring, wchar_t>(result, conv);
-	}
-
-
-	/*!
-		a method for converting into a string
-		struct Conv is defined in ttmathtypes.h, look there for more information about parameters
-	*/
-	std::string ToString(const Conv & conv) const
-	{
-		std::string result;
-		ToStringBase<std::string, char>(result, conv);
-		
-	return result;
-	}
-
-
-	/*!
-		a method for converting into a string
-		struct Conv is defined in ttmathtypes.h, look there for more information about parameters
-	*/
-	std::string ToString() const
-	{
-		Conv conv;
-
-	return ToString(conv);
 	}
 
 
@@ -3170,6 +3174,9 @@ public:
 
 	return ToWString(conv);
 	}
+
+#endif
+
 
 
 private:
@@ -4255,18 +4262,20 @@ public:
 	/*!
 		a method for converting a string into its value		
 	*/
-	uint FromString(const std::wstring & string, uint base = 10, const wchar_t ** after_source = 0, bool * value_read = 0)
+	uint FromString(const std::string & string, const Conv & conv, const wchar_t ** after_source = 0, bool * value_read = 0)
 	{
-		return FromString(string.c_str(), base, after_source, value_read);
+		return FromString(string.c_str(), conv, after_source, value_read);
 	}
 
+
+#ifndef TTMATH_DONT_USE_WCHAR
 
 	/*!
 		a method for converting a string into its value		
 	*/
-	uint FromString(const std::string & string, const Conv & conv, const wchar_t ** after_source = 0, bool * value_read = 0)
+	uint FromString(const std::wstring & string, uint base = 10, const wchar_t ** after_source = 0, bool * value_read = 0)
 	{
-		return FromString(string.c_str(), conv, after_source, value_read);
+		return FromString(string.c_str(), base, after_source, value_read);
 	}
 
 
@@ -4277,6 +4286,9 @@ public:
 	{
 		return FromString(string.c_str(), conv, after_source, value_read);
 	}
+
+#endif
+
 
 private:
 
@@ -4596,25 +4608,7 @@ public:
 	/*!
 		a constructor for converting a string into this class
 	*/
-	Big(const wchar_t * string)
-	{
-		FromString( string );
-	}
-
-
-	/*!
-		a constructor for converting a string into this class
-	*/
 	Big(const std::string & string)
-	{
-		FromString( string.c_str() );
-	}
-
-
-	/*!
-		a constructor for converting a string into this class
-	*/
-	Big(const std::wstring & string)
 	{
 		FromString( string.c_str() );
 	}
@@ -4634,20 +4628,41 @@ public:
 	/*!
 		an operator= for converting a string into its value
 	*/
-	Big<exp, man> & operator=(const wchar_t * string)
+	Big<exp, man> & operator=(const std::string & string)
 	{
-		FromString( string );
+		FromString( string.c_str() );
 
 	return *this;
+	}
+
+
+
+#ifndef TTMATH_DONT_USE_WCHAR
+
+	/*!
+		a constructor for converting a string into this class
+	*/
+	Big(const wchar_t * string)
+	{
+		FromString( string );
+	}
+
+
+	/*!
+		a constructor for converting a string into this class
+	*/
+	Big(const std::wstring & string)
+	{
+		FromString( string.c_str() );
 	}
 
 
 	/*!
 		an operator= for converting a string into its value
 	*/
-	Big<exp, man> & operator=(const std::string & string)
+	Big<exp, man> & operator=(const wchar_t * string)
 	{
-		FromString( string.c_str() );
+		FromString( string );
 
 	return *this;
 	}
@@ -4662,6 +4677,9 @@ public:
 
 	return *this;
 	}
+
+
+#endif
 
 
 
@@ -5126,6 +5144,8 @@ public:
 	}
 
 
+#ifndef TTMATH_DONT_USE_WCHAR
+
 	/*!
 		output to standard streams
 	*/
@@ -5133,6 +5153,9 @@ public:
 	{
 		return OutputToStream<std::wostream, std::wstring>(s, l);
 	}
+
+#endif
+
 
 
 private:
@@ -5220,6 +5243,8 @@ public:
 	}
 
 
+#ifndef TTMATH_DONT_USE_WCHAR
+
 	/*!
 		input from standard streams
 	*/
@@ -5227,6 +5252,8 @@ public:
 	{
 		return InputFromStream<std::wistream, std::wstring, wchar_t>(s, l);
 	}
+
+#endif
 
 };
 

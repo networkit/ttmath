@@ -317,8 +317,6 @@ ErrorCode error;
 
 /*!
 	pointer to the currently reading char
-	it's either char* or wchar_t*
-
 	when an error has occured it may be used to count the index of the wrong character
 */
 const char * pstring;
@@ -1416,7 +1414,7 @@ void Frac(int sindex, int amount_of_args, ValueType & result)
 */
 void Sprintf(char * buffer, int par)
 {
-char buf[30]; // char, not wchar_t etc.
+char buf[30]; // char, not wchar_t
 int i;
 
 	#ifdef _MSC_VER
@@ -2708,6 +2706,8 @@ ErrorCode Parse(const std::string & str)
 }
 
 
+#ifndef TTMATH_DONT_USE_WCHAR
+
 /*!
 	the main method using for parsing string
 */
@@ -2726,6 +2726,8 @@ ErrorCode Parse(const std::wstring & str)
 {
 	return Parse(str.c_str());
 }
+
+#endif
 
 
 /*!

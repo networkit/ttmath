@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2009, Tomasz Sowa
+ * Copyright (c) 2006-2010, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -2658,6 +2658,8 @@ public:
 	}
 
 
+#ifndef TTMATH_DONT_USE_WCHAR
+
 	/*!
 		a constructor for converting a string to this class (with the base=10)
 	*/
@@ -2670,16 +2672,18 @@ public:
 	/*!
 		a constructor for converting a string to this class (with the base=10)
 	*/
-	UInt(const std::string & s)
+	UInt(const std::wstring & s)
 	{
 		FromString( s.c_str() );
 	}
+
+#endif
 
 
 	/*!
 		a constructor for converting a string to this class (with the base=10)
 	*/
-	UInt(const std::wstring & s)
+	UInt(const std::string & s)
 	{
 		FromString( s.c_str() );
 	}
@@ -2793,10 +2797,6 @@ public:
 		return ToStringBase(result, b);
 	}
 
-	void ToString(std::wstring & result, uint b = 10) const
-	{
-		return ToStringBase(result, b);
-	}
 
 	std::string ToString(uint b = 10) const
 	{
@@ -2806,6 +2806,14 @@ public:
 	return result;
 	}
 
+
+#ifndef TTMATH_DONT_USE_WCHAR
+
+	void ToString(std::wstring & result, uint b = 10) const
+	{
+		return ToStringBase(result, b);
+	}
+
 	std::wstring ToWString(uint b = 10) const
 	{
 		std::wstring result;
@@ -2813,6 +2821,9 @@ public:
 	
 	return result;
 	}
+
+#endif
+
 
 
 private:
@@ -2893,30 +2904,10 @@ public:
 
 	/*!
 		this method converts a string into its value
-	*/
-	uint FromString(const wchar_t * s, uint b = 10, const wchar_t ** after_source = 0, bool * value_read = 0)
-	{
-		return FromStringBase(s, b, after_source, value_read);
-	}
-
-
-	/*!
-		this method converts a string into its value
 
 		(it returns carry=1 if the value will be too big or an incorrect base 'b' is given)
 	*/
 	uint FromString(const std::string & s, uint b = 10)
-	{
-		return FromString( s.c_str(), b );
-	}
-
-
-	/*!
-		this method converts a string into its value
-
-		(it returns carry=1 if the value will be too big or an incorrect base 'b' is given)
-	*/
-	uint FromString(const std::wstring & s, uint b = 10)
 	{
 		return FromString( s.c_str(), b );
 	}
@@ -2936,20 +2927,43 @@ public:
 	/*!
 		this operator converts a string into its value (with base = 10)
 	*/
-	UInt<value_size> & operator=(const wchar_t * s)
+	UInt<value_size> & operator=(const std::string & s)
 	{
-		FromString(s);
+		FromString( s.c_str() );
 
 	return *this;
+	}
+
+
+
+#ifndef TTMATH_DONT_USE_WCHAR
+
+	/*!
+		this method converts a string into its value
+	*/
+	uint FromString(const wchar_t * s, uint b = 10, const wchar_t ** after_source = 0, bool * value_read = 0)
+	{
+		return FromStringBase(s, b, after_source, value_read);
+	}
+
+
+	/*!
+		this method converts a string into its value
+
+		(it returns carry=1 if the value will be too big or an incorrect base 'b' is given)
+	*/
+	uint FromString(const std::wstring & s, uint b = 10)
+	{
+		return FromString( s.c_str(), b );
 	}
 
 
 	/*!
 		this operator converts a string into its value (with base = 10)
 	*/
-	UInt<value_size> & operator=(const std::string & s)
+	UInt<value_size> & operator=(const wchar_t * s)
 	{
-		FromString( s.c_str() );
+		FromString(s);
 
 	return *this;
 	}
@@ -2964,6 +2978,8 @@ public:
 
 	return *this;
 	}
+
+#endif
 
 
 	/*!
@@ -3371,6 +3387,8 @@ public:
 	}
 
 
+#ifndef TTMATH_DONT_USE_WCHAR
+
 	/*!
 		output to standard streams
 	*/
@@ -3378,6 +3396,9 @@ public:
 	{
 		return OutputToStream<std::wostream, std::wstring>(s, l);
 	}
+
+#endif
+
 
 
 private:
@@ -3424,6 +3445,8 @@ public:
 	}
 
 
+#ifndef TTMATH_DONT_USE_WCHAR
+
 	/*!
 		input from standard streams
 	*/
@@ -3431,6 +3454,8 @@ public:
 	{
 		return InputFromStream<std::wistream, std::wstring, wchar_t>(s, l);
 	}
+
+#endif
 
 
 	/*

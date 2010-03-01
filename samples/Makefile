@@ -1,5 +1,5 @@
 CC     = g++
-CFLAGS = -Wall -pedantic -s -O2 -I.. 
+CFLAGS = -Wall -pedantic -s -O2 -I.. -DTTMATH_DONT_USE_WCHAR
 
 
 .SUFFIXES: .cpp .o

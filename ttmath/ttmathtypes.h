@@ -64,8 +64,8 @@
 */
 #define TTMATH_MAJOR_VER		0
 #define TTMATH_MINOR_VER		9
-#define TTMATH_REVISION_VER		1
-#define TTMATH_PRERELEASE_VER	0
+#define TTMATH_REVISION_VER		2
+#define TTMATH_PRERELEASE_VER	1
 
 
 /*!
@@ -371,7 +371,7 @@ namespace ttmath
 
 		/*!
 			used only in Big::ToString()
-			if scient is false then the value will be print in the scientific mode
+			if scient is false then the value will be printed in the scientific mode
 			only if the exponent is greater than scien_from
 			default: 15
 		*/

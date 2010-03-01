@@ -1,3 +1,9 @@
+Version 0.9.2 prerelease (2009.03.01):
+    * added:   macro TTMATH_DONT_USE_WCHAR
+               if defined then the library does not use wide characters
+               (wchar_t, std::wstring, ...) this is a workaround for some compilers
+
+
 Version 0.9.1 (2010.02.07):
     * fixed:   the parser didn't use characters for changing the base (# and &)
                those characters were skipped
