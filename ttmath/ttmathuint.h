@@ -1965,6 +1965,7 @@ public:
 		this algorithm is described in the following book:
 			"The art of computer programming 2" (4.3.1 page 272)
 			Donald E. Knuth 
+		!! give the description here (from the book)
 	*/
 	uint Div3(const UInt<value_size> & v, UInt<value_size> * remainder = 0)
 	{

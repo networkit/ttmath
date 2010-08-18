@@ -819,8 +819,7 @@ private:
 	*/
 	uint AddMantissas(	Big<exp, man> & ss2,
 						bool & last_bit_set,
-						bool & rest_zero,
-						bool & rounding_up)
+						bool & rest_zero)
 	{
 	uint c = 0;
 
@@ -835,8 +834,6 @@ private:
 				last_bit_set = mantissa.Rcr(1,1);
 				c += exponent.AddOne();
 			}
-
-			rounding_up = true;
 		}
 		else
 		{
@@ -890,11 +887,13 @@ public:
 		if( ss2.IsZero() )
 			return 0;
 
-		last_bit_set = rest_zero = do_adding = do_rounding = rounding_up = false;
+		last_bit_set = rest_zero = do_adding = do_rounding = false;
+		rounding_up = (IsSign() == ss2.IsSign());
+
 		AddCheckExponents(ss2, exp_offset, last_bit_set, rest_zero, do_adding, do_rounding);
 
 		if( do_adding )
-			c += AddMantissas(ss2, last_bit_set, rest_zero, rounding_up);
+			c += AddMantissas(ss2, last_bit_set, rest_zero);
 
 		if( !round || !last_bit_set )
 			do_rounding = false;
