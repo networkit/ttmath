@@ -938,7 +938,10 @@ public:
 			return CheckCarry(1);
 
 		if( IsSign() || ss2.IsSign() )
+		{
+			SetNan();
 			return 2;
+		}
 
 		if( IsZero() )
 			return 0;
@@ -998,7 +1001,10 @@ public:
 			return CheckCarry(1);
 
 		if( IsSign() || ss2.IsSign() )
+		{
+			SetNan();
 			return 2;
+		}
 		
 		if( IsZero() )
 		{
@@ -1055,7 +1061,10 @@ public:
 			return CheckCarry(1);
 
 		if( IsSign() || ss2.IsSign() )
+		{
+			SetNan();
 			return 2;
+		}
 		
 		if( ss2.IsZero() )
 			return 0;
@@ -4943,6 +4952,72 @@ public:
 
 	return *this;
 	}
+
+
+
+	/*!
+	*
+	*	bitwise operators
+	*   (we do not define bitwise not)
+	*/
+
+
+	Big<exp,man> operator&(const Big<exp,man> & p2) const
+	{
+		Big<exp,man> temp( *this );
+
+		temp.BitAnd(p2);
+
+	return temp;
+	}
+
+
+	Big<exp,man> & operator&=(const Big<exp,man> & p2)
+	{
+		BitAnd(p2);
+
+	return *this;
+	}
+
+
+	Big<exp,man> operator|(const Big<exp,man> & p2) const
+	{
+		Big<exp,man> temp( *this );
+
+		temp.BitOr(p2);
+
+	return temp;
+	}
+
+
+	Big<exp,man> & operator|=(const Big<exp,man> & p2)
+	{
+		BitOr(p2);
+
+	return *this;
+	}
+
+
+	Big<exp,man> operator^(const Big<exp,man> & p2) const
+	{
+		Big<exp,man> temp( *this );
+
+		temp.BitXor(p2);
+
+	return temp;
+	}
+
+
+	Big<exp,man> & operator^=(const Big<exp,man> & p2)
+	{
+		BitXor(p2);
+
+	return *this;
+	}
+
+
+
+
 
 
 	/*!

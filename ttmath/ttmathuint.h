@@ -3259,11 +3259,9 @@ public:
 
 	UInt<value_size> & operator%=(const UInt<value_size> & p2)
 	{
-	UInt<value_size> temp(*this);
 	UInt<value_size> remainder;
 	
-		temp.Div( p2, remainder );
-
+		Div( p2, remainder );
 		operator=(remainder);
 
 	return *this;
@@ -3312,7 +3310,78 @@ public:
 	}
 
 
-	UInt<value_size> operator>>(int move)
+
+	/*!
+	*
+	*	bitwise operators
+	*
+	*/
+
+	UInt<value_size> operator~() const
+	{
+		UInt<value_size> temp( *this );
+
+		temp.BitNot();
+
+	return temp;
+	}
+
+
+	UInt<value_size> operator&(const UInt<value_size> & p2) const
+	{
+		UInt<value_size> temp( *this );
+
+		temp.BitAnd(p2);
+
+	return temp;
+	}
+
+
+	UInt<value_size> & operator&=(const UInt<value_size> & p2)
+	{
+		BitAnd(p2);
+
+	return *this;
+	}
+
+
+	UInt<value_size> operator|(const UInt<value_size> & p2) const
+	{
+		UInt<value_size> temp( *this );
+
+		temp.BitOr(p2);
+
+	return temp;
+	}
+
+
+	UInt<value_size> & operator|=(const UInt<value_size> & p2)
+	{
+		BitOr(p2);
+
+	return *this;
+	}
+
+
+	UInt<value_size> operator^(const UInt<value_size> & p2) const
+	{
+		UInt<value_size> temp( *this );
+
+		temp.BitXor(p2);
+
+	return temp;
+	}
+
+
+	UInt<value_size> & operator^=(const UInt<value_size> & p2)
+	{
+		BitXor(p2);
+
+	return *this;
+	}
+
+
+	UInt<value_size> operator>>(int move) const
 	{
 	UInt<value_size> temp( *this );
 
@@ -3330,7 +3399,7 @@ public:
 	}
 
 
-	UInt<value_size> operator<<(int move)
+	UInt<value_size> operator<<(int move) const
 	{
 	UInt<value_size> temp( *this );
 

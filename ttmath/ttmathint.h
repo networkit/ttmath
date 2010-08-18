@@ -1397,11 +1397,9 @@ public:
 
 	Int<value_size> & operator%=(const Int<value_size> & p2)
 	{
-	Int<value_size> temp(*this);
 	Int<value_size> remainder;
 	
-		temp.Div(p2, remainder);
-
+		Div(p2, remainder);
 		operator=(remainder);
 
 	return *this;
