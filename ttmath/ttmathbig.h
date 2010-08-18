@@ -1320,6 +1320,8 @@ public:
 		if( IsZero() )
 			return 0;
 
+		// !! this two loops can be joined together
+
 		for(i=0 ; i<man ; ++i)
 		{
 			man1.table[i+man] = mantissa.table[i];
@@ -1408,8 +1410,6 @@ public:
 
 	return CheckCarry(c);
 	}
-
-
 
 
 	/*!
@@ -3455,7 +3455,7 @@ private:
 
 		if( base==10 && man<=TTMATH_BUILTIN_VARIABLES_SIZE )
 		{
-			// for the base equal 10 we're using SelLn10() instead of calculating it
+			// for the base equal 10 we're using SetLn10() instead of calculating it
 			// (only if we have the constant sufficient big)
 			temp.SetLn10();
 		}
@@ -4223,6 +4223,35 @@ public:
 	/*!
 		a method for converting a string into its value
 	*/
+	uint FromString(const char * source, const Conv & conv, const char ** after_source = 0, bool * value_read = 0)
+	{
+		return FromStringBase(source, conv, after_source, value_read);
+	}
+
+
+	/*!
+		a method for converting a string into its value		
+	*/
+	uint FromString(const std::string & string, uint base = 10, const char ** after_source = 0, bool * value_read = 0)
+	{
+		return FromString(string.c_str(), base, after_source, value_read);
+	}
+
+
+	/*!
+		a method for converting a string into its value		
+	*/
+	uint FromString(const std::string & string, const Conv & conv, const char ** after_source = 0, bool * value_read = 0)
+	{
+		return FromString(string.c_str(), conv, after_source, value_read);
+	}
+
+
+#ifndef TTMATH_DONT_USE_WCHAR
+
+	/*!
+		a method for converting a string into its value
+	*/
 	uint FromString(const wchar_t * source, uint base = 10, const wchar_t ** after_source = 0, bool * value_read = 0)
 	{
 		Conv conv;
@@ -4235,40 +4264,11 @@ public:
 	/*!
 		a method for converting a string into its value
 	*/
-	uint FromString(const char * source, const Conv & conv, const char ** after_source = 0, bool * value_read = 0)
-	{
-		return FromStringBase(source, conv, after_source, value_read);
-	}
-
-
-	/*!
-		a method for converting a string into its value
-	*/
 	uint FromString(const wchar_t * source, const Conv & conv, const wchar_t ** after_source = 0, bool * value_read = 0)
 	{
 		return FromStringBase(source, conv, after_source, value_read);
 	}
 
-
-	/*!
-		a method for converting a string into its value		
-	*/
-	uint FromString(const std::string & string, uint base = 10, const wchar_t ** after_source = 0, bool * value_read = 0)
-	{
-		return FromString(string.c_str(), base, after_source, value_read);
-	}
-
-
-	/*!
-		a method for converting a string into its value		
-	*/
-	uint FromString(const std::string & string, const Conv & conv, const wchar_t ** after_source = 0, bool * value_read = 0)
-	{
-		return FromString(string.c_str(), conv, after_source, value_read);
-	}
-
-
-#ifndef TTMATH_DONT_USE_WCHAR
 
 	/*!
 		a method for converting a string into its value		
