@@ -56,11 +56,13 @@
 #include <sstream>
 #include <vector>
 
+
 /*!
 	the version of the library
 
 	TTMATH_PRERELEASE_VER is either zero or one
 	if zero that means this is the release version of the library
+	(one means something like beta)
 */
 #define TTMATH_MAJOR_VER		0
 #define TTMATH_MINOR_VER		9
@@ -68,57 +70,65 @@
 #define TTMATH_PRERELEASE_VER	1
 
 
-/*!
-	TTMATH_DEBUG
-	this macro enables further testing during writing your code
-	you don't have to define it in a release mode
 
-	if this macro is set then macros TTMATH_ASSERT and TTMATH_REFERENCE_ASSERT
-	are set as well	and these macros can throw an exception if a condition in it
-	is not fulfilled (look at the definition of TTMATH_ASSERT and TTMATH_REFERENCE_ASSERT)
 
-	TTMATH_RELEASE
-	if you are confident that your code is perfect you can define TTMATH_RELEASE
-	macro for example by using -D option in gcc
-	 gcc -DTTMATH_RELEASE -o myprogram myprogram.cpp 
-	or by defining this macro in your code before using any header files of this library
+#if !defined TTMATH_PLATFORM32 && !defined TTMATH_PLATFORM64
 
-	if TTMATH_RELEASE is not set then TTMATH_DEBUG is set automatically
-*/
-#ifndef TTMATH_RELEASE
-	#define TTMATH_DEBUG
+	#if !defined _M_X64 && !defined __x86_64__
+
+		/*
+			other platforms than x86 and amd64 are not recognized at the moment
+			so you should set TTMATH_PLATFORMxx manually
+		*/
+
+		/*!
+			we're using a 32bit platform
+		*/
+		#define TTMATH_PLATFORM32
+
+	#else
+
+		/*!
+			we're using a 64bit platform
+		*/
+		#define TTMATH_PLATFORM64
+
+	#endif
+
 #endif
+
+
+
+#if !defined __i386__  && !defined _X86_ && !defined  _M_IX86 && !defined __x86_64__  && !defined _M_X64
+	/*!
+		x86 architecture:
+		__i386__    defined by GNU C
+		_X86_  	    defined by MinGW32
+		_M_IX86     defined by Visual Studio, Intel C/C++, Digital Mars and Watcom C/C++
+
+		amd64 architecture:
+		__x86_64__  defined by GNU C and Sun Studio
+		_M_X64  	defined by Visual Studio
+
+		asm version is available only for x86 or amd64 platforms
+	*/
+	#define TTMATH_NOASM
+#endif
+
+
+
+#if !defined _MSC_VER && !defined __GNUC__
+	/*!
+		another compilers than MS VC or GCC by default use no asm version (TTMATH_NOASM)
+	*/
+	#define TTMATH_NOASM
+#endif
+
 
 
 
 namespace ttmath
 {
-
-#if !defined _M_X64 && !defined __x86_64__
-
-	/*!
-		we're using a 32bit platform
-	*/
-	#define TTMATH_PLATFORM32
-
-#else
-
-	/*!
-		we're using a 64bit platform
-	*/
-	#define TTMATH_PLATFORM64
-
-#endif
-
-
-
-/*!
-	another compilers than MS VC or GCC by default use no asm version (TTMATH_NOASM)
-*/
-#if !defined _MSC_VER && !defined __GNUC__
-	#define TTMATH_NOASM
-#endif
-
 
 
 #ifdef TTMATH_PLATFORM32
@@ -596,8 +606,21 @@ namespace ttmath
 
 
 	/*!
-		look at the description of macros TTMATH_RELEASE and TTMATH_DEBUG
+		TTMATH_DEBUG
+		this macro enables further testing during writing your code
+		you don't have to define it in a release mode
+
+		if this macro is set then macros TTMATH_ASSERT and TTMATH_REFERENCE_ASSERT
+		are set as well	and these macros can throw an exception if a condition in it
+		is not fulfilled (look at the definition of TTMATH_ASSERT and TTMATH_REFERENCE_ASSERT)
+
+		TTMATH_DEBUG is set automatically if DEBUG or _DEBUG are defined
 	*/
+	#if defined DEBUG || defined _DEBUG
+		#define TTMATH_DEBUG
+	#endif
+
+
 	#ifdef TTMATH_DEBUG
 
 		#if defined(__FILE__) && defined(__LINE__)

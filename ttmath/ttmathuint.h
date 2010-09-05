@@ -233,6 +233,19 @@ public:
 	}
 
 
+	/*!
+		this method swappes this for an argument
+	*/
+	void Swap(UInt<value_size> & ss2)
+	{
+		for(uint i=0 ; i<value_size ; ++i)
+		{
+			uint temp = table[i];
+			table[i] = ss2.table[i];
+			ss2.table[i] = temp;
+		}
+	}
+
 
 #ifdef TTMATH_PLATFORM32
 
@@ -2388,6 +2401,38 @@ public:
 	bool IsTheLowestBitSet() const
 	{
 		return (*table & 1) != 0;
+	}
+
+
+	/*!
+		returning true if only the highest bit is set
+	*/
+	bool IsOnlyTheHighestBitSet() const
+	{
+		for(uint i=0 ; i<value_size-1 ; ++i)
+			if( table[i] != 0 )
+				return false;
+
+		if( table[value_size-1] != TTMATH_UINT_HIGHEST_BIT )
+			return false;
+
+	return true;
+	}
+
+
+	/*!
+		returning true if only the lowest bit is set
+	*/
+	bool IsOnlyTheLowestBitSet() const
+	{
+		if( table[0] != 1 )
+			return false;
+
+		for(uint i=1 ; i<value_size ; ++i)
+			if( table[i] != 0 )
+				return false;
+
+	return true;
 	}
 
 

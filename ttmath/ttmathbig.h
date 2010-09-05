@@ -294,6 +294,20 @@ public:
 	}
 
 
+	/*!
+		this method swappes this for an argument
+	*/
+	void Swap(Big<exp, man> & ss2)
+	{
+		unsigned char info_temp = info;
+		info = ss2.info;
+		ss2.info = info_temp;
+
+		exponent.Swap(ss2.exponent);
+		mantissa.Swap(ss2.mantissa);
+	}
+
+
 private:
 
 	/*!
@@ -862,7 +876,7 @@ public:
 
 		it returns carry if the sum is too big
 	*/
-	uint Add(Big<exp, man> ss2, bool round = true)
+	uint Add(Big<exp, man> ss2, bool round = true, bool adding = true)
 	{
 	bool last_bit_set, rest_zero, do_adding, do_rounding, rounding_up;
 	Int<exp> exp_offset( exponent );
@@ -871,18 +885,15 @@ public:
 		if( IsNan() || ss2.IsNan() )
 			return CheckCarry(1);
 
+		if( !adding )
+			ss2.ChangeSign(); // subtracting
+
 		exp_offset.Sub( ss2.exponent );
 		exp_offset.Abs();
 
 		// (1) abs(this) will be >= abs(ss2)
 		if( SmallerWithoutSignThan(ss2) )
-		{
-			// !! use Swap here (not implemented yet)
-			Big<exp, man> temp(ss2);
-
-			ss2   = *this;
-			*this = temp;
-		}
+			Swap(ss2);
 	
 		if( ss2.IsZero() )
 			return 0;
@@ -908,17 +919,14 @@ public:
 	}
 
 
-
 	/*!
 		Subtraction this = this - ss2
 
 		it returns carry if the result is too big
 	*/
-	uint Sub(Big<exp, man> ss2, bool round = true)
+	uint Sub(const Big<exp, man> & ss2, bool round = true)
 	{
-		ss2.ChangeSign();
-
-	return Add(ss2, round);
+		return Add(ss2, round, false);
 	}
 		
 
@@ -961,12 +969,7 @@ public:
 
 		// abs(this) will be >= abs(ss2)
 		if( SmallerWithoutSignThan(ss2) )
-		{
-			Big<exp, man> temp(ss2);
-
-			ss2   = *this;
-			*this = temp;
-		}
+			Swap(ss2);
 
 		if( exp_offset >= mantissa_size_in_bits )
 		{
@@ -1024,12 +1027,7 @@ public:
 
 		// abs(this) will be >= abs(ss2)
 		if( SmallerWithoutSignThan(ss2) )
-		{
-			Big<exp, man> temp(ss2);
-
-			ss2   = *this;
-			*this = temp;
-		}
+			Swap(ss2);
 
 		if( exp_offset >= mantissa_size_in_bits )
 			// the second value is too small
@@ -1084,12 +1082,7 @@ public:
 
 		// abs(this) will be >= abs(ss2)
 		if( SmallerWithoutSignThan(ss2) )
-		{
-			Big<exp, man> temp(ss2);
-
-			ss2   = *this;
-			*this = temp;
-		}
+			Swap(ss2);
 
 		if( exp_offset >= mantissa_size_in_bits )
 			// the second value is too small

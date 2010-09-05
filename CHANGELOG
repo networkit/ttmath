@@ -1,7 +1,39 @@
-Version 0.9.2 prerelease (2009.03.01):
+Version 0.9.2 prerelease (2010.09.05):
+    * fixed:   Big::Add() sometimes incorrectly rounded the last bit from its mantissa
+    * fixed:   Big::BigAnd() Big::BigOr() Big::BigXor() should have set NaN
+               when the argument was negative (they only returned 2)
+    * fixed:   recurrence calling in Big::FromString(const std::string &, uint, const wchar_t **, bool *)
+               it should have the signature: Big::FromString(const std::string &, uint, const char **, bool *)               
+    * added:   some missing operators
+               UInt::operator~()    /* bitwise neg  */
+               UInt::operator&()    /* bitwise and  */
+               UInt::operator&=()
+               UInt::operator|()    /* bitwise or   */
+               UInt::operator|=()
+               UInt::operator^()    /* bitwise xor  */
+               UInt::operator^=()
+               Big::operator&()
+               Big::operator&=()
+               Big::operator|()
+               Big::operator|=()
+               Big::operator^()
+               Big::operator^=()
+               for Big<> we do not define bitwise neg               
     * added:   macro TTMATH_DONT_USE_WCHAR
                if defined then the library does not use wide characters
                (wchar_t, std::wstring, ...) this is a workaround for some compilers
+    * added:   bool UInt::IsOnlyTheHighestBitSet()
+               bool UInt::IsOnlyTheLowestBitSet()
+               returning true if only the highest/lowest bit is set
+    * added:   uint Int::MulInt(sint ss2)       
+    * added:   void UInt::Swap(UInt<value_size> & ss2)       
+               void Big::Swap(UInt<value_size> & ss2)
+               method for swapping this for an argument
+    * changed: now asm version is available only on x86 and amd64
+               (and only for GCC and MS VC compilers)
+    * removed: macro TTMATH_RELEASE
+               for debug version define TTMATH_DEBUG macro
+               TTMATH_DEBUG is also automatically defined when DEBUG or _DEBUG is set
 
 
 Version 0.9.1 (2010.02.07):

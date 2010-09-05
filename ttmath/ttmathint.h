@@ -104,13 +104,10 @@ public:
 	*/
 	uint ChangeSign()
 	{
-	Int<value_size> temp;
-	
-		temp.SetMin();
-
 		/*
 			if the value is equal that one which has been returned from SetMin
-			that means we can't change sign because the value is too big (bigger about one)
+			(only the highest bit is set) that means we can't change sign
+			because the value is too big (bigger about one)
 
 			e.g. when value_size = 1 and value is -2147483648 we can't change it to the
 			2147483648 because the max value which can be held is 2147483647
@@ -119,13 +116,12 @@ public:
 			(if we look on our value without the sign we get the correct value 
 			eg. -2147483648 in Int<1> will be 2147483648 on the UInt<1> type)
 		*/
-		if( operator==(temp) )
+		if( UInt<value_size>::IsOnlyTheHighestBitSet() )
 			return 1;
 
-		temp.SetZero();
-		temp.UInt<value_size>::Sub(*this);
-
-		operator=(temp);
+		UInt<value_size> temp(*this);
+		UInt<value_size>::SetZero();
+		UInt<value_size>::Sub(temp);
 
 	return 0;
 	}
@@ -350,33 +346,11 @@ public:
 	}
 
 
+private:
 
-	/*!
-		multiplication this = this * ss2
 
-		it returns carry if the result is too big
-		(we're using the method from the base class but we have to make
-		one correction in account of signs)
-	*/
-	uint Mul(Int<value_size> ss2)
+	uint CheckMinCarry(bool ss1_is_sign, bool ss2_is_sign)
 	{
-	bool ss1_is_sign, ss2_is_sign;
-
-		ss1_is_sign = IsSign();
-		ss2_is_sign = ss2.IsSign();
-
-		/*
-			we don't have to check the carry from Abs (values will be correct
-			because next we're using the method Mul from the base class UInt
-			which is without a sign)
-		*/
-		Abs();
-		ss2.Abs();
-
-		if( UInt<value_size>::Mul(ss2) )
-			return 1;
-
-
 		/*
 			we have to examine the sign of the result now
 			but if the result is with the sign then:
@@ -391,36 +365,100 @@ public:
 		*/
 		if( IsSign() )
 		{
-			/*
-				there can be one case where signs are different and
-				the result will be equal the value from SetMin()
-				(this situation is ok)
-			*/
 			if( ss1_is_sign != ss2_is_sign )
 			{
-				Int<value_size> temp;
-				temp.SetMin();
-				
-				if( operator!=(temp) )
-					/*
-						the result is too big
-					*/
+				/*
+					there can be one case where signs are different and
+					the result will be equal the value from SetMin() (only the highest bit is set)
+					(this situation is ok)
+				*/
+				if( !UInt<value_size>::IsOnlyTheHighestBitSet() )
 					return 1;
 			}
 			else
 			{
-				/*
-					the result is too big
-				*/
+				// signs were the same
 				return 1;
 			}
 		}
 
+	return 0;
+	}
+
+
+public:
+
+
+	/*!
+		multiplication: this = this * ss2
+
+		it can return a carry
+	*/
+	uint MulInt(sint ss2)
+	{
+	bool ss1_is_sign, ss2_is_sign;
+	uint c;
+
+		ss1_is_sign = IsSign();
+
+		/*
+			we don't have to check the carry from Abs (values will be correct
+			because next we're using the method MulInt from the base class UInt
+			which is without a sign)
+		*/
+		Abs();
+
+		if( ss2 < 0 )
+		{
+			ss2 = -ss2;
+			ss2_is_sign = true;
+		}
+		else
+		{
+			ss2_is_sign = false;
+		}
+
+		c  = UInt<value_size>::MulInt((uint)ss2);
+		c += CheckMinCarry(ss1_is_sign, ss2_is_sign);
+
 		if( ss1_is_sign != ss2_is_sign )
 			SetSign();
 
+	return c;
+	}
 
-	return 0;
+
+
+	/*!
+		multiplication this = this * ss2
+
+		it returns carry if the result is too big
+		(we're using the method from the base class but we have to make
+		one correction in account of signs)
+	*/
+	uint Mul(Int<value_size> ss2)
+	{
+	bool ss1_is_sign, ss2_is_sign;
+	uint c;
+
+		ss1_is_sign = IsSign();
+		ss2_is_sign = ss2.IsSign();
+
+		/*
+			we don't have to check the carry from Abs (values will be correct
+			because next we're using the method Mul from the base class UInt
+			which is without a sign)
+		*/
+		Abs();
+		ss2.Abs();
+
+		c  = UInt<value_size>::Mul(ss2);
+		c += CheckMinCarry(ss1_is_sign, ss2_is_sign);
+
+		if( ss1_is_sign != ss2_is_sign )
+			SetSign();
+
+	return c;
 	}
 
 
