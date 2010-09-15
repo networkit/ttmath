@@ -295,6 +295,17 @@ public:
 
 
 	/*!
+		this method sets NaN flag (Not a Number)
+		also clears the mantissa and exponent (similarly as it would be a zero value)
+	*/
+	void SetZeroNan()
+	{
+		SetZero();
+		SetNan();
+	}
+
+
+	/*!
 		this method swappes this for an argument
 	*/
 	void Swap(Big<exp, man> & ss2)
@@ -3001,17 +3012,26 @@ public:
 	/*!
 		a default constructor
 
-		we don't set any of the members to zero
+		by default we don't set any of the members to zero
 		only NaN flag is set
+
+		if you want the mantissa and exponent to be set to zero 
+		define TTMATH_BIG_DEFAULT_CLEAR macro
+		(useful for debug purposes)
 	*/
 	Big()
 	{
-		info = TTMATH_BIG_NAN;
+		#ifdef TTMATH_BIG_DEFAULT_CLEAR
 
-		/*
-			we're directly setting 'info' (instead of calling SetNan())
-			in order to get rid of a warning saying that 'info' is uninitialized
-		*/
+			SetZeroNan();
+
+		#else
+
+			info = TTMATH_BIG_NAN;
+			// we're directly setting 'info' (instead of calling SetNan())
+			// in order to get rid of a warning saying that 'info' is uninitialized
+
+		#endif
 	}
 
 
@@ -3034,7 +3054,7 @@ public:
 
 	return *this;
 	}
-	
+
 
 	/*!
 		a constructor for copying from another object of this class

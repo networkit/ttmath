@@ -1375,8 +1375,9 @@ private:
 			TTMATH_ASSERT( z1_size <= first_size*3 )
 
 			for(i=z1_size ; i<first_size*3 ; ++i)
+			{
 				TTMATH_ASSERT( z1.table[i] == 0 )
-				;
+			}
 			
 			c = AddVector(result+first_size, z1.table, result_size-first_size, z1_size, result+first_size);
 			TTMATH_ASSERT(c==0)
@@ -1387,6 +1388,7 @@ private:
 			TTMATH_ASSERT(c==0)
 		}
 	}
+
 
 
 #ifdef _MSC_VER
