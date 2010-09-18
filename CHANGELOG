@@ -1,4 +1,4 @@
-Version 0.9.2 prerelease (2010.09.15):
+Version 0.9.2 prerelease (2010.09.18):
     * fixed:   Big::Add() sometimes incorrectly rounded the last bit from its mantissa
     * fixed:   Big::BigAnd() Big::BigOr() Big::BigXor() should have set NaN
                when the argument was negative (they only returned 2)
@@ -18,7 +18,11 @@ Version 0.9.2 prerelease (2010.09.15):
                Big::operator|=()
                Big::operator^()
                Big::operator^=()
-               for Big<> we do not define bitwise neg               
+               for Big<> we do not define bitwise neg
+               Big::operator++()
+               Big::operator++(int)
+               Big::operator--()
+               Big::operator--(int)
     * added:   macro TTMATH_DONT_USE_WCHAR
                if defined then the library does not use wide characters
                (wchar_t, std::wstring, ...) this is a workaround for some compilers

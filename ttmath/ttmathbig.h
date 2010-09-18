@@ -270,7 +270,12 @@ public:
 	*/
 	void SetOne()
 	{
-		FromUInt(1);
+		info = 0;
+		mantissa.SetZero();
+		mantissa.table[man-1] = TTMATH_UINT_HIGHEST_BIT;
+		exponent = -sint(man * TTMATH_BITS_PER_UINT - 1);
+
+		// don't have to Standardize() - the last bit is set
 	}
 
 
@@ -279,7 +284,7 @@ public:
 	*/
 	void Set05()
 	{
-		FromUInt(1);
+		SetOne();
 		exponent.SubOne();
 	}
 
@@ -693,7 +698,7 @@ public:
 		}
 		else
 		if( IsZero() )
-			SetZero();
+			SetZero(); // !! is nedeed here?
 		else
 			SetOne();
 	}
@@ -791,6 +796,33 @@ private:
 	*	basic mathematic functions
 	*
 	*/
+
+
+	/*!
+		this method adds one to the existing value
+	*/
+	uint AddOne()
+	{
+	Big<exp, man> one;
+
+		one.SetOne();
+
+	return Add(one);
+	}
+
+
+	/*!
+		this method subtracts one from the existing value
+	*/
+	uint SubOne()
+	{
+	Big<exp, man> one;
+
+		one.SetOne();
+
+	return Sub(one);
+	}
+
 
 private:
 
@@ -4963,6 +4995,48 @@ public:
 		Div(ss2);
 
 	return *this;
+	}
+
+
+	/*!
+		Prefix operator e.g ++variable
+	*/
+	Big<exp,man> & operator++()
+	{
+		AddOne();
+
+	return *this;
+	}
+
+
+	/*!
+		Postfix operator e.g variable++
+	*/
+	Big<exp,man> operator++(int)
+	{
+	Big<exp,man> temp( *this );
+
+		AddOne();
+
+	return temp;
+	}
+
+
+	Big<exp,man> & operator--()
+	{
+		SubOne();
+
+	return *this;
+	}
+
+
+	Big<exp,man> operator--(int)
+	{
+	Big<exp,man> temp( *this );
+
+		SubOne();
+
+	return temp;
 	}
 
 
