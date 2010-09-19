@@ -1732,7 +1732,7 @@ public:
 		return 0;
 		}
 
-		if( pow.exponent>-int(man*TTMATH_BITS_PER_UINT) && pow.exponent<=0 )
+		if( pow.exponent>-sint(man*TTMATH_BITS_PER_UINT) && pow.exponent<=0 )
 		{
 			if( pow.IsInteger() )
 				return PowInt( pow );
@@ -3545,21 +3545,40 @@ private:
 		Big<exp+1,man> new_exp_;
 		c += new_exp_.ToString_Log(temp, conv.base); // this logarithm isn't very complicated
 
-		// adding some epsilon value (to get rid of some floating point errors)
-		temp.Set05();
-		temp.exponent.SubOne(); // temp = 0.5/2 = 0.25
-		c += new_exp_.Add(temp);
-
-		if( !new_exp_.IsSign() && !new_exp_.IsInteger() )
+		// rounding up to the nearest integer
+		if( !new_exp_.IsInteger() )
 		{
-			// new_exp_ > 0 and with fraction
-			temp.SetOne();
-			c += new_exp_.Add( temp );
+			if( !new_exp_.IsSign() )
+				c += new_exp_.AddOne(); // new_exp_ > 0 and with fraction
+
+			new_exp_.SkipFraction();
 		}
 
-		// new_exp_ = int(new_exp_)
-		new_exp_.SkipFraction();
+		if( ToString_CreateNewMantissaTryExponent<string_type, char_type>(new_man, conv, new_exp_, new_exp) )
+		{
+			// in very rare cases there can be an overflow from ToString_CreateNewMantissaTryExponent
+			// it means that new_exp_ was too small (the problem comes from floating point numbers precision)
+			// so we increse new_exp_ and try again
+			new_exp_.AddOne();
+			c += ToString_CreateNewMantissaTryExponent<string_type, char_type>(new_man, conv, new_exp_, new_exp);
+		}
 
+	return (c==0)? 0 : 1;
+	}
+
+
+
+	/*!
+		an auxiliary method for converting into the string
+
+		trying to calculate new_man for given exponent (new_exp_)
+		if there is a carry it can mean that new_exp_ is too small
+	*/
+	template<class string_type, class char_type>
+	uint ToString_CreateNewMantissaTryExponent(	string_type & new_man, const Conv & conv,
+												const Big<exp+1,man> & new_exp_, Int<exp+1> & new_exp) const
+	{
+	uint c = 0;
 
 		// because 'base^new_exp' is >= '2^exponent' then 
 		// because base is >= 2 then we've got:
@@ -3572,15 +3591,16 @@ private:
 		Big<exp+1,man> base_(conv.base);
 
 		// base_ = base_ ^ new_exp_
-		c += base_.Pow( new_exp_ );
+		c += base_.Pow( new_exp_ ); // use new_exp_ so Pow(Big<> &) version will be used
 		// if we hadn't used a bigger type than 'Big<exp,man>' then the result
 		// of this formula 'Pow(...)' would have been with an overflow
 
 		// temp = mantissa * 2^exponent / base_^new_exp_
-		// the sign don't interest us here
+		Big<exp+1,man> temp;
+		temp.info = 0;
 		temp.mantissa = mantissa;
 		temp.exponent = exponent;
-		c += temp.Div(base_, false); // dividing without rounding
+		c += temp.Div(base_);
 
 		// moving all bits of the mantissa into the right 
 		// (how many times to move depend on the exponent)
@@ -3593,9 +3613,15 @@ private:
 		// maximum valid bits
 		temp.mantissa.ToString(new_man, conv.base);
 
-		// base rounding
+		if( IsInteger() )
+		{
+			// making sure the new mantissa will be without fraction (integer)
+			ToString_CheckMantissaInteger<string_type, char_type>(new_man, new_exp);
+		}
 		if( conv.base_round )
+		{
 			c += ToString_BaseRound<string_type, char_type>(new_man, conv, new_exp);
+		}
 
 	return (c==0)? 0 : 1;
 	}
@@ -3974,6 +4000,46 @@ private:
 				return false; // it will not be an integer
 
 	return true; // it will be integer after rounding
+	}
+
+
+	/*!
+		an auxiliary method for converting into the string
+		(when this is integer)
+
+		after floating point calculating the new mantissa can consist of some fraction
+		so if our value is integer we should check the new mantissa
+		(after the decimal point there should be only zeroes)
+		
+		often this is a last digit different from zero
+		ToString_BaseRound would not get rid of it because the method make a test against 
+		an integer value (ToString_RoundMantissaWouldBeInteger) and returns immediately
+	*/
+	template<class string_type, class char_type>
+	void ToString_CheckMantissaInteger(string_type & new_man, const Int<exp+1> & new_exp) const
+	{
+		if( !new_exp.IsSign() )
+			return; // return if new_exp >= 0
+		
+		uint i = 0;
+		uint man_size = new_man.size();
+
+		if( man_size >= TTMATH_UINT_HIGHEST_BIT )
+			return; // ops, the mantissa is too long
+
+		sint sman_size = -sint(man_size);
+
+		if( new_exp >= sman_size )
+		{
+			sint e = new_exp.ToInt();
+			e = -e;
+			// now e means how many last digits from the mantissa should be equal zero
+
+			i = man_size - uint(e);
+		}
+
+		for( ; i<man_size ; ++i)
+			new_man[i] = '0';
 	}
 
 

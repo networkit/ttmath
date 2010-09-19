@@ -4,6 +4,10 @@ Version 0.9.2 prerelease (2010.09.19):
                when the argument was negative (they only returned 2)
     * fixed:   recurrence calling in Big::FromString(const std::string &, uint, const wchar_t **, bool *)
                it should have the signature: Big::FromString(const std::string &, uint, const char **, bool *)               
+    * fixed:   Big::ToString method
+               in some cases when in the output string the exponent should be equal zero
+               the method changes the exponent to one so the last digit from the mantissa
+               was lost
     * added:   some missing operators
                UInt::operator~()    /* bitwise neg  */
                UInt::operator&()    /* bitwise and  */
