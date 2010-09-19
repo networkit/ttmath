@@ -131,8 +131,8 @@ namespace ttmath
 	for example:
 		"1+2;4+5"
 	the result will be on the stack as follows:
-		"3"
-		"9"
+		stack[0].value=3
+		stack[1].value=9
 */
 template<class ValueType>
 class Parser
@@ -282,9 +282,16 @@ public:
 /*!
 	stack on which we're keeping the Items
 
-	at the end of parsing we'll have the result on its
-	the result don't have to be one value, it can be a list
-	of values separated by the 'semicolon item'
+	at the end of parsing we'll have the result here
+	the result don't have to be one value, it can be
+	more than one if we have used a semicolon in the global space
+	e.g. such input string "1+2;3+4" will generate a result:
+	 stack[0].value=3
+	 stack[1].value=7
+
+	you should check if the stack is not empty, because if there was
+	a syntax error in the input string then we do not have any results
+	on the stack 
 */
 std::vector<Item> stack;
 
@@ -2715,7 +2722,9 @@ ErrorCode Parse(const wchar_t * str)
 {
 	Misc::AssignString(wide_to_ansi, str);
 
-return Parse(wide_to_ansi.c_str());	
+return Parse(wide_to_ansi.c_str());
+
+	// !! wide_to_ansi clearing can be added here
 }
 
 

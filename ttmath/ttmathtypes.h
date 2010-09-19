@@ -56,22 +56,32 @@
 #include <sstream>
 #include <vector>
 
+#ifndef _MSC_VER
+#include <stdint.h>
+// for uint64_t and int64_t on a 32 bit platform
+#endif
+
+
 
 /*!
 	the version of the library
 
 	TTMATH_PRERELEASE_VER is either zero or one
-	if zero that means this is the release version of the library
+	zero means that this is the release version of the library
 	(one means something like beta)
 */
 #define TTMATH_MAJOR_VER		0
 #define TTMATH_MINOR_VER		9
 #define TTMATH_REVISION_VER		2
+
 #define TTMATH_PRERELEASE_VER	1
 
 
 
-
+/*!
+	you can define a platform explicitly by defining either
+	TTMATH_PLATFORM32 or TTMATH_PLATFORM64 macro
+*/
 #if !defined TTMATH_PLATFORM32 && !defined TTMATH_PLATFORM64
 
 	#if !defined _M_X64 && !defined __x86_64__
@@ -81,16 +91,12 @@
 			so you should set TTMATH_PLATFORMxx manually
 		*/
 
-		/*!
-			we're using a 32bit platform
-		*/
+		// we're using a 32bit platform
 		#define TTMATH_PLATFORM32
 
 	#else
 
-		/*!
-			we're using a 64bit platform
-		*/
+		//	we're using a 64bit platform
 		#define TTMATH_PLATFORM64
 
 	#endif
@@ -98,33 +104,42 @@
 #endif
 
 
+/*!
+	asm version of the library is available by default only for:
+	x86 and amd64 platforms and for Microsoft Visual and GCC compilers
 
-#if !defined __i386__  && !defined _X86_ && !defined  _M_IX86 && !defined __x86_64__  && !defined _M_X64
-	/*!
-		x86 architecture:
-		__i386__    defined by GNU C
-		_X86_  	    defined by MinGW32
-		_M_IX86     defined by Visual Studio, Intel C/C++, Digital Mars and Watcom C/C++
+	but you can force using asm version (the same asm as for Microsoft Visual)
+	by defining TTMATH_FORCEASM macro
+	you have to be sure that your compiler accept such an asm format
+*/
+#ifndef TTMATH_FORCEASM
 
-		amd64 architecture:
-		__x86_64__  defined by GNU C and Sun Studio
-		_M_X64  	defined by Visual Studio
+	#if !defined __i386__  && !defined _X86_ && !defined  _M_IX86 && !defined __x86_64__  && !defined _M_X64
+		/*!
+			x86 architecture:
+			__i386__    defined by GNU C
+			_X86_  	    defined by MinGW32
+			_M_IX86     defined by Visual Studio, Intel C/C++, Digital Mars and Watcom C/C++
 
-		asm version is available only for x86 or amd64 platforms
-	*/
-	#define TTMATH_NOASM
+			amd64 architecture:
+			__x86_64__  defined by GNU C and Sun Studio
+			_M_X64  	defined by Visual Studio
+
+			asm version is available only for x86 or amd64 platforms
+		*/
+		#define TTMATH_NOASM
+	#endif
+
+
+
+	#if !defined _MSC_VER && !defined __GNUC__
+		/*!
+			another compilers than MS VC or GCC by default use no asm version
+		*/
+		#define TTMATH_NOASM
+	#endif
+
 #endif
-
-
-
-#if !defined _MSC_VER && !defined __GNUC__
-	/*!
-		another compilers than MS VC or GCC by default use no asm version (TTMATH_NOASM)
-	*/
-	#define TTMATH_NOASM
-#endif
-
-
 
 
 namespace ttmath
@@ -140,17 +155,18 @@ namespace ttmath
 	typedef signed   int sint;
 
 	/*!
-		this type is twice bigger than uint
-		(64bit on a 32bit platforms)
-
-		although C++ Standard - ANSI ISO IEC 14882:2003 doesn't define such a type (long long) 
-		but it is defined in C99 and in upcoming C++0x /3.9.1 (2)/ and many compilers support it
-
-		this type is used in UInt::MulTwoWords and UInt::DivTwoWords when macro TTMATH_NOASM is defined
-		but only on a 32bit platform
+		on 32 bit platform ulint and slint will be equal 64 bits
 	*/
-	#ifdef TTMATH_NOASM
+	#ifdef _MSC_VER
+		// long long on MS Windows (Visual and GCC mingw compilers) have 64 bits
+		// stdint.h is not available on Visual Studio prior to VS 2010 version
 		typedef unsigned long long int ulint;
+		typedef signed   long long int slint;
+	#else
+		// we do not use 'long' here because there is a difference in unix and windows
+		// environments: in unix 'long' has 64 bits but in windows it has only 32 bits
+		typedef uint64_t ulint;
+		typedef int64_t  slint;
 	#endif
 
 	/*!
@@ -198,13 +214,8 @@ namespace ttmath
 	#endif 
 
 	/*!
-		on 64bit platform we do not define ulint
-		sizeof(long long) is 8 (64bit) but we need 128bit
-
-		on 64 bit platform (when there is defined TTMATH_NOASM macro)
-		methods UInt::MulTwoWords and UInt::DivTwoWords are using other algorithms than those on 32 bit
+		on 64bit platforms we do not define ulint and slint
 	*/
-	//typedef unsigned long long int ulint;
 
 	/*!
 		how many bits there are in the uint type

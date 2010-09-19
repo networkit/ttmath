@@ -275,7 +275,7 @@ public:
 		mantissa.table[man-1] = TTMATH_UINT_HIGHEST_BIT;
 		exponent = -sint(man * TTMATH_BITS_PER_UINT - 1);
 
-		// don't have to Standardize() - the last bit is set
+		// don't have to Standardize() - the last bit from mantissa is set
 	}
 
 
@@ -2354,6 +2354,12 @@ public:
 	*/
 	void FromUInt(uint value)
 	{
+		if( value == 0 )
+		{
+			SetZero();
+			return;
+		}
+
 		info = 0;
 
 		for(uint i=0 ; i<man-1 ; ++i)
@@ -2838,6 +2844,130 @@ public:
 	{
 		FromDouble(value);
 	}
+
+
+#ifdef TTMATH_PLATFORM32
+
+
+	/*!
+		a method for converting 'ulint' (64bit unsigned integer) to this class
+	*/
+	void FromUInt(ulint value)
+	{
+		if( value == 0 )
+		{
+			SetZero();
+			return;
+		}
+
+		info = 0;
+
+		if( man == 1 )
+		{
+			sint bit = mantissa.FindLeadingBitInWord(uint(value >> 32));
+
+			if( bit != -1 )
+			{
+				// the highest word from value is different from zero
+				bit += 1;
+				value >>= bit;
+				exponent = bit;
+			}
+			else
+			{
+				exponent.SetZero();
+			}
+
+			mantissa.table[0] = uint(value);
+		}
+		else
+		{
+		#ifdef _MSC_VER
+		//warning C4307: '*' : integral constant overflow
+		#pragma warning( disable: 4307 )
+		#endif
+
+			// man >= 2
+			mantissa.table[man-1] = uint(value >> 32);
+			mantissa.table[man-2] = uint(value);
+
+		#ifdef _MSC_VER
+		//warning C4307: '*' : integral constant overflow
+		#pragma warning( default: 4307 )
+		#endif
+
+			exponent = -sint(man-2) * sint(TTMATH_BITS_PER_UINT);
+
+			for(uint i=0 ; i<man-2 ; ++i)
+				mantissa.table[i] = 0;
+		}
+
+		// there shouldn't be a carry because 'value' has the 'ulint' type 
+		// (we have	sufficient exponent)
+		Standardizing();
+	}
+
+
+
+
+	/*!
+		a method for converting 'slint' (64bit signed integer) to this class
+	*/
+	void FromInt(slint value)
+	{
+	bool is_sign = false;
+
+		if( value < 0 )
+		{
+			value   = -value;
+			is_sign = true;
+		}
+
+		FromUInt(ulint(value));
+
+		if( is_sign )
+			SetSign();
+	}
+
+	/*!
+		a constructor for converting 'ulint' (64bit unsigned integer) to this class
+	*/
+	Big(ulint value)
+	{	
+		FromUInt(value);
+	}
+
+	/*!
+		an operator for converting 'ulint' (64bit unsigned integer) to this class
+	*/
+	Big<exp, man> & operator=(ulint value)
+	{	
+		FromUInt(value);
+
+	return *this;
+	}
+
+
+	/*!
+		a constructor for converting 'slint' (64bit signed integer) to this class
+	*/
+	Big(slint value)
+	{	
+		FromInt(value);
+	}
+
+	/*!
+		an operator for converting 'slint' (64bit signed integer) to this class
+	*/
+	Big<exp, man> & operator=(slint value)
+	{	
+		FromInt(value);
+
+	return *this;
+	}
+
+#endif
+
 
 
 #ifdef TTMATH_PLATFORM64

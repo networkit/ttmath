@@ -858,6 +858,61 @@ public:
  
 
 
+#ifdef TTMATH_PLATFORM32
+
+
+	/*!
+		this method converts signed 64 bit int type to this class
+		***this method is created only on a 32bit platform***
+	*/
+	uint FromInt(slint n)
+	{
+	uint mask = (n < 0) ? TTMATH_UINT_MAX_VALUE : 0;
+
+		UInt<value_size>::table[0] = (uint)(ulint)n;
+
+		if( value_size == 1 )
+		{
+			if( uint(ulint(n) >> 32) != mask )
+				return 1;
+
+			return ((UInt<value_size>::table[0] & TTMATH_UINT_HIGHEST_BIT) == (mask & TTMATH_UINT_HIGHEST_BIT)) ? 0 : 1;
+		}
+
+		UInt<value_size>::table[1] = (uint)(ulint(n) >> 32);
+
+		for(uint i=2 ; i<value_size ; ++i)
+			UInt<value_size>::table[i] = mask;
+
+	return 0;
+	}
+
+
+	/*!
+		this operator converts signed 64 bit int type to this class
+		***this operator is created only on a 32bit platform***
+	*/
+	Int<value_size> & operator=(slint n)
+	{
+		FromInt(n);
+
+	return *this;
+	}
+
+
+	/*!
+		a constructor for converting signed 64 bit int to this class
+		***this constructor is created only on a 32bit platform***
+	*/
+	Int(slint n)
+	{
+		FromInt(n);
+	}
+
+#endif
+
+
+
 
 #ifdef TTMATH_PLATFORM64
 

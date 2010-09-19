@@ -2618,6 +2618,53 @@ public:
 	}
 
 
+#ifdef TTMATH_PLATFORM32
+
+
+	/*!
+		this method converts unsigned 64 bit int type to this class
+		***this method is created only on a 32bit platform***
+	*/
+	uint FromUInt(ulint n)
+	{
+		table[0] = (uint)n;
+
+		if( value_size == 1 )
+			return (n <= ulint(TTMATH_UINT_MAX_VALUE)) ? 0 : 1;
+
+		table[1] = (uint)(n >> 32);
+
+		for(uint i=2 ; i<value_size ; ++i)
+			table[i] = 0;
+
+	return 0;
+	}
+
+
+	/*!
+		this operator converts unsigned 64 bit int type to this class
+		***this operator is created only on a 32bit platform***
+	*/
+	UInt<value_size> & operator=(ulint n)
+	{
+		FromUInt(n);
+
+	return *this;
+	}
+
+
+	/*!
+		a constructor for converting unsigned 64 bit int to this class
+		***this constructor is created only on a 32bit platform***
+	*/
+	UInt(ulint n)
+	{
+		FromUInt(n);
+	}
+
+#endif
+
+
 
 #ifdef TTMATH_PLATFORM64
 
@@ -2805,6 +2852,8 @@ public:
 		return table[0];
 	}
 
+	// !! add a second version of ToUInt() with an reference (pointer) to the output value
+	// and with returning carry
 
 private:
 
