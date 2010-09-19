@@ -3618,6 +3618,7 @@ private:
 			// making sure the new mantissa will be without fraction (integer)
 			ToString_CheckMantissaInteger<string_type, char_type>(new_man, new_exp);
 		}
+		else
 		if( conv.base_round )
 		{
 			c += ToString_BaseRound<string_type, char_type>(new_man, conv, new_exp);
