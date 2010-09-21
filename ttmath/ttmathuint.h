@@ -975,12 +975,14 @@ public:
 		the first version of the multiplication algorithm
 	*/
 
+private:
+
 	/*!
 		multiplication: this = this * ss2
 
 		it returns carry if it has been
 	*/
-	uint Mul1(const UInt<value_size> & ss2)
+	uint Mul1Ref(const UInt<value_size> & ss2)
 	{
 	TTMATH_REFERENCE_ASSERT( ss2 )
 
@@ -1006,6 +1008,26 @@ public:
 		TTMATH_LOGC("UInt::Mul1", 0)
 
 	return 0;
+	}
+
+
+public:
+
+	/*!
+		multiplication: this = this * ss2
+		can return carry
+	*/
+	uint Mul1(const UInt<value_size> & ss2)
+	{
+		if( this == &ss2 )
+		{
+			UInt<value_size> copy_ss2(ss2);
+			return Mul1Ref(copy_ss2);
+		}
+		else
+		{
+			return Mul1Ref(ss2);
+		}
 	}
 
 	
@@ -1688,10 +1710,33 @@ public:
 	}
 
 
+	/*!
+		the first division algorithm
+		radix 2
+	*/
+	uint Div1(const UInt<value_size> & divisor, UInt<value_size> & remainder)
+	{
+		return Div1(divisor, &remainder);
+	}
+
+
 private:
 
-
 	uint Div1_Calculate(const UInt<value_size> & divisor, UInt<value_size> & rest)
+	{
+		if( this == &divisor )
+		{
+			UInt<value_size> divisor_copy(divisor);
+			return Div1_CalculateRef(divisor_copy, rest);
+		}
+		else
+		{
+			return Div1_CalculateRef(divisor, rest);
+		}
+	}
+
+
+	uint Div1_CalculateRef(const UInt<value_size> & divisor, UInt<value_size> & rest)
 	{
 	TTMATH_REFERENCE_ASSERT( divisor )
 	
@@ -1749,7 +1794,6 @@ private:
 
 public:
 
-
 	/*!
 		the second division algorithm
 
@@ -1759,8 +1803,42 @@ public:
 	*/
 	uint Div2(const UInt<value_size> & divisor, UInt<value_size> * remainder = 0)
 	{
-		TTMATH_REFERENCE_ASSERT( divisor )
+		if( this == &divisor )
+		{
+			UInt<value_size> divisor_copy(divisor);
+			return Div2Ref(divisor_copy, remainder);
+		}
+		else
+		{
+			return Div2Ref(divisor, remainder);
+		}
+	}
 
+
+	/*!
+		the second division algorithm
+
+		return values:
+			0 - ok
+			1 - division by zero
+	*/
+	uint Div2(const UInt<value_size> & divisor, UInt<value_size> & remainder)
+	{
+		return Div2(divisor, &remainder);
+	}
+
+
+private:
+
+	/*!
+		the second division algorithm
+
+		return values:
+			0 - ok
+			1 - division by zero
+	*/
+	uint Div2Ref(const UInt<value_size> & divisor, UInt<value_size> * remainder = 0)
+	{
 		uint bits_diff;
 		uint status = Div2_Calculate(divisor, remainder, bits_diff);
 		if( status < 2 )
@@ -1785,14 +1863,6 @@ public:
 	return 0;
 	}
 
-
-	uint Div2(const UInt<value_size> & divisor, UInt<value_size> & remainder)
-	{
-		return Div2(divisor, &remainder);
-	}
-
-
-private:
 
 	/*!
 		return values:
@@ -1976,16 +2046,42 @@ public:
 
 	/*!
 		the third division algorithm
+	*/
+	uint Div3(const UInt<value_size> & ss2, UInt<value_size> * remainder = 0)
+	{
+		if( this == &ss2 )
+		{
+			UInt<value_size> copy_ss2(ss2);
+			return Div3Ref(copy_ss2, remainder);
+		}
+		else
+		{
+			return Div3Ref(ss2, remainder);
+		}
+	}
+
+
+	/*!
+		the third division algorithm
+	*/
+	uint Div3(const UInt<value_size> & ss2, UInt<value_size> & remainder)
+	{
+		return Div3(ss2, &remainder);
+	}
+
+
+private:
+
+	/*!
+		the third division algorithm
 
 		this algorithm is described in the following book:
 			"The art of computer programming 2" (4.3.1 page 272)
 			Donald E. Knuth 
 		!! give the description here (from the book)
 	*/
-	uint Div3(const UInt<value_size> & v, UInt<value_size> * remainder = 0)
+	uint Div3Ref(const UInt<value_size> & v, UInt<value_size> * remainder = 0)
 	{
-	TTMATH_REFERENCE_ASSERT( v )
-
 	uint m,n, test;
 
 		test = Div_StandardTest(v, m, n, remainder);

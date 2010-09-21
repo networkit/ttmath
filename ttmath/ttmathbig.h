@@ -1265,15 +1265,13 @@ private:
 	}
 
 
-
-public:
-
+private:
 
 	/*!
 		multiplication this = this * ss2
 		this method returns a carry
 	*/
-	uint Mul(const Big<exp, man> & ss2, bool round = true)
+	uint MulRef(const Big<exp, man> & ss2, bool round = true)
 	{
 	TTMATH_REFERENCE_ASSERT( ss2 )
 
@@ -1336,6 +1334,29 @@ public:
 	}
 	
 
+public:
+
+
+	/*!
+		multiplication this = this * ss2
+		this method returns a carry
+	*/
+	uint Mul(const Big<exp, man> & ss2, bool round = true)
+	{
+		if( this == &ss2 )
+		{
+			Big<exp, man> copy_ss2(ss2);
+			return MulRef(copy_ss2, round);
+		}
+		else
+		{
+			return MulRef(ss2, round);
+		}
+	}
+
+
+private:
+
 	/*!
 		division this = this / ss2
 
@@ -1344,7 +1365,7 @@ public:
 		1 - carry (in a division carry can be as well)
 		2 - improper argument (ss2 is zero)
 	*/
-	uint Div(const Big<exp, man> & ss2, bool round = true)
+	uint DivRef(const Big<exp, man> & ss2, bool round = true)
 	{
 	TTMATH_REFERENCE_ASSERT( ss2 )
 
@@ -1407,24 +1428,36 @@ public:
 	}
 
 
+public:
+
 	/*!
-		the remainder from a division
-
-		e.g.
-		 12.6 mod  3 =  0.6   because  12.6 = 3*4 + 0.6
-		-12.6 mod  3 = -0.6   bacause -12.6 = 3*(-4) + (-0.6)
-		 12.6 mod -3 =  0.6
-		-12.6 mod -3 = -0.6
-
-		it means:
-		in other words: this(old) = ss2 * q + this(new)
+		division this = this / ss2
 
 		return value:
 		0 - ok
-		1 - carry
+		1 - carry (in a division carry can be as well)
 		2 - improper argument (ss2 is zero)
 	*/
-	uint Mod(const Big<exp, man> & ss2)
+	uint Div(const Big<exp, man> & ss2, bool round = true)
+	{
+		if( this == &ss2 )
+		{
+			Big<exp, man> copy_ss2(ss2);
+			return DivRef(copy_ss2, round);
+		}
+		else
+		{
+			return DivRef(ss2, round);
+		}
+	}
+
+
+private:
+
+	/*!
+		the remainder from a division
+	*/
+	uint ModRef(const Big<exp, man> & ss2)
 	{
 	TTMATH_REFERENCE_ASSERT( ss2 )
 
@@ -1453,6 +1486,58 @@ public:
 		}
 
 	return CheckCarry(c);
+	}
+
+
+public:
+
+	/*!
+		the remainder from a division
+
+		e.g.
+		 12.6 mod  3 =  0.6   because  12.6 = 3*4 + 0.6
+		-12.6 mod  3 = -0.6   bacause -12.6 = 3*(-4) + (-0.6)
+		 12.6 mod -3 =  0.6
+		-12.6 mod -3 = -0.6
+
+		it means:
+		in other words: this(old) = ss2 * q + this(new)
+
+		return value:
+		0 - ok
+		1 - carry
+		2 - improper argument (ss2 is zero)
+	*/
+	uint Mod(const Big<exp, man> & ss2)
+	{
+		if( this == &ss2 )
+		{
+			Big<exp, man> copy_ss2(ss2);
+			return ModRef(copy_ss2);
+		}
+		else
+		{
+			return ModRef(ss2);
+		}
+	}
+
+
+	/*!
+		this method returns: 'this' mod 2
+		(either zero or one)
+
+		this method is much faster than using Mod( object_with_value_two )
+	*/
+	uint Mod2() const
+	{
+		if( exponent>sint(0) || exponent<=-sint(man*TTMATH_BITS_PER_UINT) )
+			return 0;
+
+		sint exp_int = exponent.ToInt();
+		// 'exp_int' is negative (or zero), we set it as positive
+		exp_int = -exp_int;
+
+	return mantissa.GetBit(exp_int);
 	}
 
 
@@ -1550,26 +1635,6 @@ public:
 
 
 	/*!
-		this method returns: 'this' mod 2
-		(either zero or one)
-
-		this method is much faster than using Mod( object_with_value_two )
-	*/
-	uint Mod2() const
-	{
-		if( exponent>sint(0) || exponent<=-sint(man*TTMATH_BITS_PER_UINT) )
-			return 0;
-
-		sint exp_int = exponent.ToInt();
-		// 'exp_int' is negative (or zero), we set it as positive
-		exp_int = -exp_int;
-
-	return mantissa.GetBit(exp_int);
-	}
-
-
-
-	/*!
 		power this = this ^ abs([pow])
 		pow is treated as a value without a sign and without a fraction
 		 if pow has a sign then the method pow.Abs() is used
@@ -1642,8 +1707,6 @@ public:
 	*/
 	uint PowInt(const Big<exp, man> & pow)
 	{
-		TTMATH_REFERENCE_ASSERT( pow )
-	
 		if( IsNan() || pow.IsNan() )
 			return CheckCarry(1);
 
@@ -1680,8 +1743,6 @@ public:
 	*/
 	uint PowFrac(const Big<exp, man> & pow)
 	{
-		TTMATH_REFERENCE_ASSERT( pow )
-
 		if( IsNan() || pow.IsNan() )
 			return CheckCarry(1);
 
@@ -1701,7 +1762,6 @@ public:
 	}
 
 
-
 	/*!
 		power this = this ^ pow
 		pow can be negative and with fraction
@@ -1713,8 +1773,6 @@ public:
 	*/
 	uint Pow(const Big<exp, man> & pow)
 	{
-		TTMATH_REFERENCE_ASSERT( pow )
-
 		if( IsNan() || pow.IsNan() )
 			return CheckCarry(1);
 
@@ -2055,8 +2113,6 @@ public:
 	*/
 	uint Ln(const Big<exp,man> & x)
 	{
-		TTMATH_REFERENCE_ASSERT( x )
-
 		if( x.IsNan() )
 			return CheckCarry(1);
 
@@ -2066,17 +2122,17 @@ public:
 			return 2;
 		}
 
+		Big<exp,man> exponent_temp;
+		exponent_temp.FromInt( x.exponent );
+
 		// m will be the value of the mantissa in range <1,2)
 		Big<exp,man> m(x);
 		m.exponent = -sint(man*TTMATH_BITS_PER_UINT - 1);
 
-	    LnSurrounding1(m);
-
-		Big<exp,man> exponent_temp;
-		exponent_temp.FromInt( x.exponent );
-
 		// we must add 'man*TTMATH_BITS_PER_UINT-1' because we've taken it from the mantissa
 		uint c = exponent_temp.Add(man*TTMATH_BITS_PER_UINT-1);
+
+	    LnSurrounding1(m);
 
 		Big<exp,man> ln2;
 		ln2.SetLn2();
@@ -2085,7 +2141,6 @@ public:
 
 	return CheckCarry(c);
 	}
-
 
 
 	/*!
@@ -2102,9 +2157,6 @@ public:
 	*/
 	uint Log(const Big<exp,man> & x, const Big<exp,man> & base)
 	{
-		TTMATH_REFERENCE_ASSERT( base )
-		TTMATH_REFERENCE_ASSERT( x )
-
 		if( x.IsNan() || base.IsNan() )
 			return CheckCarry(1);
 
@@ -3513,19 +3565,19 @@ private:
 		if( conv.base<2 || conv.base>16 )
 			return 1;
 	
-		// the speciality for base equal 2
+		// special method for base equal 2
 		if( conv.base == 2 )
 			return ToString_CreateNewMantissaAndExponent_Base2(new_man, new_exp);
 
-		// the speciality for base equal 4
+		// special method for base equal 4
 		if( conv.base == 4 )
 			return ToString_CreateNewMantissaAndExponent_BasePow2(new_man, new_exp, 2);
 
-		// the speciality for base equal 8
+		// special method for base equal 8
 		if( conv.base == 8 )
 			return ToString_CreateNewMantissaAndExponent_BasePow2(new_man, new_exp, 3);
 
-		// the speciality for base equal 16
+		// special method for base equal 16
 		if( conv.base == 16 )
 			return ToString_CreateNewMantissaAndExponent_BasePow2(new_man, new_exp, 4);
 
