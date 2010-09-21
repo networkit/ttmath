@@ -2404,12 +2404,12 @@ public:
 	/*!
 		a method for converting 'uint' to this class
 	*/
-	void FromUInt(uint value)
+	uint FromUInt(uint value)
 	{
 		if( value == 0 )
 		{
 			SetZero();
-			return;
+			return 0;
 		}
 
 		info = 0;
@@ -2422,6 +2422,17 @@ public:
 
 		// there shouldn't be a carry because 'value' has the 'uint' type 
 		Standardizing();
+
+	return 0;
+	}
+
+
+	/*!
+		a method for converting 'uint' to this class
+	*/
+	uint FromInt(uint value)
+	{
+		return FromUInt(value);
 	}
 
 
@@ -2904,19 +2915,19 @@ public:
 	/*!
 		a method for converting 'ulint' (64bit unsigned integer) to this class
 	*/
-	void FromUInt(ulint value)
+	uint FromUInt(ulint value)
 	{
 		if( value == 0 )
 		{
 			SetZero();
-			return;
+			return 0;
 		}
 
 		info = 0;
 
 		if( man == 1 )
 		{
-			sint bit = mantissa.FindLeadingBitInWord(uint(value >> 32));
+			sint bit = mantissa.FindLeadingBitInWord(uint(value >> TTMATH_BITS_PER_UINT));
 
 			if( bit != -1 )
 			{
@@ -2940,7 +2951,7 @@ public:
 		#endif
 
 			// man >= 2
-			mantissa.table[man-1] = uint(value >> 32);
+			mantissa.table[man-1] = uint(value >> TTMATH_BITS_PER_UINT);
 			mantissa.table[man-2] = uint(value);
 
 		#ifdef _MSC_VER
@@ -2957,15 +2968,24 @@ public:
 		// there shouldn't be a carry because 'value' has the 'ulint' type 
 		// (we have	sufficient exponent)
 		Standardizing();
+
+	return 0;
 	}
 
 
+	/*!
+		a method for converting 'ulint' (64bit unsigned integer) to this class
+	*/
+	uint FromInt(ulint value)
+	{
+		return FromUInt(value);
+	}
 
 
 	/*!
 		a method for converting 'slint' (64bit signed integer) to this class
 	*/
-	void FromInt(slint value)
+	uint FromInt(slint value)
 	{
 	bool is_sign = false;
 
@@ -2979,7 +2999,10 @@ public:
 
 		if( is_sign )
 			SetSign();
+
+	return 0;
 	}
+
 
 	/*!
 		a constructor for converting 'ulint' (64bit unsigned integer) to this class
@@ -2988,6 +3011,7 @@ public:
 	{	
 		FromUInt(value);
 	}
+
 
 	/*!
 		an operator for converting 'ulint' (64bit unsigned integer) to this class
@@ -3008,6 +3032,7 @@ public:
 		FromInt(value);
 	}
 
+
 	/*!
 		an operator for converting 'slint' (64bit signed integer) to this class
 	*/
@@ -3024,69 +3049,81 @@ public:
 
 #ifdef TTMATH_PLATFORM64
 
-	/*!
-		in 64bit platforms we must define additional operators and contructors
-		in order to allow a user initializing the objects in this way:
-			Big<...> type = 20;
-		or
-			Big<...> type; 
-			type = 30;
-
-		decimal constants such as 20, 30 etc. are integer literal of type int,
-		if the value is greater it can even be long int,
-		0 is an octal integer of type int
-		(ISO 14882 p2.13.1 Integer literals)
+	/*
+		this method converts 32 bit unsigned int to this class
+		***this method is created only on a 64bit platform***
 	*/
-
-	/*!
-		an operator= for converting 'signed int' to this class
-		***this operator is created only on a 64bit platform***
-		it takes one argument of 32bit
-
-		
-	*/
-	Big<exp, man> & operator=(signed int value)
+	uint FromUInt(unsigned int value)
 	{
-		FromInt(sint(value));
+		return FromUInt(uint(value));
+	}
 
-	return *this;
+
+	/*
+		this method converts 32 bit unsigned int to this class
+		***this method is created only on a 64bit platform***
+	*/
+	uint FromInt(unsigned int value)
+	{
+		return FromUInt(uint(value));
+	}
+
+
+	/*
+		this method converts 32 bit signed int to this class
+		***this method is created only on a 64bit platform***
+	*/
+	uint FromInt(signed int value)
+	{
+		return FromInt(sint(value));
 	}
 
 
 	/*!
-		an operator= for converting 'unsigned int' to this class
+		an operator= for converting 32 bit unsigned int to this class
 		***this operator is created only on a 64bit platform***
-		it takes one argument of 32bit
 	*/
 	Big<exp, man> & operator=(unsigned int value)
 	{
-		FromUInt(uint(value));
+		FromUInt(value);
 
 	return *this;
 	}
 
 
 	/*!
-		a constructor for converting 'signed int' to this class
+		a constructor for converting 32 bit unsigned int to this class
 		***this constructor is created only on a 64bit platform***
-		it takes one argument of 32bit
-	*/
-	Big(signed int value)
-	{
-		FromInt(sint(value));
-	}
-
-	/*!
-		a constructor for converting 'unsigned int' to this class
-		***this constructor is created only on a 64bit platform***
-		it takes one argument of 32bit
 	*/
 	Big(unsigned int value)
 	{
-		FromUInt(uint(value));
+		FromUInt(value);
+	}
+
+
+	/*!
+		an operator for converting 32 bit signed int to this class
+		***this operator is created only on a 64bit platform***
+	*/
+	Big<exp, man> & operator=(signed int value)
+	{
+		FromInt(value);
+
+	return *this;
+	}
+
+
+	/*!
+		a constructor for converting 32 bit signed int to this class
+		***this constructor is created only on a 64bit platform***
+	*/
+	Big(signed int value)
+	{
+		FromInt(value);
 	}
 
 #endif
+
 
 private:
 
@@ -3098,7 +3135,7 @@ private:
 		that one from the UInt)
 	*/
 	template<uint int_size>
-	void FromUIntOrInt(const UInt<int_size> & value, sint compensation)
+	uint FromUIntOrInt(const UInt<int_size> & value, sint compensation)
 	{
 		uint minimum_size = (int_size < man)? int_size : man;
 		exponent          = (sint(int_size)-sint(man)) * sint(TTMATH_BITS_PER_UINT) - compensation;
@@ -3115,17 +3152,18 @@ private:
 		// the highest bit is either one or zero (when the whole mantissa is zero)
 		// we can only call CorrectZero()
 		CorrectZero();
+
+	return 0;
 	}
 
 
 public:
 
-
 	/*!
 		a method for converting from 'UInt<int_size>' to this class
 	*/
 	template<uint int_size>
-	void FromUInt(UInt<int_size> value)
+	uint FromUInt(UInt<int_size> value)
 	{
 		info = 0;
 		sint compensation = (sint)value.CompensationToLeft();
@@ -3135,10 +3173,20 @@ public:
 
 
 	/*!
+		a method for converting from 'UInt<int_size>' to this class
+	*/
+	template<uint int_size>
+	uint FromInt(const UInt<int_size> & value)
+	{
+		return FromUInt(value);
+	}
+
+		
+	/*!
 		a method for converting from 'Int<int_size>' to this class
 	*/
 	template<uint int_size>
-	void FromInt(Int<int_size> value)
+	uint FromInt(Int<int_size> value)
 	{
 		info = 0;
 		bool is_sign = false;
@@ -3154,6 +3202,8 @@ public:
 
 		if( is_sign )
 			SetSign();
+
+	return 0;
 	}
 
 
@@ -3339,9 +3389,10 @@ public:
 		a method for converting into a string
 		struct Conv is defined in ttmathtypes.h, look there for more information about parameters
 	*/
-	std::string ToString() const
+	std::string ToString(uint base = 10) const
 	{
 		Conv conv;
+		conv.base = base;
 
 	return ToString(conv);
 	}
@@ -3403,9 +3454,10 @@ public:
 		a method for converting into a string
 		struct Conv is defined in ttmathtypes.h, look there for more information about parameters
 	*/
-	std::wstring ToWString() const
+	std::wstring ToWString(uint base = 10) const
 	{
 		Conv conv;
+		conv.base = base;
 
 	return ToWString(conv);
 	}

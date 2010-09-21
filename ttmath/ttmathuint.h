@@ -2622,9 +2622,24 @@ public:
 
 
 	/*!
+		this method converts an UInt<another_size> type to this class
+
+		this operation has mainly sense if the value from p is 
+		equal or smaller than that one which is returned from UInt<value_size>::SetMax()
+
+		it returns a carry if the value 'p' is too big
+	*/
+	template<uint argument_size>
+	uint FromInt(const UInt<argument_size> & p)
+	{
+		return FromUInt(p);
+	}
+
+
+	/*!
 		this method converts the uint type to this class
 	*/
-	void FromUInt(uint value)
+	uint FromUInt(uint value)
 	{
 		for(uint i=1 ; i<value_size ; ++i)
 			table[i] = 0;
@@ -2632,6 +2647,32 @@ public:
 		table[0] = value;
 
 		TTMATH_LOG("UInt::FromUInt(uint)")
+
+		// there'll never be a carry here
+	return 0;
+	}
+
+
+	/*!
+		this method converts the uint type to this class
+	*/
+	uint FromInt(uint value)
+	{
+		return FromUInt(value);
+	}
+
+
+	/*!
+		this method converts the sint type to this class
+	*/
+	uint FromInt(sint value)
+	{
+		uint c = FromUInt(uint(value));
+
+		if( c || value < 0 )
+			return 1;
+
+	return 0;
 	}
 
 
@@ -2685,19 +2726,10 @@ public:
 
 	/*!
 		this method converts the sint type to this class
-
-		we provide operator(sint) and the constructor(sint) in order to allow
-		the programmer do that:
-			UInt<..> type = 10;
-
-		above "10" constant has the int type (signed int), if we don't give such
-		operators and constructors the compiler will not compile the program,
-		because it has to make a conversion and doesn't know into which type
-		(the UInt class has operator=(const char*), operator=(uint) etc.)
 	*/
 	UInt<value_size> & operator=(sint i)
 	{
-		FromUInt(uint(i));
+		FromInt(i);
 
 	return *this;
 	}
@@ -2710,7 +2742,7 @@ public:
 	*/
 	UInt(sint i)
 	{
-		FromUInt(uint(i));
+		FromInt(i);
 	}
 
 
@@ -2726,12 +2758,37 @@ public:
 		table[0] = (uint)n;
 
 		if( value_size == 1 )
-			return (n <= ulint(TTMATH_UINT_MAX_VALUE)) ? 0 : 1;
+			return ((n >> TTMATH_BITS_PER_UINT) == 0) ? 0 : 1;
 
-		table[1] = (uint)(n >> 32);
+		table[1] = (uint)(n >> TTMATH_BITS_PER_UINT);
 
 		for(uint i=2 ; i<value_size ; ++i)
 			table[i] = 0;
+
+	return 0;
+	}
+
+
+	/*!
+		this method converts unsigned 64 bit int type to this class
+		***this method is created only on a 32bit platform***
+	*/
+	uint FromInt(ulint n)
+	{
+		return FromUInt(n);
+	}
+
+
+	/*!
+		this method converts signed 64 bit int type to this class
+		***this method is created only on a 32bit platform***
+	*/
+	uint FromInt(slint n)
+	{
+		uint c = FromUInt(ulint(n));
+
+		if( c || n < 0 )
+			return 1;
 
 	return 0;
 	}
@@ -2758,79 +2815,108 @@ public:
 		FromUInt(n);
 	}
 
+
+	/*!
+		this operator converts signed 64 bit int type to this class
+		***this operator is created only on a 32bit platform***
+	*/
+	UInt<value_size> & operator=(slint n)
+	{
+		FromInt(n);
+
+	return *this;
+	}
+
+
+	/*!
+		a constructor for converting signed 64 bit int to this class
+		***this constructor is created only on a 32bit platform***
+	*/
+	UInt(slint n)
+	{
+		FromInt(n);
+	}
+
 #endif
 
 
 
 #ifdef TTMATH_PLATFORM64
 
-	/*!
-		in 64bit platforms we must define additional operators and contructors
-		in order to allow a user initializing the objects in this way:
-			UInt<...> type = 20;
-		or
-			UInt<...> type; 
-			type = 30;
-
-		decimal constants such as 20, 30 etc. are integer literal of type int,
-		if the value is greater it can even be long int,
-		0 is an octal integer of type int
-		(ISO 14882 p2.13.1 Integer literals)
-	*/
 
 	/*!
-		this operator converts the unsigned int type to this class
-
+		this method converts 32 bit unsigned int type to this class
 		***this operator is created only on a 64bit platform***
-		it takes one argument of 32bit
+	*/
+	uint FromUInt(unsigned int i)
+	{
+		// !! need testing
+		return FromUInt(uint(i));
+	}
+
+	/*!
+		this method converts 32 bit unsigned int type to this class
+		***this operator is created only on a 64bit platform***
+	*/
+	uint FromInt(unsigned int i)
+	{
+		// !! need testing
+		return FromUInt(uint(i));
+	}
+
+
+	/*!
+		this method converts 32 bit signed int type to this class
+		***this operator is created only on a 64bit platform***
+	*/
+	uint FromInt(signed int i)
+	{
+		// !! need testing
+		return FromInt(sint(i));
+	}
+
+
+	/*!
+		this operator converts 32 bit unsigned int type to this class
+		***this operator is created only on a 64bit platform***
 	*/
 	UInt<value_size> & operator=(unsigned int i)
 	{
-		FromUInt(uint(i));
+		FromUInt(i);
 
 	return *this;
 	}
 
 
 	/*!
-		a constructor for converting the unsigned int to this class
-
+		a constructor for converting 32 bit unsigned int to this class
 		***this constructor is created only on a 64bit platform***
-		it takes one argument of 32bit
 	*/
 	UInt(unsigned int i)
 	{
-		FromUInt(uint(i));
+		FromUInt(i);
 	}
 
 
 	/*!
-		an operator for converting the signed int to this class
-
+		an operator for converting 32 bit signed int to this class
 		***this constructor is created only on a 64bit platform***
-		it takes one argument of 32bit
-
-		look at the description of UInt::operator=(sint)
 	*/
 	UInt<value_size> & operator=(signed int i)
 	{
-		FromUInt(uint(i));
+		FromInt(i);
 
 	return *this;
 	}
 
 
 	/*!
-		a constructor for converting the signed int to this class
-
+		a constructor for converting 32 bit signed int to this class
 		***this constructor is created only on a 64bit platform***
-		it takes one argument of 32bit
-
-		look at the description of UInt::operator=(sint)
 	*/
 	UInt(signed int i)
 	{
-		FromUInt(uint(i));
+		FromInt(i);
 	}
 
 
@@ -2846,6 +2932,15 @@ public:
 	UInt(const char * s)
 	{
 		FromString(s);
+	}
+
+
+	/*!
+		a constructor for converting a string to this class (with the base=10)
+	*/
+	UInt(const std::string & s)
+	{
+		FromString( s.c_str() );
 	}
 
 
@@ -2871,13 +2966,6 @@ public:
 #endif
 
 
-	/*!
-		a constructor for converting a string to this class (with the base=10)
-	*/
-	UInt(const std::string & s)
-	{
-		FromString( s.c_str() );
-	}
 
 
 	/*!
@@ -2948,8 +3036,177 @@ public:
 		return table[0];
 	}
 
-	// !! add a second version of ToUInt() with an reference (pointer) to the output value
-	// and with returning carry
+
+	/*!
+		this method converts the value to uint type
+		can return a carry if the value is too long to store it in uint type
+	*/
+	uint ToUInt(uint & result) const
+	{
+		result = table[0];
+
+		for(uint i=1 ; i<value_size ; ++i)
+			if( table[i] != 0 )
+				return 1;
+
+	return 0;
+	}
+
+
+	/*!
+		this method converts the value to uint type
+		can return a carry if the value is too long to store it in uint type
+	*/
+	uint ToInt(uint & result) const
+	{
+		return ToUInt(result);
+	}
+
+
+	/*!
+		this method converts the value to sint type (signed integer)
+		can return a carry if the value is too long to store it in sint type
+	*/
+	uint ToInt(sint & result) const
+	{
+		result = sint(table[0]);
+
+		if( (result & TTMATH_UINT_HIGHEST_BIT) != 0 )
+			return 1;
+
+		for(uint i=1 ; i<value_size ; ++i)
+			if( table[i] != 0 )
+				return 1;
+
+	return 0;
+	}
+
+
+#ifdef TTMATH_PLATFORM32
+
+	/*!
+		this method converts the value to ulint type (64 bit unsigned integer)
+		can return a carry if the value is too long to store it in ulint type
+		*** this method is created only on a 32 bit platform ***
+	*/
+	uint ToUInt(ulint & result) const
+	{
+		if( value_size == 1 )
+		{
+			result = table[0];
+		}
+		else
+		{
+			uint low  = table[0];
+			uint high = table[1];
+
+			result = low;
+			result |= (ulint(high) << TTMATH_BITS_PER_UINT);
+
+			for(uint i=2 ; i<value_size ; ++i)
+				if( table[i] != 0 )
+					return 1;
+		}
+
+	return 0;
+	}
+
+
+	/*!
+		this method converts the value to ulint type (64 bit unsigned integer)
+		can return a carry if the value is too long to store it in ulint type
+		*** this method is created only on a 32 bit platform ***
+	*/
+	uint ToInt(ulint & result) const
+	{
+		return ToUInt(result);
+	}
+
+
+	/*!
+		this method converts the value to slint type (64 bit signed integer)
+		can return a carry if the value is too long to store it in slint type
+		*** this method is created only on a 32 bit platform ***
+	*/
+	uint ToInt(slint & result) const
+	{
+	ulint temp;
+
+		uint c = ToUInt(temp);
+		result = slint(temp);
+
+		if( c || result < 0 )
+			return 1;
+
+	return 0;
+	}
+
+#endif
+
+
+
+#ifdef TTMATH_PLATFORM64
+
+	/*!
+		this method converts the value to a 32 unsigned integer
+		can return a carry if the value is too long to store it in this type
+		*** this method is created only on a 64 bit platform ***
+	*/
+	uint ToUInt(unsigned int & result) const
+	{
+		// !! need testing
+
+		result = (unsigned int)table[0];
+
+		if( (table[0] >> 32) != 0 )
+			return 1;
+
+		for(uint i=1 ; i<value_size ; ++i)
+			if( table[i] != 0 )
+				return 1;
+
+	return 0;
+	}
+
+
+	/*!
+		this method converts the value to a 32 unsigned integer
+		can return a carry if the value is too long to store it in this type
+		*** this method is created only on a 64 bit platform ***
+	*/
+	uint ToInt(unsigned int & result) const
+	{
+		// !! need testing
+
+		return ToUInt(result);
+	}
+
+
+	/*!
+		this method converts the value to a 32 signed integer
+		can return a carry if the value is too long to store it in this type
+		*** this method is created only on a 64 bit platform ***
+	*/
+	uint ToInt(int & result) const
+	{
+	// !! need testing
+
+	unsigned int temp;
+
+		uint c = ToUInt(temp);
+		result = int(temp);
+
+		if( c || result < 0 )
+			return 1;
+
+	return 0;
+	}
+
+
+#endif
+
+
+
 
 private:
 
