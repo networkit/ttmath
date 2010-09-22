@@ -2260,21 +2260,18 @@ public:
 	}
 
 
-	/*!
-		this method converts 'this' into 'result'
+private:
 
+	/*!
+		an auxiliary method for converting 'this' into 'result'
 		if the value is too big this method returns a carry (1)
 	*/
-	uint ToUInt(uint & result, bool test_sign = true) const
+	uint ToUIntOrInt(uint & result) const
 	{
 		result = 0;
 
 		if( IsZero() )
 			return 0;
-
-		if( test_sign && IsSign() )
-			// the result should be positive
-			return 1;
 
 		sint maxbit = -sint(man*TTMATH_BITS_PER_UINT);
 
@@ -2287,20 +2284,73 @@ public:
 			// our value is from the range of (-1,1) and we return zero
 			return 0;
 
-		UInt<man> mantissa_temp(mantissa);
 		// exponent is from a range of (maxbit, maxbit + sint(TTMATH_BITS_PER_UINT) >
+		// and [maxbit + sint(TTMATH_BITS_PER_UINT] <= 0
 		sint how_many_bits = exponent.ToInt();
 
 		// how_many_bits is negative, we'll make it positive
 		how_many_bits = -how_many_bits;
 	
-		// we're taking into account only the last word in a mantissa table
-		mantissa_temp.Rcr( how_many_bits % TTMATH_BITS_PER_UINT, 0 );
-		result = mantissa_temp.table[ man-1 ];
+		result = (mantissa.table[man-1] >> (how_many_bits % TTMATH_BITS_PER_UINT));
 
 	return 0;
 	}
 
+
+public:
+
+	/*!
+		this method converts 'this' into uint
+	*/
+	uint ToUInt() const
+	{
+	uint result;
+
+		ToUInt(result);
+
+	return result;
+	}
+
+
+	/*!
+		this method converts 'this' into 'result'
+
+		if the value is too big this method returns a carry (1)
+	*/
+	uint ToUInt(uint & result) const
+	{
+		if( ToUIntOrInt(result) )
+			return 1;
+
+		if( IsSign() )
+			return 1;
+
+	return 0;
+	}
+
+
+	/*!
+		this method converts 'this' into sint
+	*/
+	sint ToInt() const
+	{
+	sint result;
+
+		ToInt(result);
+
+	return result;
+	}
+
+
+	/*!
+		this method converts 'this' into 'result'
+
+		if the value is too big this method returns a carry (1)
+	*/
+	uint ToInt(uint & result) const
+	{
+		return ToUInt(result);
+	}
 
 
 	/*!
@@ -2310,36 +2360,35 @@ public:
 	*/
 	uint ToInt(sint & result) const
 	{
-		result = 0;
-		uint result_uint;
+	uint result_uint;
 
-		if( ToUInt(result_uint, false) )
+		uint c = ToUIntOrInt(result_uint);
+		result = sint(result_uint);
+
+		if( c )
 			return 1;
 
-		result = static_cast<sint>( result_uint );
-
-		// the exception for the minimal value
-		if( IsSign() && result_uint == TTMATH_UINT_HIGHEST_BIT )
-			return 0;
-
-		if( (result_uint & TTMATH_UINT_HIGHEST_BIT) != 0 )
-			// the value is too big
-			return 1;
+		uint mask = 0;
 
 		if( IsSign() )
+		{
+			mask = TTMATH_UINT_MAX_VALUE;
 			result = -result;
+		}
 
-	return 0;
+	return ((result & TTMATH_UINT_HIGHEST_BIT) == (mask & TTMATH_UINT_HIGHEST_BIT)) ? 0 : 1;
 	}
 
 
+private:
+
 	/*!
-		this method converts 'this' into 'result'
+		an auxiliary method for converting 'this' into 'result'
 
 		if the value is too big this method returns a carry (1)
 	*/
 	template<uint int_size>
-	uint ToInt(Int<int_size> & result) const
+	uint ToUIntOrInt(UInt<int_size> & result) const
 	{
 		result.SetZero();
 
@@ -2350,7 +2399,7 @@ public:
 
 		if( exponent > maxbit + sint(int_size*TTMATH_BITS_PER_UINT) )
 			// if exponent > (maxbit + sint(int_size*TTMATH_BITS_PER_UINT)) the value can't be passed
-			// into the 'Int<int_size>' type (it's too big)
+			// into the 'UInt<int_size>' type (it's too big)
 			return 1;
 
 		if( exponent <= maxbit )
@@ -2374,30 +2423,79 @@ public:
 		{
 			uint index = how_many_bits / TTMATH_BITS_PER_UINT;
 
-			for(uint i=0 ; i<man ; ++i)
-				result.table[index+i] = mantissa.table[i];
+			if( index + (man-1) < int_size )
+			{
+				// above 'if' is always true
+				// this is only to get rid of a warning "warning: array subscript is above array bounds"
+				// (from gcc)
+				// we checked the condition there: "if( exponent > maxbit + sint(int_size*TTMATH_BITS_PER_UINT) )"
+				// but gcc doesn't understand our types - exponent is Int<>
+
+				for(uint i=0 ; i<man ; ++i)
+					result.table[index+i] = mantissa.table[i];
+			}
 
 			result.Rcl( how_many_bits % TTMATH_BITS_PER_UINT, 0 );
 		}
 
-		// the exception for the minimal value
-		if( IsSign() )
-		{
-			Int<int_size> min;
-			min.SetMin();
+	return 0;
+	}
 
-			if( result == min )
-				return 0;
-		}
 
-		if( (result.table[int_size-1] & TTMATH_UINT_HIGHEST_BIT) != 0 )
-			// the value is too big
+public:
+
+	/*!
+		this method converts 'this' into 'result'
+
+		if the value is too big this method returns a carry (1)
+	*/
+	template<uint int_size>
+	uint ToUInt(UInt<int_size> & result) const
+	{
+		uint c = ToUIntOrInt(result);
+
+		if( c )
 			return 1;
 
 		if( IsSign() )
-			result.ChangeSign();
+			return 1;
+	}
 
-	return 0;
+
+	/*!
+		this method converts 'this' into 'result'
+
+		if the value is too big this method returns a carry (1)
+	*/
+	template<uint int_size>
+	uint ToInt(UInt<int_size> & result) const
+	{
+		return ToUInt(result);
+	}
+
+
+	/*!
+		this method converts 'this' into 'result'
+
+		if the value is too big this method returns a carry (1)
+	*/
+	template<uint int_size>
+	uint ToInt(Int<int_size> & result) const
+	{
+		uint c = ToUIntOrInt(result);
+
+		if( c )
+			return 1;
+
+		uint mask = 0;
+
+		if( IsSign() )
+		{
+			result.ChangeSign();
+			mask = TTMATH_UINT_MAX_VALUE;
+		}
+
+	return ((result.table[int_size-1] & TTMATH_UINT_HIGHEST_BIT) == (mask & TTMATH_UINT_HIGHEST_BIT))? 0 : 1;
 	}
 
 
@@ -2439,7 +2537,7 @@ public:
 	/*!
 		a method for converting 'sint' to this class
 	*/
-	void FromInt(sint value)
+	uint FromInt(sint value)
 	{
 	bool is_sign = false;
 
@@ -2453,6 +2551,8 @@ public:
 
 		if( is_sign )
 			SetSign();
+
+	return 0;
 	}
 
 
@@ -2487,12 +2587,8 @@ public:
 
 #ifdef TTMATH_PLATFORM32
 
-	void FromDouble(double value)
+	uint FromDouble(double value)
 	{
-		// sizeof(double) should be 8 (64 bits), this is actually not a runtime
-		// error but I leave it at the moment as is
-		TTMATH_ASSERT( sizeof(double) == 8 )
-
 		// I am not sure what will be on a platform which has 
 		// a different endianness... but we use this library only
 		// on x86 and amd (intel) 64 bits (as there's a lot of assembler code)
@@ -2562,6 +2658,8 @@ public:
 				SetZero();
 			}
 		}
+
+	return 0; // never be a carry
 	}
 
 
@@ -2602,12 +2700,8 @@ private:
 public:
 
 	// 64bit platforms
-	void FromDouble(double value)
+	uint FromDouble(double value)
 	{
-		// sizeof(double) should be 8 (64 bits), this is actually not a runtime
-		// error but I leave it at the moment as is
-		TTMATH_ASSERT( sizeof(double) == 8 )
-
 		// I am not sure what will be on a plaltform which has 
 		// a different endianness... but we use this library only
 		// on x86 and amd (intel) 64 bits (as there's a lot of assembler code)
@@ -2671,6 +2765,8 @@ public:
 				SetZero();
 			}
 		}
+
+	return 0; // never be a carry
 	}
 
 private:
@@ -2698,6 +2794,139 @@ private:
 public:
 
 
+	/*!
+		this method converts from float to this class
+	*/
+	uint FromFloat(float value)
+	{
+		return FromDouble(double(value));
+	}
+
+
+	/*!
+		this method converts from this class into the 'double'
+
+		if the value is too big:
+			'result' will be +/-infinity (depending on the sign)
+		if the value is too small:
+			'result' will be 0
+	*/
+	double ToDouble() const
+	{
+	double result;
+
+		ToDouble(result);
+
+	return result;
+	}
+
+
+private:
+
+
+	/*!
+		an auxiliary method to check if the float value is +/-infinity
+		we provide this method because isinf(float) in only in C99 language
+
+		description taken from: http://www.psc.edu/general/software/packages/ieee/ieee.php
+
+		The IEEE single precision floating point standard representation requires a 32 bit word,
+		which may be represented as numbered from 0 to 31, left to right.
+		The first bit is the sign bit, S, the next eight bits are the exponent bits, 'E',
+		and the final 23 bits are the fraction 'F':
+
+		S EEEEEEEE FFFFFFFFFFFFFFFFFFFFFFF
+		0 1      8 9                    31
+
+		The value V represented by the word may be determined as follows:
+
+			* If E=255 and F is nonzero, then V=NaN ("Not a number")
+			* If E=255 and F is zero and S is 1, then V=-Infinity
+			* If E=255 and F is zero and S is 0, then V=Infinity
+			* If 0<E<255 then V=(-1)**S * 2 ** (E-127) * (1.F) where "1.F" is intended to represent
+			  the binary number created by prefixing F with an implicit leading 1 and a binary point.
+			* If E=0 and F is nonzero, then V=(-1)**S * 2 ** (-126) * (0.F) These are "unnormalized" values.
+			* If E=0 and F is zero and S is 1, then V=-0
+			* If E=0 and F is zero and S is 0, then V=0 		
+	*/
+	bool IsInf(float value) const
+	{
+		// need testing on a 64 bit machine
+
+		union 
+		{
+			float d;
+			uint u;
+		} temp;
+
+		temp.d = value;
+
+		if( ((temp.u >> 23) & 0xff) == 0xff )
+		{
+			if( (temp.u & 0x7FFFFF) == 0 )
+				return true; // +/- infinity
+		}
+
+	return false;
+	}
+
+
+public:
+
+	/*!
+		this method converts from this class into the 'float'
+
+		if the value is too big:
+			'result' will be +/-infinity (depending on the sign)
+		if the value is too small:
+			'result' will be 0
+	*/
+	float ToFloat() const
+	{
+	float result;
+
+		ToFloat(result);
+
+	return result;
+	}
+
+
+	/*!
+		this method converts from this class into the 'float'
+
+		if the value is too big:
+			'result' will be +/-infinity (depending on the sign)
+			and the method returns 1
+		if the value is too small:
+			'result' will be 0
+			and the method returns 1
+	*/
+	uint ToFloat(float & result) const
+	{
+	double result_double;
+
+		uint c = ToDouble(result_double);
+		result = float(result_double);
+		
+		if( result == -0.0f )
+			result = 0.0f;
+
+		if( c )
+			return 1;
+
+		// although the result_double can have a correct value
+		// but after converting to float there can be infinity
+
+		if( IsInf(result) )
+			return 1;
+
+		if( result == 0.0f && result_double != 0.0 )
+			// result_double was too small for float
+			return 1;
+
+	return 0;
+	}
+
 
 	/*!
 		this method converts from this class into the 'double'
@@ -2711,10 +2940,6 @@ public:
 	*/
 	uint ToDouble(double & result) const
 	{
-		// sizeof(double) should be 8 (64 bits), this is actually not a runtime
-		// error but I leave it at the moment as is
-		TTMATH_ASSERT( sizeof(double) == 8 )
-
 		if( IsZero() )
 		{
 			result = 0.0;
@@ -2733,7 +2958,7 @@ public:
 		if( exponent >= 1024 - e_correction )
 		{
 			// +/- infinity
-			result = ToDouble_SetDouble( 0, 2047, 0, true);
+			result = ToDouble_SetDouble( IsSign(), 2047, 0, true);
 
 		return 1;
 		}
@@ -2873,6 +3098,17 @@ public:
 
 
 	/*!
+		an operator= for converting 'float' to this class
+	*/
+	Big<exp, man> & operator=(float value)
+	{
+		FromFloat(value);
+
+	return *this;
+	}
+
+
+	/*!
 		an operator= for converting 'double' to this class
 	*/
 	Big<exp, man> & operator=(double value)
@@ -2908,6 +3144,14 @@ public:
 		FromDouble(value);
 	}
 
+
+	/*!
+		a constructor for converting 'float' to this class
+	*/
+	Big(float value)
+	{
+		FromFloat(value);
+	}
 
 #ifdef TTMATH_PLATFORM32
 

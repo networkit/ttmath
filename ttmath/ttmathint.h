@@ -1134,6 +1134,30 @@ public:
 	}
 
 
+	/*!
+		this method converts the value to uint type
+		can return a carry if the value is too long to store it in uint type
+	*/
+	uint ToUInt(uint & result) const
+	{
+		uint c = UInt<value_size>::ToUInt(result);
+
+		if( value_size == 1 )
+			return (result & TTMATH_UINT_HIGHEST_BIT) == 0 ? 0 : 1;
+
+	return c;
+	}
+
+
+	/*!
+		this method converts the value to uint type
+		can return a carry if the value is too long to store it in uint type
+	*/
+	uint ToInt(uint & result) const
+	{
+		return ToUInt(result);
+	}
+
 
 	/*!
 		this method converts the value to sint type
@@ -1156,6 +1180,36 @@ public:
 
 
 #ifdef TTMATH_PLATFORM32
+
+	/*!
+		this method converts the value to ulint type (64 bit unsigned integer)
+		can return a carry if the value is too long to store it in ulint type
+		*** this method is created only on a 32 bit platform ***
+	*/
+	uint ToUInt(ulint & result) const
+	{
+		uint c = UInt<value_size>::ToUInt(result);
+
+		if( value_size == 1 )
+			return (UInt<value_size>::table[0] & TTMATH_UINT_HIGHEST_BIT) == 0 ? 0 : 1;
+
+		if( value_size == 2 )
+			return (UInt<value_size>::table[1] & TTMATH_UINT_HIGHEST_BIT) == 0 ? 0 : 1;
+
+	return c;
+	}
+
+
+	/*!
+		this method converts the value to ulint type (64 bit unsigned integer)
+		can return a carry if the value is too long to store it in ulint type
+		*** this method is created only on a 32 bit platform ***
+	*/
+	uint ToInt(ulint & result) const
+	{
+		return ToUInt(result);
+	}
+
 
 	/*!
 		this method converts the value to slint type (64 bit signed integer)
@@ -1196,7 +1250,37 @@ public:
 #ifdef TTMATH_PLATFORM64
 
 	/*!
-		this method converts the value to a 32 signed integer
+		this method converts the value to a 32 bit unsigned integer
+		can return a carry if the value is too long to store it in this type
+		*** this method is created only on a 64 bit platform ***
+	*/
+	uint ToUInt(unsigned int & result) const
+	{
+	// !! need testing
+
+		uint c = UInt<value_size>::ToUInt(result);
+
+		if( c )
+			return 1;
+
+	return (int(result) < 0) ? 1 : 0;
+	}
+
+
+	/*!
+		this method converts the value to a 32 bit unsigned integer
+		can return a carry if the value is too long to store it in this type
+		*** this method is created only on a 64 bit platform ***
+	*/
+	uint ToInt(unsigned int & result) const
+	{
+	// !! need testing
+		return ToUInt(result);
+	}
+
+
+	/*!
+		this method converts the value to a 32 bit signed integer
 		can return a carry if the value is too long to store it in this type
 		*** this method is created only on a 64 bit platform ***
 	*/

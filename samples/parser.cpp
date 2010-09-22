@@ -29,7 +29,7 @@ const char equation[] = " (34 + 24) * 123 - 34.32 ^ 6 * sin(2.56) - atan(10)";
 
 /*
 the result (on 32 bit platform):
--897705014.52573107
+-897705014.525731067
 */
 
 
