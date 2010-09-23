@@ -74,7 +74,7 @@
 #define TTMATH_MINOR_VER		9
 #define TTMATH_REVISION_VER		2
 
-#define TTMATH_PRERELEASE_VER	1
+#define TTMATH_PRERELEASE_VER	0
 
 
 
@@ -542,26 +542,13 @@ namespace ttmath
 		In the library is used macro TTMATH_REFERENCE_ASSERT which
 		can throw an exception of this type
 
+		** from version 0.9.2 this macro is removed from all methods
+		   in public interface so you don't have to worry about it **
+
 		If you compile with gcc you can get a small benefit 
 		from using method Where() (it returns std::string) with
 		the name and the line of a file where the macro TTMATH_REFERENCE_ASSERT
 		was used)
-
-		What is the 'reference' error?
-		Some kind of methods use a reference as their argument to another object,
-		and the another object not always can be the same which is calling, e.g.
-			Big<1,2> foo(10);
-			foo.Mul(foo); // this is incorrect
-		above method Mul is making something more with 'this' object and 
-		'this' cannot be passed as the argument because the result will be undefined
-
-		macro TTMATH_REFERENCE_ASSERT helps us to solve the above problem
-
-		note! some methods can use 'this' object as the argument
-		for example this code is correct:
-			UInt<2> foo(10);
-			foo.Add(foo);
-		but there are only few methods which can do that
 	*/
 	class ReferenceError : public std::logic_error, public ExceptionInfo
 	{
