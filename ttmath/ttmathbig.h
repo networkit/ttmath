@@ -2459,6 +2459,8 @@ public:
 
 		if( IsSign() )
 			return 1;
+
+	return 0;
 	}
 
 
@@ -3153,7 +3155,47 @@ public:
 		FromFloat(value);
 	}
 
+
 #ifdef TTMATH_PLATFORM32
+
+	/*!
+		this method converts 'this' into 'result' (64 bit unsigned integer)
+		if the value is too big this method returns a carry (1)
+	*/
+	uint ToUInt(ulint & result) const
+	{
+	UInt<2> temp; // 64 bits container
+
+		uint c = ToUInt(temp);
+		temp.ToUInt(result);
+
+	return c;
+	}
+
+
+	/*!
+		this method converts 'this' into 'result' (64 bit unsigned integer)
+		if the value is too big this method returns a carry (1)
+	*/
+	uint ToInt(ulint & result) const
+	{
+		return ToUInt(result);
+	}
+
+
+	/*!
+		this method converts 'this' into 'result' (64 bit unsigned integer)
+		if the value is too big this method returns a carry (1)
+	*/
+	uint ToInt(slint & result) const
+	{
+	Int<2> temp; // 64 bits container
+
+		uint c = ToInt(temp);
+		temp.ToInt(result);
+
+	return c;
+	}
 
 
 	/*!
@@ -3292,6 +3334,56 @@ public:
 
 
 #ifdef TTMATH_PLATFORM64
+
+
+	/*!
+		this method converts 'this' into 'result' (32 bit unsigned integer)
+		***this method is created only on a 64bit platform***
+		if the value is too big this method returns a carry (1)
+	*/
+	uint ToUInt(unsigned int & result) const
+	{
+	uint result_uint;
+
+		uint c = ToUInt(result_uint);
+		result = (unsigned int)result_uint;
+
+		if( c || result_uint != uint(result) )
+			return 1;
+
+	return 0;
+	}
+
+
+	/*!
+		this method converts 'this' into 'result' (32 bit unsigned integer)
+		***this method is created only on a 64bit platform***
+		if the value is too big this method returns a carry (1)
+	*/
+	uint ToInt(unsigned int & result) const
+	{
+		return ToUInt(result);
+	}
+
+
+	/*!
+		this method converts 'this' into 'result' (32 bit signed integer)
+		***this method is created only on a 64bit platform***
+		if the value is too big this method returns a carry (1)
+	*/
+	uint ToInt(signed int & result) const
+	{
+	sint result_sint;
+
+		uint c = ToInt(result_sint);
+		result = (signed int)result_sint;
+
+		if( c || result_sint != sint(result) )
+			return 1;
+
+	return 0;
+	}
+
 
 	/*
 		this method converts 32 bit unsigned int to this class

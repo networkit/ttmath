@@ -2850,7 +2850,6 @@ public:
 	*/
 	uint FromUInt(unsigned int i)
 	{
-		// !! need testing
 		return FromUInt(uint(i));
 	}
 
@@ -2860,7 +2859,6 @@ public:
 	*/
 	uint FromInt(unsigned int i)
 	{
-		// !! need testing
 		return FromUInt(uint(i));
 	}
 
@@ -2871,7 +2869,6 @@ public:
 	*/
 	uint FromInt(signed int i)
 	{
-		// !! need testing
 		return FromInt(sint(i));
 	}
 
