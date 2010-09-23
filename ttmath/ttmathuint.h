@@ -2758,12 +2758,19 @@ public:
 		table[0] = (uint)n;
 
 		if( value_size == 1 )
-			return ((n >> TTMATH_BITS_PER_UINT) == 0) ? 0 : 1;
+		{
+			uint c = ((n >> TTMATH_BITS_PER_UINT) == 0) ? 0 : 1;
+
+			TTMATH_LOGC("UInt::FromUInt(ulint)", c)
+			return c;
+		}
 
 		table[1] = (uint)(n >> TTMATH_BITS_PER_UINT);
 
 		for(uint i=2 ; i<value_size ; ++i)
 			table[i] = 0;
+
+		TTMATH_LOG("UInt::FromUInt(ulint)")
 
 	return 0;
 	}
