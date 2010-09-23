@@ -3151,8 +3151,6 @@ public:
 	*/
 	uint ToUInt(unsigned int & result) const
 	{
-		// !! need testing
-
 		result = (unsigned int)table[0];
 
 		if( (table[0] >> 32) != 0 )
@@ -3173,8 +3171,6 @@ public:
 	*/
 	uint ToInt(unsigned int & result) const
 	{
-		// !! need testing
-
 		return ToUInt(result);
 	}
 
@@ -3186,8 +3182,6 @@ public:
 	*/
 	uint ToInt(int & result) const
 	{
-	// !! need testing
-
 	unsigned int temp;
 
 		uint c = ToUInt(temp);

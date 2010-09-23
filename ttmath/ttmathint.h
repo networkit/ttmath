@@ -1256,14 +1256,12 @@ public:
 	*/
 	uint ToUInt(unsigned int & result) const
 	{
-	// !! need testing
-
 		uint c = UInt<value_size>::ToUInt(result);
 
-		if( c )
+		if( c || IsSign() )
 			return 1;
 
-	return (int(result) < 0) ? 1 : 0;
+	return 0;
 	}
 
 
@@ -1274,7 +1272,6 @@ public:
 	*/
 	uint ToInt(unsigned int & result) const
 	{
-	// !! need testing
 		return ToUInt(result);
 	}
 
@@ -1286,8 +1283,6 @@ public:
 	*/
 	uint ToInt(int & result) const
 	{
-	// !! need testing
-
 		uint first = UInt<value_size>::table[0];
 
 		result = int(first);
