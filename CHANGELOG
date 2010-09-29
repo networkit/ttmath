@@ -1,3 +1,11 @@
+Version 0.9.3 prerelease (2010.09.29):
+    * added:   Parser::InitCGamma()
+               initializing coefficients used when calculating the gamma (or factorial) function
+               this speed up the next calculations
+               you don't have to call this method explicitly
+               these coefficients will be calculated when needed
+
+
 Version 0.9.2 (2010.09.23):
     * fixed:   Big::Add() sometimes incorrectly rounded the last bit from its mantissa
     * fixed:   Big::BigAnd() Big::BigOr() Big::BigXor() should have set NaN

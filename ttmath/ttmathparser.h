@@ -2755,6 +2755,18 @@ bool Calculated()
 }
 
 
+/*!
+	initializing coefficients used when calculating the gamma (or factorial) function
+	this speed up the next calculations
+	you don't have to call this method explicitly
+	these coefficients will be calculated when needed
+*/
+void InitCGamma()
+{
+	cgamma.InitAll();
+}
+
+
 };
 
 
