@@ -2370,7 +2370,7 @@ public:
 			// we don't define zero^zero
 			return 2;
 
-		UInt<value_size> start(*this), start_temp;
+		UInt<value_size> start(*this);
 		UInt<value_size> result;
 		result.SetOne();
 		uint c = 0;
@@ -2384,9 +2384,7 @@ public:
 			if( pow.IsZero() )
 				break;
 
-			start_temp = start;
-			// in the second Mul algorithm we can use start.Mul(start) directly (there is no TTMATH_ASSERT_REFERENCE there)
-			c += start.Mul(start_temp);
+			c += start.Mul(start);
 		}
 
 		*this = result;

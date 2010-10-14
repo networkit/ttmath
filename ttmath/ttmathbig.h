@@ -1571,7 +1571,7 @@ public:
 			return 0;
 		}
 
-		Big<exp, man> start(*this), start_temp;
+		Big<exp, man> start(*this);
 		Big<exp, man> result;
 		result.SetOne();
 		uint c = 0;
@@ -1586,8 +1586,7 @@ public:
 			if( pow.IsZero() )
 				break;
 
-			start_temp = start;
-			c += start.Mul(start_temp);
+			c += start.Mul(start);
 		}
 
 		*this = result;
@@ -1665,13 +1664,10 @@ public:
 		if( pow.IsSign() )
 			pow.Abs();
 
-		Big<exp, man> start(*this), start_temp;
+		Big<exp, man> start(*this);
 		Big<exp, man> result;
 		Big<exp, man> one;
-		Int<exp> e_one;
 		uint c = 0;
-
-		e_one.SetOne();
 		one.SetOne();
 		result = one;
 
@@ -1680,13 +1676,12 @@ public:
 			if( pow.Mod2() )
 				c += result.Mul(start);
 
-			c += pow.exponent.Sub( e_one ); // !! may use SubOne() here?
+			c += pow.exponent.SubOne();
 
 			if( pow < one )
 				break;
 
-			start_temp = start;
-			c += start.Mul(start_temp);
+			c += start.Mul(start);
 		}
 
 		*this = result;
