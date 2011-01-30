@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2010, Tomasz Sowa
+ * Copyright (c) 2006-2011, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -4738,15 +4738,19 @@ private:
 											typename string_type::size_type & index) const
 	{
 	typedef typename string_type::size_type StrSize;
-	uint group = 0;
-		
+
+		uint group = 0;
 		StrSize i = index;
+		uint group_digits = conv.group_digits;
+
+		if( group_digits < 1 )
+			group_digits = 1;
 
 		// adding group characters before the comma operator
 		// i>0 because on the first position we don't put any additional grouping characters
 		for( ; i>0 ; --i, ++group)
 		{
-			if( group >= 3 )
+			if( group >= group_digits )
 			{
 				group = 0;
 				new_man.insert(i, 1, static_cast<char_type>(conv.group));
@@ -4763,11 +4767,15 @@ private:
 	void ToString_Group_man_after_comma(string_type & new_man, const Conv & conv,
 										typename string_type::size_type index) const
 	{
-	uint group = 0;
+		uint group = 0;
+		uint group_digits = conv.group_digits;
+
+		if( group_digits < 1 )
+			group_digits = 1;
 
 		for( ; index<new_man.size() ; ++index, ++group)
 		{
-			if( group >= 3 )
+			if( group >= group_digits )
 			{
 				group = 0;
 				new_man.insert(index, 1, static_cast<char_type>(conv.group));

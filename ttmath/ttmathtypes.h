@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2010, Tomasz Sowa
+ * Copyright (c) 2006-2011, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -466,6 +466,13 @@ namespace ttmath
 
 
 		/*!
+			how many digits should be grouped (it is used if 'group' is non zero)
+			default: 3
+		*/
+		uint group_digits;
+
+
+		/*!
 		*/
 		uint group_exp; // not implemented yet
 
@@ -484,6 +491,7 @@ namespace ttmath
 			comma        = '.';
 			comma2       = ',';
 			group        = 0;
+			group_digits = 3;
 			group_exp    = 0;
 		}
 	};

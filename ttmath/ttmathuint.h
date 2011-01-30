@@ -3225,7 +3225,8 @@ private:
 		{
 			temp.DivInt(b, &rem);
 			character = static_cast<char>( Misc::DigitToChar(rem) );
-			result.insert(result.begin(), character);
+			result.insert(result.begin(), character); // !! it has O(n^2) complexity, change it
+			// take the one from winix
 		}
 		while( !temp.IsZero() );
 
