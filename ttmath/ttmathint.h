@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2010, Tomasz Sowa
+ * Copyright (c) 2006-2011, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -1315,13 +1315,11 @@ private:
 		{
 			Int<value_size> temp(*this);
 			temp.Abs();
-
-			temp.UInt<value_size>::ToString(result, b);
-			result.insert(result.begin(), '-');
+			temp.UInt<value_size>::ToStringBase(result, b, true);
 		}
 		else
 		{
-			UInt<value_size>::ToString(result, b);
+			UInt<value_size>::ToStringBase(result, b, false);
 		}
 	}
 

@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2010, Tomasz Sowa
+ * Copyright (c) 2006-2011, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -3204,34 +3204,94 @@ public:
 
 
 
-private:
+protected:
+
+	/*!
+		an auxiliary method for converting into the string
+		it returns the log (with the base 2) from x
+		where x is in <2;16>
+	*/
+	double ToStringLog2(uint x) const
+	{
+		static double log_tab[] = {
+			1.000000000000000000,
+			0.630929753571457437,
+			0.500000000000000000,
+			0.430676558073393050,
+			0.386852807234541586,
+			0.356207187108022176,
+			0.333333333333333333,
+			0.315464876785728718,
+			0.301029995663981195,
+			0.289064826317887859,
+			0.278942945651129843,
+			0.270238154427319741,
+			0.262649535037193547,
+			0.255958024809815489,
+			0.250000000000000000
+		};
+
+		if( x<2 || x>16 )
+			return 0;
+
+	return log_tab[x-2];
+	}
+
 
 	/*!	
 		an auxiliary method for converting to a string
+		it's used from Int::ToString() too (negative is set true then)
 	*/
 	template<class string_type>
-	void ToStringBase(string_type & result, uint b = 10) const
+	void ToStringBase(string_type & result, uint b = 10, bool negative = false) const
 	{
-	UInt<value_size> temp( *this );
+	UInt<value_size> temp(*this);
+	uint rest, table_id, index, digits;
+	double digits_d;
 	char character;
-	uint rem;
 
 		result.clear();
 
 		if( b<2 || b>16 )
 			return;
 
+		if( !FindLeadingBit(table_id, index) )
+		{
+			result = '0';
+			return;
+		}
+
+		if( negative )
+			result = '-';
+
+		digits_d  = table_id; // for not making an overflow in uint type
+		digits_d *= TTMATH_BITS_PER_UINT;
+		digits_d += index + 1;
+		digits_d *= ToStringLog2(b);
+		digits = static_cast<uint>(digits_d) + 3; // plus some epsilon
+
+		if( result.capacity() < digits )
+			result.reserve(digits);
+
 		do
 		{
-			temp.DivInt(b, &rem);
-			character = static_cast<char>( Misc::DigitToChar(rem) );
-			result.insert(result.begin(), character); // !! it has O(n^2) complexity, change it
-			// take the one from winix
+			temp.DivInt(b, &rest);
+			character = static_cast<char>(Misc::DigitToChar(rest));
+			result.insert(result.end(), character);
 		}
 		while( !temp.IsZero() );
 
-	return;
+		size_t i1 = negative ? 1 : 0; // the first is a hyphen (when negative is true)
+		size_t i2 = result.size() - 1;
+
+		for( ; i1 < i2 ; ++i1, --i2 )
+		{
+			char tempc = static_cast<char>(result[i1]);
+			result[i1] = result[i2];
+			result[i2] = tempc;
+		}
 	}
+
 
 
 public:
