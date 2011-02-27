@@ -5120,19 +5120,14 @@ private:
 	uint FromString_ReadPartAfterComma( const char_type * & source, const Conv & conv, bool & value_read )
 	{
 	sint character;
-	uint c = 0, index = 1;
-	Big<exp, man> sum, part, power, old_value, base_( conv.base );
+	uint c = 0, power = 0;
+	UInt<1> power_;
+	Big<exp, man> sum, base_(conv.base);
 
 		// we don't remove any white characters here
-
-		// this is only to avoid getting a warning about an uninitialized object 'old_value' which GCC reports
-		// (in fact we will initialize it later when the condition 'testing' is fulfilled)
-		old_value.SetZero();
-
-		power.SetOne();
 		sum.SetZero();
 
-		for( ; true ; ++source, ++index )
+		for( ; sum.exponent.IsSign() || sum.exponent.IsZero() ; ++source )
 		{
 			if( conv.group!=0 && *source==static_cast<char>(conv.group) )
 				continue;
@@ -5144,30 +5139,13 @@ private:
 
 			value_read = true;
 
-			part = character;
-
-			if( power.Mul( base_ ) )
-				// there's no sens to add the next parts, but we can't report this
-				// as an error (this is only inaccuracy)
-				break;
-
-			if( part.Div( power ) )
-				break;
-
-			// every 5 iteration we make a test whether the value will be changed or not
-			// (character must be different from zero to this test)
-			bool testing = (character != 0 && (index % 5) == 0);
-
-			if( testing )
-				old_value = sum;
-
 			// there actually shouldn't be a carry here
-			c += sum.Add( part );
+			c += sum.Mul(base_);
+			c += sum.Add(character);
+			power += 1;
 
-			if( testing && old_value == sum )
-				// after adding 'part' the value has not been changed
-				// there's no sense to add any next parts
-				break;
+			if( power == 0 )
+				c += 1;
 		}
 
 		// we could break the parsing somewhere in the middle of the string,
@@ -5175,6 +5153,9 @@ private:
 		// we should set a correct value of 'source' now
 		for( ; Misc::CharToDigit(*source, conv.base) != -1 ; ++source );
 
+		power_ = power;
+		c += base_.Pow(power_);
+		c += sum.Div(base_);
 		c += Add(sum);
 
 	return (c==0)? 0 : 1;
