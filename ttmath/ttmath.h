@@ -2832,9 +2832,11 @@ namespace ttmath
 
 /*!
 	this is for convenience for the user
-	he can only use '#include <ttmath/ttmath.h>' even if he uses the parser
+	he can only use '#include <ttmath/ttmath.h>'
 */
 #include "ttmathparser.h"
+#include "ttmathdec.h"
+
 
 
 #ifdef _MSC_VER

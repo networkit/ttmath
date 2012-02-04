@@ -3238,6 +3238,9 @@ protected:
 	}
 
 
+public:
+
+
 	/*!	
 		an auxiliary method for converting to a string
 		it's used from Int::ToString() too (negative is set true then)
@@ -3293,8 +3296,6 @@ protected:
 	}
 
 
-
-public:
 
 	/*!	
 		this method converts the value to a string with a base equal 'b'
@@ -3369,7 +3370,7 @@ private:
 			{
 				temp.table[0] = z;
 
-				c += Mul(base);
+				c += Mul(base); // !! IMPROVE ME: there can be used MulInt here
 				c += Add(temp);
 			}
 		}		
