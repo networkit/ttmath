@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2011, Tomasz Sowa
+ * Copyright (c) 2006-2012, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -2644,7 +2644,7 @@ public:
 
 				FromDouble_SetExpAndMan((temp.u[1] & 0x80000000u) != 0,
 										e - 1022 - man*TTMATH_BITS_PER_UINT + 1 - moved, 0,
-										m.table[1], m.table[2]);
+										m.table[1], m.table[0]);
 			}
 			else
 			{
