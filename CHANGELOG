@@ -1,4 +1,4 @@
-Version 0.9.3  (2012.12.28):
+Version 0.9.3  (2012.11.28):
     * fixed:   in Big::FromDouble(double value) (only 32 bit version)
                buffer overflow in referencing to UInt<2>
                this was used when 'value' was in so called "unnormalized" state
