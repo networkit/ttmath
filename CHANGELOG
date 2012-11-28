@@ -1,4 +1,9 @@
-Version 0.9.3 prerelease (2011.02.27):
+Version 0.9.3  (2012.12.28):
+    * fixed:   in Big::FromDouble(double value) (only 32 bit version)
+               buffer overflow in referencing to UInt<2>
+               this was used when 'value' was in so called "unnormalized" state
+               (E=0 and F is nonzero)
+               it produced incorrect mantissa (on about 8th decimal digit up)
     * added:   Parser::InitCGamma()
                initializing coefficients used when calculating the gamma (or factorial) function
                this speed up the next calculations

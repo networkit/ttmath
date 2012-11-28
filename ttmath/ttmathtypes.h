@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2011, Tomasz Sowa
+ * Copyright (c) 2006-2012, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -74,7 +74,7 @@
 #define TTMATH_MINOR_VER		9
 #define TTMATH_REVISION_VER		3
 
-#define TTMATH_PRERELEASE_VER	1
+#define TTMATH_PRERELEASE_VER	0
 
 
 
@@ -122,7 +122,7 @@
 			_M_IX86     defined by Visual Studio, Intel C/C++, Digital Mars and Watcom C/C++
 
 			amd64 architecture:
-			__x86_64__  defined by GNU C and Sun Studio
+			__x86_64__  defined by GNU C, CLANG (LLVM) and Sun Studio
 			_M_X64  	defined by Visual Studio
 
 			asm version is available only for x86 or amd64 platforms
@@ -134,7 +134,8 @@
 
 	#if !defined _MSC_VER && !defined __GNUC__
 		/*!
-			another compilers than MS VC or GCC by default use no asm version
+			another compilers than MS VC or GCC or CLANG (LLVM) by default use no asm version
+			(CLANG defines __GNUC__ too)
 		*/
 		#define TTMATH_NOASM
 	#endif

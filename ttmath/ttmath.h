@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2010, Tomasz Sowa
+ * Copyright (c) 2006-2012, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -2835,7 +2835,9 @@ namespace ttmath
 	he can only use '#include <ttmath/ttmath.h>'
 */
 #include "ttmathparser.h"
-#include "ttmathdec.h"
+
+// Dec is not finished yet
+//#include "ttmathdec.h"
 
 
 

@@ -1260,8 +1260,17 @@ private:
 			UInt<ss_size*2> res;
 			Mul2Big2<ss_size>(ss1, ss2, res);
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-compare"
+#endif
+
 			for(uint i=0 ; i<ss_size*2 ; ++i)
 				result[i] = res.table[i];
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 		return;
 		}
@@ -1355,10 +1364,18 @@ private:
 
 		Mul3Big2<first_size>(temp.table, temp2.table, z1.table);
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-compare"
+#endif
+
 		// clearing the rest of z1
 		for(i=first_size*2 ; i<first_size*3 ; ++i)
 			z1.table[i] = 0;
 
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 		
 		if( xc )
 		{
@@ -1375,9 +1392,18 @@ private:
 
 		if( xc && yc )
 		{
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-compare"
+#endif
+
 			for( i=first_size*2 ; i<first_size*3 ; ++i )
 				if( ++z1.table[i] != 0 )
-					break;  // break if there was no carry 
+ 					break;  // break if there was no carry 
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 		}
 
 		// z1 = z1 - z2
@@ -1396,11 +1422,20 @@ private:
 			uint z1_size = result_size - first_size;
 			TTMATH_ASSERT( z1_size <= first_size*3 )
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-compare"
+#endif
+
 			for(i=z1_size ; i<first_size*3 ; ++i)
 			{
 				TTMATH_ASSERT( z1.table[i] == 0 )
 			}
-			
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+ 			
 			c = AddVector(result+first_size, z1.table, result_size-first_size, z1_size, result+first_size);
 			TTMATH_ASSERT(c==0)
 		}
@@ -2505,10 +2540,18 @@ public:
 	*/
 	bool IsOnlyTheHighestBitSet() const
 	{
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-compare"
+#endif
+
 		for(uint i=0 ; i<value_size-1 ; ++i)
 			if( table[i] != 0 )
 				return false;
 
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 		if( table[value_size-1] != TTMATH_UINT_HIGHEST_BIT )
 			return false;
 
@@ -4036,7 +4079,7 @@ public:
 
 
 	/*
-		following methods are defined in:
+		Following methods are defined in:
 			ttmathuint_x86.h
 			ttmathuint_x86_64.h
 			ttmathuint_noasm.h
