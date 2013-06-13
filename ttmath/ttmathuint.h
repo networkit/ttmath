@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2011, Tomasz Sowa
+ * Copyright (c) 2006-2013, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -1313,6 +1313,11 @@ private:
 //we have the stop point in Mul3Big2() method
 #endif
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
+
 
 	/*!
 		an auxiliary method for calculating the Karatsuba multiplication
@@ -1447,6 +1452,9 @@ private:
 	}
 
 
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 #ifdef _MSC_VER
 #pragma warning (default : 4717)
