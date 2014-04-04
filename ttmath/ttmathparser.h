@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2010, Tomasz Sowa
+ * Copyright (c) 2006-2014, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -2604,7 +2604,7 @@ void SetBase(int b)
 */
 void SetDegRadGrad(int angle)
 {
-	if( angle >= 0 || angle <= 2 )
+	if( angle >= 0 && angle <= 2 )
 		deg_rad_grad = angle;
 }
 
