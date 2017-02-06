@@ -1,11 +1,11 @@
 ;
 ; This file is a part of TTMath Bignum Library
 ; and is distributed under the (new) BSD licence.
-; Author: Christian Kaiser <chk@online.de>
+; Author: Christian Kaiser <chk@online.de>, Tomasz Sowa <t.sowa@ttmath.org>
 ;
 
 ; 
-; Copyright (c) 2009, Christian Kaiser
+; Copyright (c) 2009-2017, Christian Kaiser, Tomasz Sowa
 ; All rights reserved.
 ; 
 ; Redistribution and use in source and binary forms, with or without
@@ -151,12 +151,12 @@ ttmath_addindexed2_x64	PROC
         ; rdx = b  (value size)
         ; r8 = nPos
         ; r9 = nValue1
-        ; [esp+0x28] = nValue2
+        ; [rsp+0x28] = nValue2
 
 		xor		rax, rax			; return value
 		mov		r11, rcx			; table
 		sub		rdx, r8				; rdx = remaining count of uints
-		mov		r10, [esp+028h]		; r10 = nValue2
+		mov		r10, [rsp+028h]		; r10 = nValue2
 
 		add		qword ptr [r11 + r8 * 8], r9
 		lea		r8, [r8+1]
@@ -194,9 +194,9 @@ ttmath_addvector_x64				PROC
         ; rdx = ss2
         ; r8 = ss1_size
         ; r9 = ss2_size
-        ; [esp+0x28] = result
+        ; [rsp+0x28] = result
 
-		mov		r10, [esp+028h]
+		mov		r10, [rsp+028h]
 		sub		r8, r9
         xor		r11, r11				; r11=0, cf=0
 
@@ -316,9 +316,9 @@ ttmath_subvector_x64				PROC
         ; rdx = ss2
         ; r8 = ss1_size
         ; r9 = ss2_size
-        ; [esp+0x28] = result
+        ; [rsp+0x28] = result
 
-		mov		r10, [esp+028h]
+		mov		r10, [rsp+028h]
 		sub		r8, r9
         xor		r11, r11				; r11=0, cf=0
 
