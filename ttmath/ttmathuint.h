@@ -3319,7 +3319,7 @@ public:
 		if( negative )
 			result = '-';
 
-		digits_d  = table_id; // for not making an overflow in uint type
+		digits_d  = static_cast<double>(table_id); // for not making an overflow in uint type
 		digits_d *= TTMATH_BITS_PER_UINT;
 		digits_d += index + 1;
 		digits_d *= ToStringLog2(b);

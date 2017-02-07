@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2014, Tomasz Sowa
+ * Copyright (c) 2006-2017, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -1781,7 +1781,7 @@ Conv conv;
 /*!
 	this method returns true if 'character' is a proper first digit for the value (or a comma -- can be first too)
 */
-bool ValueStarts(int character, int base)
+bool ValueStarts(int character, int character_base)
 {
 	if( character == comma )
 		return true;
@@ -1789,7 +1789,7 @@ bool ValueStarts(int character, int base)
 	if( comma2!=0 && character==comma2 )
 		return true;
 
-	if( Misc::CharToDigit(character, base) != -1 )
+	if( Misc::CharToDigit(character, character_base) != -1 )
 		return true;
 
 return false;
