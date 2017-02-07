@@ -1,3 +1,9 @@
+Version 0.9.4prerelease  (....):
+    * fixed:   in x86_64 asm code (*.asm for Win64) there was in some places esp register used,
+               there should be rsp used instead
+               this affects MS Windows users when they use the asm version (ttmathuint_x86_64_msvc.asm)
+
+
 Version 0.9.3  (2012.11.28):
     * fixed:   in Big::FromDouble(double value) (only 32 bit version)
                buffer overflow in referencing to UInt<2>
