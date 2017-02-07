@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2013, Tomasz Sowa
+ * Copyright (c) 2006-2017, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -1313,7 +1313,7 @@ private:
 //we have the stop point in Mul3Big2() method
 #endif
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
@@ -1452,7 +1452,7 @@ private:
 	}
 
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
 
@@ -2480,6 +2480,7 @@ public:
 
 		TTMATH_LOG("UInt::Sqrt")
 	}
+
 
 
 

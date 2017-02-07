@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2012, Tomasz Sowa
+ * Copyright (c) 2006-2017, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -2148,7 +2148,7 @@ public:
 			0 - ok
 			1 - overflow
 			2 - incorrect argument (x<=0)
-			3 - incorrect base (a<=0 lub a=1)
+			3 - incorrect base (a<=0 or a=1)
 	*/
 	uint Log(const Big<exp,man> & x, const Big<exp,man> & base)
 	{

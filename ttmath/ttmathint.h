@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2013, Tomasz Sowa
+ * Copyright (c) 2006-2017, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -812,7 +812,7 @@ public:
 	/*!
 		a copy constructor
 	*/
-	Int(const Int<value_size> & u)
+	Int(const Int<value_size> & u) : UInt<value_size>()
 	{
 		FromInt(u);
 	}

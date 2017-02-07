@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2012, Tomasz Sowa
+ * Copyright (c) 2006-2017, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -346,6 +346,9 @@ namespace ttmath
 	/*
 		this namespace consists of auxiliary functions
 		(something like 'private' in a class)
+
+		this is excluded from doxygen documentation
+		(option EXCLUDE_SYMBOLS in doxygen.cfg)
 	*/
 	namespace auxiliaryfunctions
 	{
