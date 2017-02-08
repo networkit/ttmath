@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2010, Tomasz Sowa
+ * Copyright (c) 2006-2017, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -484,7 +484,7 @@ public:
 
 		if( i == table.end() )
 		{
-			value.empty();
+			value.clear();
 			*param = 0;
 			return err_unknown_object;
 		}
