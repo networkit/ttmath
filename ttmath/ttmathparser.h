@@ -1975,7 +1975,7 @@ typename OperatorsTable::iterator iter_old, iter_new;
 		
 		if( iter_new == operators_table.end() || !IsSubstring(iter_new->first, oper) )
 		{
-			oper.erase( --oper.end() ); // we've got mininum one element
+			oper.pop_back(); // we've got mininum one element
 
 			if( iter_old != operators_table.end() && iter_old->first == oper )
 			{
