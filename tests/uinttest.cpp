@@ -1,7 +1,7 @@
 /*
  * This file is a part of TTMath Bignum Library
- * and is distributed under the (new) BSD licence.
- * Author: Tomasz Sowa <t.sowa@slimaczek.pl>
+ * and is distributed under the 3-Clause BSD Licence.
+ * Author: Tomasz Sowa <t.sowa@ttmath.org>
  */
 
 /* 

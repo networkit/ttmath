@@ -1,5 +1,6 @@
 CC     = g++
-CFLAGS = -Wall -pedantic -s -O2 -I.. -DTTMATH_DONT_USE_WCHAR
+#CC     = clang++
+CFLAGS = -Wall -pedantic -O2 -I.. -DTTMATH_DONT_USE_WCHAR
 
 
 .SUFFIXES: .cpp .o
@@ -12,19 +13,19 @@ all: uint int big big2 parser
 
 
 uint: uint.o
-	$(CC) -o uint $(CFLAGS) uint.o
+	$(CC) -o uint -s $(CFLAGS) uint.o
 
 int: int.o
-	$(CC) -o int $(CFLAGS) int.o
+	$(CC) -o int -s $(CFLAGS) int.o
 
 big: big.o
-	$(CC) -o big $(CFLAGS) big.o
+	$(CC) -o big -s $(CFLAGS) big.o
 
 big2: big2.o
-	$(CC) -o big2 $(CFLAGS) big2.o
+	$(CC) -o big2 -s $(CFLAGS) big2.o
 
 parser: parser.o
-	$(CC) -o parser $(CFLAGS) parser.o
+	$(CC) -o parser -s $(CFLAGS) parser.o
 
 
 uint.o:		uint.cpp

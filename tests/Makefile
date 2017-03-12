@@ -1,6 +1,6 @@
-CC     = g++
+CC     = clang++
 o      = main.o uinttest.o
-CFLAGS = -Wall -O2 -s
+CFLAGS = -Wall -O2
 ttmath = ..
 name   = tests
 
@@ -16,7 +16,7 @@ all: $(name)
 
 
 $(name): $(o)
-	$(CC) -o $(name) $(CFLAGS) -I$(ttmath) $(o)
+	$(CC) -o $(name) -s $(CFLAGS) -I$(ttmath) $(o)
 
 
 main.o: main.cpp uinttest.h

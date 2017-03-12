@@ -1,6 +1,6 @@
 o      = main.o
-CC     = g++
-CFLAGS = -s -O2 -DTTMATH_CONSTANTSGENERATOR
+CC     = clang++
+CFLAGS = -O2 -DTTMATH_CONSTANTSGENERATOR
 name   = gen
 
 
@@ -13,7 +13,7 @@ name   = gen
 all: $(name)
 
 $(name): $(o)
-	$(CC) -o $(name) $(CFLAGS) $(o)
+	$(CC) -o $(name) -s $(CFLAGS) $(o)
 
 
 

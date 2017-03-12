@@ -1,6 +1,6 @@
 /*
  * This file is a part of TTMath Bignum Library
- * and is distributed under the (new) BSD licence.
+ * and is distributed under the 3-Clause BSD Licence.
  * Author: Tomasz Sowa <t.sowa@ttmath.org>
  */
 
@@ -392,6 +392,8 @@ public:
 	*/
 	void SetPi()
 	{
+		// IMPROVE ME
+		// give some compiler-time warning when the size of mantissa is greater than the builtin size of the mantissa pi
 		SetMantissaPi();
 		info = 0;
 		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT) + 2;
@@ -403,6 +405,8 @@ public:
 	*/
 	void Set05Pi()
 	{
+		// IMPROVE ME
+		// give some compiler-time warning when the size of mantissa is greater than the builtin size of the mantissa pi
 		SetMantissaPi();
 		info = 0;
 		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT) + 1;
@@ -414,6 +418,8 @@ public:
 	*/
 	void Set2Pi()
 	{
+		// IMPROVE ME
+		// give some compiler-time warning when the size of mantissa is greater than the builtin size of the mantissa pi
 		SetMantissaPi();
 		info = 0;
 		exponent = -sint(man)*sint(TTMATH_BITS_PER_UINT) + 3;
