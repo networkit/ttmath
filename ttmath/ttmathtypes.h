@@ -64,16 +64,41 @@
 
 
 /*!
-	the version of the library
+	the major version of the library
 
+	the version present to the end user is constructed in this way:
+
+		TTMATH_MAJOR_VER.TTMATH_MINOR_VER.TTMATH_REVISION_VER.[prerelease if TTMATH_PRERELEASE_VER==1]
+*/
+#define TTMATH_MAJOR_VER		0
+
+/*!
+	the minor version of the library
+
+	the version present to the end user is constructed in this way:
+
+		TTMATH_MAJOR_VER.TTMATH_MINOR_VER.TTMATH_REVISION_VER.[prerelease if TTMATH_PRERELEASE_VER==1]
+*/
+#define TTMATH_MINOR_VER		9
+
+/*!
+	the revision version of the library
+
+	the version present to the end user is constructed in this way:
+
+		TTMATH_MAJOR_VER.TTMATH_MINOR_VER.TTMATH_REVISION_VER.[prerelease if TTMATH_PRERELEASE_VER==1]
+*/
+#define TTMATH_REVISION_VER		4
+
+/*!
 	TTMATH_PRERELEASE_VER is either zero or one
 	zero means that this is the release version of the library
 	(one means something like beta)
-*/
-#define TTMATH_MAJOR_VER		0
-#define TTMATH_MINOR_VER		9
-#define TTMATH_REVISION_VER		4
 
+	the version present to the end user is constructed in this way:
+
+		TTMATH_MAJOR_VER.TTMATH_MINOR_VER.TTMATH_REVISION_VER.[prerelease if TTMATH_PRERELEASE_VER==1]
+*/
 #define TTMATH_PRERELEASE_VER	1
 
 
