@@ -41,6 +41,9 @@
 ; this creates ttmathuint_x86_64_msvc.obj file which can be linked with your program
 ;
 
+; doxygen info is put to ttmathuint_x86_64.h file
+
+
 PUBLIC	ttmath_adc_x64
 PUBLIC	ttmath_addindexed_x64
 PUBLIC	ttmath_addindexed2_x64

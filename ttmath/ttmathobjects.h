@@ -81,7 +81,7 @@ public:
 		// (if there's a variable this 'param' is ignored)
 		int param;
 
-		Item() {}
+		Item() { param = 0; }
 		Item(const std::string & v, int p) : value(v), param(p) {}
 	};
 
@@ -723,14 +723,17 @@ public:
 
 	in multithreaded environment you can provide an object of this class to
 	the Gamma() or Factorial() function, e.g;
+
 		typedef Big<1, 3> MyBig;
 		MyBig x = 123456;
 		CGamma<MyBig> cgamma;
 		std::cout << Gamma(x, cgamma);
+
 	each thread should have its own CGamma<> object
 
 	in a single-thread environment a CGamma<> object is a static variable
-	in a second version of Gamma() and you don't have to explicitly use it, e.g.
+	and you don't have to explicitly use it, e.g.
+
 		typedef Big<1, 3> MyBig;
 		MyBig x = 123456;
 		std::cout << Gamma(x);
