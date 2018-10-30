@@ -395,7 +395,8 @@ namespace ttmath
 		err_unknown_object,
 		err_still_calculating,
 		err_in_short_form_used_function,
-		err_percent_from
+		err_percent_from,
+		err_assignment_requires_variable
 	};
 
 
