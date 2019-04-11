@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2017, Tomasz Sowa
+ * Copyright (c) 2006-2019, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -930,7 +930,6 @@ public:
 	uint Add(Big<exp, man> ss2, bool round = true, bool adding = true)
 	{
 	bool last_bit_set, rest_zero, do_adding, do_rounding, rounding_up;
-	Int<exp> exp_offset( exponent );
 	uint c = 0;
 
 		if( IsNan() || ss2.IsNan() )
@@ -939,32 +938,41 @@ public:
 		if( !adding )
 			ss2.ChangeSign(); // subtracting
 
-		exp_offset.Sub( ss2.exponent );
-		exp_offset.Abs();
-
 		// (1) abs(this) will be >= abs(ss2)
 		if( SmallerWithoutSignThan(ss2) )
 			Swap(ss2);
-	
+
 		if( ss2.IsZero() )
 			return 0;
 
-		last_bit_set = rest_zero = do_adding = do_rounding = false;
-		rounding_up = (IsSign() == ss2.IsSign());
+		Int<exp> exp_offset( exponent );
+		exp_offset.Sub( ss2.exponent );
 
-		AddCheckExponents(ss2, exp_offset, last_bit_set, rest_zero, do_adding, do_rounding);
+		if( !exp_offset.Abs() )
+		{
+			// if there is a carry in Abs it means the value in exp_offset has only the lowest bit set
+			// so the value is the smallest possible integer
+			// and its Abs would be greater than mantissa size in bits
+			// so the method AddCheckExponents would do nothing
 
-		if( do_adding )
-			c += AddMantissas(ss2, last_bit_set, rest_zero);
+			last_bit_set = rest_zero = do_adding = do_rounding = false;
+			rounding_up = (IsSign() == ss2.IsSign());
 
-		if( !round || !last_bit_set )
-			do_rounding = false;
+			AddCheckExponents(ss2, exp_offset, last_bit_set, rest_zero, do_adding, do_rounding);
 
-		if( do_rounding )
-			c += RoundHalfToEven(rest_zero, rounding_up);
+			if( do_adding )
+				c += AddMantissas(ss2, last_bit_set, rest_zero);
 
-		if( do_adding || do_rounding )
-			c += Standardizing();
+			if( !round || !last_bit_set )
+				do_rounding = false;
+
+			if( do_rounding )
+				c += RoundHalfToEven(rest_zero, rounding_up);
+
+			if( do_adding || do_rounding )
+				c += Standardizing();
+		}
+
 
 	return CheckCarry(c);
 	}
@@ -993,6 +1001,8 @@ public:
 	*/
 	uint BitAnd(Big<exp, man> ss2)
 	{
+		uint c = 0;
+
 		if( IsNan() || ss2.IsNan() )
 			return CheckCarry(1);
 
@@ -1011,20 +1021,20 @@ public:
 			return 0;
 		}
 
-		Int<exp> exp_offset( exponent );
-		Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
-
-		uint c = 0;
-
-		exp_offset.Sub( ss2.exponent );
-		exp_offset.Abs();
-
 		// abs(this) will be >= abs(ss2)
 		if( SmallerWithoutSignThan(ss2) )
 			Swap(ss2);
 
-		if( exp_offset >= mantissa_size_in_bits )
+		Int<exp> exp_offset( exponent );
+		Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
+		exp_offset.Sub( ss2.exponent );
+
+		if( exp_offset.Abs() || exp_offset >= mantissa_size_in_bits )
 		{
+			// if there is a carry in Abs it means the value in exp_offset has only the lowest bit set
+			// so the value is the smallest possible integer
+			// and its Abs would be greater than mantissa size in bits
+
 			// the second value is too small
 			SetZero();
 			return 0;
@@ -1052,6 +1062,8 @@ public:
 	*/
 	uint BitOr(Big<exp, man> ss2)
 	{
+		uint c = 0;
+
 		if( IsNan() || ss2.IsNan() )
 			return CheckCarry(1);
 
@@ -1070,21 +1082,23 @@ public:
 		if( ss2.IsZero() )
 			return 0;
 
-		Int<exp> exp_offset( exponent );
-		Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
-
-		uint c = 0;
-
-		exp_offset.Sub( ss2.exponent );
-		exp_offset.Abs();
-
 		// abs(this) will be >= abs(ss2)
 		if( SmallerWithoutSignThan(ss2) )
 			Swap(ss2);
 
-		if( exp_offset >= mantissa_size_in_bits )
+		Int<exp> exp_offset( exponent );
+		Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
+		exp_offset.Sub( ss2.exponent );
+
+		if( exp_offset.Abs() || exp_offset >= mantissa_size_in_bits )
+		{
+			// if there is a carry in Abs it means the value in exp_offset has only the lowest bit set
+			// so the value is the smallest possible integer
+			// and its Abs would be greater than mantissa size in bits
+
 			// the second value is too small
 			return 0;
+		}
 
 		// exp_offset < mantissa_size_in_bits, moving 'exp_offset' times
 		ss2.mantissa.Rcr( exp_offset.ToInt(), 0 );
@@ -1108,6 +1122,8 @@ public:
 	*/
 	uint BitXor(Big<exp, man> ss2)
 	{
+		uint c = 0;
+
 		if( IsNan() || ss2.IsNan() )
 			return CheckCarry(1);
 
@@ -1126,21 +1142,23 @@ public:
 			return 0;
 		}
 
-		Int<exp> exp_offset( exponent );
-		Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
-
-		uint c = 0;
-
-		exp_offset.Sub( ss2.exponent );
-		exp_offset.Abs();
-
 		// abs(this) will be >= abs(ss2)
 		if( SmallerWithoutSignThan(ss2) )
 			Swap(ss2);
 
-		if( exp_offset >= mantissa_size_in_bits )
+		Int<exp> exp_offset( exponent );
+		Int<exp> mantissa_size_in_bits( man * TTMATH_BITS_PER_UINT );
+		exp_offset.Sub( ss2.exponent );
+
+		if( exp_offset.Abs() || exp_offset >= mantissa_size_in_bits )
+		{
+			// if there is a carry in Abs it means the value in exp_offset has only the lowest bit set
+			// so the value is the smallest possible integer
+			// and its Abs would be greater than mantissa size in bits
+
 			// the second value is too small
 			return 0;
+		}
 
 		// exp_offset < mantissa_size_in_bits, moving 'exp_offset' times
 		ss2.mantissa.Rcr( exp_offset.ToInt(), 0 );
