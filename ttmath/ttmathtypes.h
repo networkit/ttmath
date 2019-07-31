@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2006-2017, Tomasz Sowa
+ * Copyright (c) 2006-2019, Tomasz Sowa
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -235,12 +235,12 @@ namespace ttmath
 		/*!
 			on 64bit platforms one word (uint, sint) will be equal 64bits
 		*/
-		typedef unsigned long uint;
+		typedef uint64_t uint;
 
 		/*!
 			on 64bit platforms one word (uint, sint) will be equal 64bits
 		*/
-		typedef signed   long sint;
+		typedef int64_t sint;
 	#endif 
 
 	/*!
