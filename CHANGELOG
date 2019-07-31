@@ -1,4 +1,17 @@
-Version 0.9.4prerelease  (....):
+Version 0.9.4_prerelease  (....):
+    * fixed:   cannot compile on MS Windows when compiling with GCC (Mingw) for 64 bit platform:
+               incorrect size of ttmath::uint and ::sint were used
+               they were 'long' but 'long' is a 32bit type on Windows
+    * fixed:   a crash in Big::Add() (buffer overflow)
+               there was an offset calculated from Int type by using Abs() method and a carry was not checked
+               (if there is a carry we should not make addition -- the argument is too small)
+               this had no impact on calculated values because there was a crash (bus error) immediately
+               following program could crash (64bit):
+               typedef ttmath::Big<1, 8> MyBig;
+               ttmath::Parser<MyBig> parser;
+               parser.Parse("2^(2^63) + 1");
+    * fixed:   similar problems were in methods Big::BitAnd() Big::BitOr() and Big::BitXor() (bitwise operations)
+               and they could return incorrect values
     * fixed:   in x86_64 asm code (*.asm for Win64) there was in some places esp register used,
                there should be rsp used instead
                this affects MS Windows users when they use the asm version (ttmathuint_x86_64_msvc.asm)
