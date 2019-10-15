@@ -43,5 +43,5 @@ clean:
 	rm -f big
 	rm -f big2
 	rm -f parser
-# on MS Windows can automatically be added suffixes .exe to the names of output programs
+# on MS Windows suffixes .exe will be automatically added
 	rm -f *.exe
