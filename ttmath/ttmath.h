@@ -873,7 +873,8 @@ namespace ttmath
 			if( err )
 				*err = err_improper_argument;
 
-			return result; // NaN is set by default
+			result.SetZeroNan();
+			return result;
 		}
 
 		if( x.IsSign() )
@@ -2710,7 +2711,7 @@ namespace ttmath
 		if( n.IsZero() )
 		{
 			err_tmp = err_improper_argument;
-			result.SetNan();
+			result.SetZeroNan();
 		}
 		else
 		{

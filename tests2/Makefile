@@ -1,6 +1,11 @@
-#CC     = g++
+#CC     = g++6
+#CFLAGS = -Wall -pedantic -O3 -s -I.. -Wl,-rpath=/usr/local/lib/gcc6
+#CFLAGS = -Wall -pedantic -O3 -DTTMATH_NOASM -s -I.. -Wl,-rpath=/usr/local/lib/gcc6
+
 CC     = clang++
-CFLAGS = -Wall -pedantic -O2 -I..
+CFLAGS = -Wall -pedantic -O3 -s -I..
+#CFLAGS = -Wall -pedantic -O3 -DTTMATH_NOASM -s -I..
+
 
 
 .SUFFIXES: .cpp .o
