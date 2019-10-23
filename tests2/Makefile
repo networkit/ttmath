@@ -97,7 +97,7 @@ test: all
 	@echo "making tests for exponent=64 and mantissa=4096"
 	@echo "****************************************************************************"
 	cat tests.txt | xargs -S 4096 -I foo ./big_64_4096 "foo" | tee big_64_4096.out
-	
+
 	@echo "****************************************************************************"
 	@echo "making tests for exponent=128 and mantissa=512"
 	@echo "****************************************************************************"
@@ -117,7 +117,7 @@ test: all
 	@echo "making tests for exponent=512 and mantissa=2048"
 	@echo "****************************************************************************"
 	cat tests.txt | xargs -S 4096 -I foo ./big_512_2048 "foo" | tee big_512_2048.out
-	
+
 	./check_files.sh
 
 
