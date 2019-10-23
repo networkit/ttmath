@@ -2119,9 +2119,18 @@ virtual bool ReadOperator()
 	{
 		OperatorPercentage();
 		++pstring;
+		SkipWhiteCharacters();
 		// now we can read another operator
+		// we do not return read_next_operator=true here because
+		// we dont want such an expression to be correct: 20-10+20%% (two percentage operators next to each other)
+		// you must use brackets to calculate it: 20-(10+20%)%
 	}
 
+	if( *pstring == 0 )
+	{
+		// the string is finished (after reading % operator)
+	}
+	else
 	if( *pstring == ')' )
 	{
 		++pstring;
