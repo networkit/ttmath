@@ -2182,7 +2182,7 @@ private:
 
 	void Div3_Division(UInt<value_size> v, UInt<value_size> * remainder, uint m, uint n)
 	{
-	TTMATH_ASSERT( n>=2 )
+	TTMATH_ASSERT( n>=2 && n<=value_size && m<=value_size && m+n<=value_size )
 
 	UInt<value_size+1> uu, vv;
 	UInt<value_size> q;
