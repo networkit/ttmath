@@ -94,7 +94,7 @@ namespace ttmath
 			// warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead.
 			#endif
 
-			sprintf(buffer, "TTMATH_LOCK_%ul", (unsigned long)GetCurrentProcessId());
+			snprintf(buffer, sizeof(buffer), "TTMATH_LOCK_%ul", (unsigned long)GetCurrentProcessId());
 
 			#ifdef _MSC_VER
 			#pragma warning (default : 4996)
