@@ -1344,7 +1344,7 @@ private:
 			   z1 = (x1 + x0)*(y1 + y0) - z2 - z0
 	*/
 	template<uint first_size, uint second_size, uint result_size>
-	void Mul3Big3(const uint * x1, const uint * x0, const uint * y1, const uint * y0, uint * result)
+	uint Mul3Big3(const uint * x1, const uint * x0, const uint * y1, const uint * y0, uint * result)
 	{
 	uint i, c, xc, yc;
 
@@ -1458,6 +1458,7 @@ private:
 			c = AddVector(result+first_size, z1.table, result_size-first_size, first_size*3, result+first_size);
 			TTMATH_ASSERT(c==0)
 		}
+	return c;
 	}
 
 
